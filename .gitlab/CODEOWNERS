@@ -1,0 +1,6 @@
+# Default reviewers / owners.
+# Adjust to your GitLab usernames before merging real changes.
+*           @chenzhuo
+/scripts/   @chenzhuo
+/mcp/       @chenzhuo
+/docs/      @chenzhuo
