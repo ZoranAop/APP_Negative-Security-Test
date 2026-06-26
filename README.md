@@ -23,6 +23,7 @@ xxai-square-publisher/
 │   ├── 07-artifacts.md             # 产物文件清单
 │   ├── 08-quick-replay.md          # 复用步骤速查
 │   ├── 09-security.md              # 凭证与脱敏约定
+│   ├── 10-auto-poster-merge.md     # 与 tester/auto-poster 的合并说明
 │   └── runbooks/                   # 可直接照抄的 runbook
 │       ├── run-image-post.md
 │       └── run-video-post.md
@@ -90,3 +91,13 @@ py -3 scripts/post_video.py --account <email> --video <mp4_url_or_path> \
 - **不要把 `.env`、真实账号 CSV、token 提交到本仓库**，`.gitignore` 已默认拦截。
 - 仓库内提及的所有账号/密码/URL，参考 `docs/09-security.md` 与 `.env.example`，**全部通过环境变量注入**。
 - 任务执行后建议轮换凭证。
+
+## 仓库演变
+
+本仓库继承并取代了 [`tester/auto-poster`](http://100.64.0.45:8999/tester/auto-poster) 的发布工具链：
+
+- 该仓库的 7 个核心脚本（`post_moments.py` / `config.py` / `utils.py` / `retry.py` / `validation.py` / `post_single_moment_vision.py` / `requirements.txt`）已**完全融合**进本仓库 `scripts/` 目录（SHA256 一致）。
+- 历史的小红书爬虫 `crawl_xhs.py` 已收纳到 `scripts/legacy/crawl_xhs.py`。
+- 该仓库的真实账号池 `企管用户_邮箱密码pincode_200.csv` **按设计不入本仓库**，由 `scripts/gitlab_pull.py` 在运行时从 Project 207 拉取。
+
+完整差异比对、迁移指引与真实回归结果，见 [`docs/10-auto-poster-merge.md`](docs/10-auto-poster-merge.md)。

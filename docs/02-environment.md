@@ -57,10 +57,36 @@ requirements.txt
 
 ## 2.4 准备账号 CSV
 
+账号库 CSV **不在本仓库**（被 `.gitignore` 拦截），有两种获取方式：
+
+### 方式 A：从 `tester/auto-poster`（Project 207）运行时拉取（推荐）
+
+`tester/auto-poster` 仍是真实账号池的唯一存储仓，本仓库通过 `scripts/gitlab_pull.py` 拉取：
+
+```powershell
+# .env 中需先设置：
+#   GITLAB_BASE_URL=http://100.64.0.45:8999
+#   GITLAB_PROJECT_ID=207   ← 关键：指向 auto-poster
+#   GITLAB_TOKEN=glpat-xxxx    （或同时设置 GITLAB_USERNAME + GITLAB_PASSWORD）
+
+py -3 scripts/gitlab_pull.py `
+    --files "企管用户_邮箱密码pincode_200.csv" `
+    --ref main `
+    --out .
+```
+
+执行后会在当前目录得到 `企管用户_邮箱密码pincode_200.csv`（不会被 `git` 跟踪）。
+
+### 方式 B：本地手动放置
+
+把账号库 CSV 复制到工作目录（**绝对不要 commit**）。
+
+### 字段要求
+
 - 把账号库 CSV 复制到工作目录（**不要 commit**）。
 - 按需求裁剪出 N 个用户的子集（如 `accounts_10.csv`，保留表头 + 前 10 行）。
 
-字段要求（小写或中文均可，参考 `config.py` 的 `ACCOUNTS_CSV_*_FIELDS`）：
+字段名（小写英文或中文均可，参考 `config.py` 的 `ACCOUNTS_CSV_*_FIELDS`）：
 
 | 字段名（任一）                              | 用途       |
 | ------------------------------------------- | ---------- |

@@ -1,3 +1,4 @@
-email,password,user_id
-your_account_1@example.com,your_password_1,u_xxxxxxxx
-your_account_2@example.com,your_password_2,u_xxxxxxxx
+序号,user_id,邮箱,用户名,昵称,密码,pincode
+1,000000000000001,user_xxxx_1@example.com,u_xxxxxxxx,昵称示例1,REPLACE_WITH_PASSWORD,000000
+2,000000000000002,user_xxxx_2@example.com,u_xxxxxxxx,昵称示例2,REPLACE_WITH_PASSWORD,000000
+3,000000000000003,user_xxxx_3@example.com,u_xxxxxxxx,昵称示例3,REPLACE_WITH_PASSWORD,000000
