@@ -29,10 +29,27 @@
 
 ### 其他可选数据源
 
-- https://www.open-prompts.com/zh/gallery
-- https://lovimg.com/zh?category=people-characters
-- https://meigenai.io/zh
-- https://www.promptspace.in/images?sort=best&premium=true
+- https://www.open-prompts.com/zh/gallery — 见 `scripts/fetch_openprompts.py`
+- https://lovimg.com/zh?category=people-characters — 见 `scripts/fetch_lovimg.py`
+- https://meigenai.io/zh — Next.js CSR，暂无脚本
+- https://www.promptspace.in/images?sort=best&premium=true — Next.js CSR，暂无脚本
+
+## 4.1.1 统一采集入口 `multi_source_fetch.py`
+
+三源合抓 + 广告过滤 + 主题过滤 + 跨源去重：
+
+```powershell
+py -3 scripts/multi_source_fetch.py `
+    --sources opennana,openprompts,lovimg `
+    --theme beauty `
+    --exclude-ads `
+    --limit 100 `
+    --dedupe-file result\used_slugs.json `
+    --output moments.csv `
+    --shuffle
+```
+
+详见 [`12-multi-source.md`](12-multi-source.md) 与 [`11-anti-ad-filtering.md`](11-anti-ad-filtering.md)。
 
 ## 4.2 文案改写原则（重要）
 
@@ -56,3 +73,18 @@
 | 纯文本   | `LLM_TEXT_*`     | 文案润色（如 DeepSeek）   |
 
 所有 `*_API_KEY` / `*_API_BASE` / `*_MODEL` 均通过 `.env` 配置，未设置时回退到通用配置。
+
+## 4.4 多语言主体视角文案改写 `caption_multilang.py`
+
+如果你想批量把 `moments.csv` 的 `content` 列改写为英/繁中/日/简中之一或组合，
+无需自己调 LLM，可直接用：
+
+```powershell
+py -3 scripts/caption_multilang.py `
+    --input moments.csv `
+    --output moments_multilang.csv `
+    --langs en,zh_hant,ja
+```
+
+内置分场景 + 分语言模板池，也支持 `--use-llm` 走 `LLM_TEXT_*` 环境变量真调 LLM。
+详见 [`13-multilang-captions.md`](13-multilang-captions.md)。

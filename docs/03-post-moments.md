@@ -1,4 +1,4 @@
-# 03. 图文 / 文本发帖（post_moments.py）
+# 03. 图文 / 文本发帖（post_moments.py / publish_from_tokens.py）
 
 ## 3.1 流程
 
@@ -55,3 +55,51 @@ py -3 scripts/post_moments.py `
 ## 3.5 结果输出
 
 `result/post_results_<时间戳>.csv` + `_summary.txt`，含每帖 `moment_id`、状态、成功率。
+
+---
+
+## 3.6 高级：`publish_from_tokens.py`（避开 429 的两阶段发布）
+
+`post_moments.py` 会**在启动时并发登录所有账号**。实战中 ≥15 个账号同时登录
+会有较大概率触发服务端限流（HTTP 429）——参见 `docs/05-batch-records.md`
+批次 7-8 的记录（12/20 → 首次登录失败）。
+
+`scripts/publish_from_tokens.py` 把流程拆成三阶段：
+
+1. **登录**：顺序执行，账号之间间隔 `LOGIN_SPACING`（默认 2.5s），
+   遇 429 自动指数退避。产出 `{email: token}` 映射并落盘。
+2. **上传**：把 CSV 里所有外部图片 URL 去重后统一上传到 S3，
+   `image_urls` 就地替换为 AWS URL 缓存。
+3. **发布**：并发（默认 4）向后端 `/api/v1/moments/` POST。
+
+```powershell
+py -3 scripts/publish_from_tokens.py `
+    --accounts-csv accounts_20.csv `
+    --csv moments.csv `
+    --concurrency 4 `
+    --login-spacing 2.5 `
+    --tokens-out result/tokens.json
+```
+
+### 复用 token
+
+第二次跑同批账号时，直接复用：
+
+```powershell
+py -3 scripts/publish_from_tokens.py `
+    --accounts-csv accounts_20.csv `
+    --csv moments_batch3.csv `
+    --tokens-in result/tokens.json
+```
+
+token 无效则自动重新登录缺失账号并合并回文件。
+
+### 与 post_moments.py 的关系
+
+| 场景                                | 推荐脚本                      |
+| ----------------------------------- | ----------------------------- |
+| ≤ 10 个账号 / 一次性发帖            | `post_moments.py`             |
+| ≥ 15 个账号 / 高并发 / 多批次       | `publish_from_tokens.py`      |
+| 上一批 token 还没过期，想跳过登录    | `publish_from_tokens.py`      |
+
+功能等价，`publish_from_tokens.py` 更适合大规模、更容易失败恢复。

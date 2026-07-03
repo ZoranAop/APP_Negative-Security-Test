@@ -105,6 +105,49 @@ class Config:
     # 请求超时时间（秒）
     POST_REQUEST_TIMEOUT: int = int(os.getenv("POST_REQUEST_TIMEOUT", "15"))
 
+    # 顺序登录间隔（秒）- publish_from_tokens 使用
+    # 实测经验：并发登录 20 账号 -> 12/20 触发 429；
+    # 顺序 + 2.5s 间距 -> 20/20 通过
+    LOGIN_SPACING: float = float(os.getenv("LOGIN_SPACING", "2.5"))
+
+    # ==================== 上传 / 素材站 ====================
+    # S3 临时凭证接口
+    UPLOAD_CREDENTIALS_URL: str = os.getenv(
+        "UPLOAD_CREDENTIALS_URL",
+        "https://devapi-x.tp-ex.com/file/upload/credentials"
+    )
+
+    # OpenNana 素材源
+    OPENNANA_API_BASE: str = os.getenv("OPENNANA_API_BASE", "https://api.opennana.com")
+
+    # open-prompts.com 素材源
+    OPENPROMPTS_API_BASE: str = os.getenv(
+        "OPENPROMPTS_API_BASE", "https://www.open-prompts.com/api"
+    )
+
+    # lovimg.com 素材源
+    LOVIMG_BASE: str = os.getenv("LOVIMG_BASE", "https://lovimg.com")
+
+    # 多源采集默认（multi_source_fetch.py）
+    MULTI_SOURCE_DEFAULT: str = os.getenv(
+        "MULTI_SOURCE_DEFAULT", "opennana,openprompts,lovimg"
+    )
+
+    # 默认过滤广告
+    MULTI_SOURCE_EXCLUDE_ADS_DEFAULT: bool = os.getenv(
+        "MULTI_SOURCE_EXCLUDE_ADS_DEFAULT", "true"
+    ).lower() in ("1", "true", "yes")
+
+    # 默认主题
+    MULTI_SOURCE_THEME_DEFAULT: str = os.getenv(
+        "MULTI_SOURCE_THEME_DEFAULT", "beauty"
+    )
+
+    # ==================== 多语言文案 ====================
+    # 生成 caption 时使用的语言组合（逗号分隔）
+    # 支持：en / zh / zh_hant / ja
+    CAPTION_LANGS_DEFAULT: str = os.getenv("CAPTION_LANGS_DEFAULT", "en,zh_hant,ja")
+
     # ==================== 重试配置 ====================
     # 最大重试次数
     MAX_RETRY_ATTEMPTS: int = int(os.getenv("MAX_RETRY_ATTEMPTS", "3"))

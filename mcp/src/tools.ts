@@ -224,17 +224,150 @@ export const tools = [
   {
     name: "fetch_opennana",
     description:
-      "Call scripts/opennana_fetch.py to pull prompt-gallery materials and write a moments CSV.",
+      "Call scripts/opennana_fetch.py to pull prompt-gallery materials and write a moments CSV. " +
+      "Supports theme/model filtering and ad exclusion (see docs/11 / docs/12).",
     inputSchema: {
       type: "object",
       properties: {
         media_type: { type: "string", enum: ["image", "video"], default: "image" },
         page: { type: "integer", default: 1, minimum: 1 },
-        pages: { type: "integer", default: 1, minimum: 1, maximum: 20 },
-        limit: { type: "integer", default: 10, minimum: 1, maximum: 200 },
+        pages: { type: "integer", default: 1, minimum: 1, maximum: 30 },
+        limit: { type: "integer", default: 10, minimum: 1, maximum: 500 },
+        model: { type: "string", description: 'e.g. "ChatGPT", "Nano banana pro"' },
+        theme: {
+          type: "string",
+          enum: ["beauty", "portrait", "sport", "travel", "food", "all"],
+          default: "all",
+        },
+        exclude_ads: { type: "boolean", default: false },
+        dedupe_file: { type: "string", description: "JSON of already-used slugs" },
+        shuffle_pages: { type: "boolean", default: false },
         output: { type: "string", description: "Destination CSV path." },
       },
       required: ["output"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "fetch_openprompts",
+    description:
+      "Call scripts/fetch_openprompts.py to pull materials from open-prompts.com and write a moments CSV.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        page: { type: "integer", default: 1, minimum: 1 },
+        pages: { type: "integer", default: 1, minimum: 1, maximum: 10 },
+        limit: { type: "integer", default: 50, minimum: 1, maximum: 500 },
+        model: { type: "string" },
+        theme: {
+          type: "string",
+          enum: ["beauty", "portrait", "sport", "travel", "food", "all"],
+          default: "all",
+        },
+        exclude_ads: { type: "boolean", default: false },
+        dedupe_file: { type: "string" },
+        output: { type: "string" },
+      },
+      required: ["output"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "fetch_lovimg",
+    description:
+      "Call scripts/fetch_lovimg.py to pull materials from lovimg.com. lovimg is SSR-only, " +
+      "no REST API; the script parses inline JS payloads.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        category: { type: "string", default: "people-characters" },
+        max_pages: { type: "integer", default: 15, minimum: 1, maximum: 60 },
+        limit: { type: "integer", default: 50, minimum: 1, maximum: 500 },
+        theme: {
+          type: "string",
+          enum: ["beauty", "portrait", "sport", "travel", "food", "all"],
+          default: "all",
+        },
+        exclude_ads: { type: "boolean", default: false },
+        dedupe_file: { type: "string" },
+        output: { type: "string" },
+      },
+      required: ["output"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "fetch_multi_source",
+    description:
+      "Call scripts/multi_source_fetch.py to aggregate materials across opennana / open-prompts / lovimg " +
+      "with unified theme + ad filters and a shared dedupe list.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        sources: { type: "string", default: "opennana,openprompts,lovimg",
+                   description: "comma-separated: opennana / openprompts / lovimg" },
+        theme: {
+          type: "string",
+          enum: ["beauty", "portrait", "sport", "travel", "food", "all"],
+          default: "beauty",
+        },
+        model: { type: "string", description: "optional opennana/openprompts model filter" },
+        exclude_ads: { type: "boolean", default: true },
+        limit: { type: "integer", default: 100, minimum: 1, maximum: 1000 },
+        source_weights: { type: "string",
+                          description: 'e.g. "opennana=40,openprompts=40,lovimg=20"' },
+        dedupe_file: { type: "string" },
+        shuffle: { type: "boolean", default: true },
+        opennana_pages: { type: "integer", default: 8, minimum: 1, maximum: 30 },
+        openprompts_pages: { type: "integer", default: 3, minimum: 1, maximum: 10 },
+        lovimg_max_pages: { type: "integer", default: 15, minimum: 1, maximum: 60 },
+        output: { type: "string" },
+      },
+      required: ["output"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "generate_multilang_captions",
+    description:
+      "Call scripts/caption_multilang.py to rewrite the `content` column of a moments CSV " +
+      "into subject-first captions in one or more languages (en / zh / zh_hant / ja). " +
+      "Uses built-in template pool by default; --use-llm invokes LLM_TEXT_* / LLM_* if configured.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        input: { type: "string", description: "input CSV path" },
+        output: { type: "string", description: "output CSV path" },
+        langs: { type: "string", default: "en,zh_hant,ja",
+                 description: "comma-separated: en / zh / zh_hant / ja" },
+        use_llm: { type: "boolean", default: false },
+        seed: { type: "integer", default: 20260703 },
+      },
+      required: ["input", "output"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "run_publish_from_tokens",
+    description:
+      "Invoke scripts/publish_from_tokens.py: three-phase safe publisher " +
+      "(sequential login with 429-backoff → S3 upload cache → parallel publish). " +
+      "Recommended for ≥15 accounts. See docs/03 §3.6.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        accounts_csv: { type: "string" },
+        csv: { type: "string", description: "moments CSV" },
+        concurrency: { type: "integer", default: 4, minimum: 1, maximum: 32 },
+        login_spacing: { type: "number", default: 2.5, minimum: 0 },
+        tokens_in: { type: "string", description: "optional pre-existing tokens JSON to reuse" },
+        tokens_out: { type: "string", default: "result/tokens.json" },
+        no_persist_tokens: { type: "boolean", default: false },
+        output_csv: { type: "string" },
+        dry_run: { type: "boolean", default: false,
+                   description: "if true, stop after phase 1 (login) and report" },
+      },
+      required: ["accounts_csv", "csv"],
       additionalProperties: false,
     },
   },
@@ -349,7 +482,89 @@ export async function callTool(name: string, args: Record<string, unknown>): Pro
           "--limit", String(a.limit ?? 10),
           "--output", String(a.output),
         ];
+        if (a.model) flags.push("--model", String(a.model));
+        if (a.theme && a.theme !== "all") flags.push("--theme", String(a.theme));
+        if (a.exclude_ads) flags.push("--exclude-ads");
+        if (a.dedupe_file) flags.push("--dedupe-file", String(a.dedupe_file));
+        if (a.shuffle_pages) flags.push("--shuffle-pages");
         return runPython("opennana_fetch.py", flags);
+      }
+
+      case "fetch_openprompts": {
+        const a = args as Record<string, any>;
+        const flags = [
+          "--page", String(a.page ?? 1),
+          "--pages", String(a.pages ?? 1),
+          "--limit", String(a.limit ?? 50),
+          "--output", String(a.output),
+        ];
+        if (a.model) flags.push("--model", String(a.model));
+        if (a.theme && a.theme !== "all") flags.push("--theme", String(a.theme));
+        if (a.exclude_ads) flags.push("--exclude-ads");
+        if (a.dedupe_file) flags.push("--dedupe-file", String(a.dedupe_file));
+        return runPython("fetch_openprompts.py", flags);
+      }
+
+      case "fetch_lovimg": {
+        const a = args as Record<string, any>;
+        const flags = [
+          "--category", String(a.category ?? "people-characters"),
+          "--max-pages", String(a.max_pages ?? 15),
+          "--limit", String(a.limit ?? 50),
+          "--output", String(a.output),
+        ];
+        if (a.theme && a.theme !== "all") flags.push("--theme", String(a.theme));
+        if (a.exclude_ads) flags.push("--exclude-ads");
+        if (a.dedupe_file) flags.push("--dedupe-file", String(a.dedupe_file));
+        return runPython("fetch_lovimg.py", flags);
+      }
+
+      case "fetch_multi_source": {
+        const a = args as Record<string, any>;
+        const flags = [
+          "--sources", String(a.sources ?? "opennana,openprompts,lovimg"),
+          "--theme", String(a.theme ?? "beauty"),
+          "--limit", String(a.limit ?? 100),
+          "--output", String(a.output),
+          "--opennana-pages", String(a.opennana_pages ?? 8),
+          "--openprompts-pages", String(a.openprompts_pages ?? 3),
+          "--lovimg-max-pages", String(a.lovimg_max_pages ?? 15),
+        ];
+        if (a.model) flags.push("--model", String(a.model));
+        if (a.exclude_ads === false) flags.push("--include-ads");
+        // exclude_ads default = true, no flag needed then
+        if (a.source_weights) flags.push("--source-weights", String(a.source_weights));
+        if (a.dedupe_file) flags.push("--dedupe-file", String(a.dedupe_file));
+        if (a.shuffle !== false) flags.push("--shuffle");
+        return runPython("multi_source_fetch.py", flags);
+      }
+
+      case "generate_multilang_captions": {
+        const a = args as Record<string, any>;
+        const flags = [
+          "--input", String(a.input),
+          "--output", String(a.output),
+          "--langs", String(a.langs ?? "en,zh_hant,ja"),
+          "--seed", String(a.seed ?? 20260703),
+        ];
+        if (a.use_llm) flags.push("--use-llm");
+        return runPython("caption_multilang.py", flags);
+      }
+
+      case "run_publish_from_tokens": {
+        const a = args as Record<string, any>;
+        const flags = [
+          "--accounts-csv", String(a.accounts_csv),
+          "--csv", String(a.csv),
+          "--concurrency", String(a.concurrency ?? 4),
+          "--login-spacing", String(a.login_spacing ?? 2.5),
+          "--tokens-out", String(a.tokens_out ?? "result/tokens.json"),
+        ];
+        if (a.tokens_in) flags.push("--tokens-in", String(a.tokens_in));
+        if (a.no_persist_tokens) flags.push("--no-persist-tokens");
+        if (a.output_csv) flags.push("--output-csv", String(a.output_csv));
+        if (a.dry_run) flags.push("--dry-run");
+        return runPython("publish_from_tokens.py", flags, 15 * 60 * 1000);
       }
 
       case "rewrite_caption": {

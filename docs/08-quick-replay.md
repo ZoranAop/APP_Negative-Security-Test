@@ -20,8 +20,38 @@ Copy-Item .env.example .env
 
 ## 图文 / 文本
 
+### 推荐流程（多源 + 多语言 + 两阶段发布）
+
 ```powershell
-# 1. 取素材：调 OpenNana / 热点接口
+# 1. 多源采集（自动过滤广告）
+py -3 scripts/multi_source_fetch.py `
+    --sources opennana,openprompts,lovimg `
+    --theme beauty `
+    --exclude-ads `
+    --limit 100 `
+    --dedupe-file result\used_slugs.json `
+    --output moments_raw.csv `
+    --shuffle
+
+# 2. 多语言主体视角文案改写
+py -3 scripts/caption_multilang.py `
+    --input moments_raw.csv `
+    --output moments.csv `
+    --langs en,zh_hant,ja
+
+# 3. 两阶段发布（避开并发登录 429）
+py -3 scripts/publish_from_tokens.py `
+    --accounts-csv accounts_20.csv `
+    --csv moments.csv `
+    --concurrency 4 `
+    --login-spacing 2.5 `
+    --tokens-out result/tokens.json
+```
+
+### 简易流程（旧脚本，兼容）
+
+```powershell
+# 1. 取素材：调 OpenNana 单源
 py -3 scripts/opennana_fetch.py --media-type image --page 1 --output moments.csv
 
 # 2. 改写成用户口吻文案 → 写入素材 CSV
