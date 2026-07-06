@@ -56,43 +56,36 @@ py -3 scripts/multi_source_fetch.py `
 沿用 docs/11 的思路：按标题关键词（广告/推广/优惠/微信/扫码/福利群/coupon/promo…）
 丢弃疑似广告条目。`--exclude-ads` 开启。
 
-## 15.5 ⚠️ Referer 反爬：发布前需预下载
+## 15.5 Referer 反爬：已自动处理（无需预下载）
 
-`publish_from_tokens.py` 的 `upload_url_to_s3` 下载外链图片时用的是**固定的
-opennana Referer**。yituyu / tuzi 的 CDN 对 Referer 敏感，直接下载会失败
-（表现为 S3 上传阶段 `FileNotFoundError`）。
+yituyu / tuzi 的 CDN 对 Referer 敏感：早期 `publish_from_tokens.py` 的
+`upload_url_to_s3` 下载外链图片时用的是**固定的 opennana Referer**，
+导致 yituyu / tuzi 图片下载被拒（表现为 S3 上传阶段 `FileNotFoundError`）。
 
-**处理方式**：发布前用**各站正确的 Referer** 把图片预下载到
-`publish_from_tokens.py` 期望的本地缓存路径，函数便会复用本地文件、跳过失败下载：
+**现已从根本修复**：`upload_url_to_s3` 通过 `resolve_referer()` **按图片域名
+自动匹配 Referer**（yituyu→www.yituyu.com、tuzi→tuziyouwang.com、
+opennana / open-prompts / lovimg / twimg 等均已内置），未命中的域名回退到
+图片自身的 `scheme://host/`。下载失败时会抛出**清晰的错误**（含所用 Referer），
+不再静默产生 `FileNotFoundError`。
 
-```python
-import hashlib, requests, pathlib
-def local_name(u):
-    h = hashlib.md5(u.encode()).hexdigest()[:12]
-    ext = ".jpg"
-    for e in (".png", ".webp", ".gif"):
-        if e in u.lower(): ext = e; break
-    return f"downloaded_{h}{ext}"
+因此接入这类站点**无需再预下载**，直接跑两阶段发布即可：
 
-REFERER = {"yituyu": "https://www.yituyu.com/", "tuzi": "http://tuziyouwang.com/"}
-imgs = pathlib.Path("images"); imgs.mkdir(exist_ok=True)
-for url, source in url_source_pairs:
-    p = imgs / local_name(url)
-    if p.exists(): continue
-    r = requests.get(url, headers={"User-Agent": "Mozilla/5.0", "Referer": REFERER[source]}, timeout=30)
-    if r.status_code == 200 and len(r.content) > 1000:
-        p.write_bytes(r.content)
-```
-
-预下载后照常跑：
 ```powershell
 py -3 scripts/publish_from_tokens.py `
     --accounts-csv accounts.csv --csv moments.csv `
     --concurrency 3 --tokens-out result/tokens.json
 ```
 
-> 后续可给 `upload_url_to_s3` 增加按图片域名自动匹配 Referer 的逻辑，
-> 从根本上省掉预下载这一步。
+### 扩展 Referer 映射
+
+内置映射不够时，用环境变量 `POST_REFERER_MAP`（JSON：`{"域名子串": "referer"}`）追加/覆盖：
+
+```powershell
+$env:POST_REFERER_MAP = '{"somecdn.com": "https://somesite.com/"}'
+```
+
+> 兼容说明：若仍想手动预下载（例如离线场景），把图片放到 `images/`
+> 下、命名为 `downloaded_<md5(url)[:12]><ext>`，函数会优先复用本地文件、跳过下载。
 
 ## 15.6 端到端 runbook（高清图 → 文案 → 发布）
 
@@ -106,25 +99,26 @@ py -3 scripts/multi_source_fetch.py --sources yituyu,tuzi `
 py -3 scripts/caption_multilang.py --input materials.csv --output moments.csv `
     --langs en,zh_hant,ja
 
-# 3. 预下载图片（正确 Referer）到 images/ 缓存  ← 见 §15.5
-
-# 4. 两阶段发布
+# 3. 两阶段发布（Referer 已自动匹配，无需预下载 — 见 §15.5）
 py -3 scripts/publish_from_tokens.py --accounts-csv accounts.csv `
     --csv moments.csv --concurrency 3 --tokens-out result/tokens.json
 ```
 
 ## 15.7 环境变量（均可留默认）
 
-| 变量                | 默认值                          |
-| ------------------- | ------------------------------- |
-| `YITUYU_BASE`       | `https://www.yituyu.com`        |
-| `YITUYU_REFERER`    | `https://www.yituyu.com/`       |
-| `YITUYU_USER_AGENT` | Chrome UA                       |
-| `TUZI_BASE`         | `http://tuziyouwang.com`        |
-| `TUZI_USER_AGENT`   | Chrome UA                       |
+| 变量                | 默认值                          | 说明 |
+| ------------------- | ------------------------------- | ---- |
+| `YITUYU_BASE`       | `https://www.yituyu.com`        |      |
+| `YITUYU_REFERER`    | `https://www.yituyu.com/`       |      |
+| `YITUYU_USER_AGENT` | Chrome UA                       |      |
+| `TUZI_BASE`         | `http://tuziyouwang.com`        |      |
+| `TUZI_USER_AGENT`   | Chrome UA                       |      |
+| `POST_REFERER_MAP`  | （空）                          | JSON，扩展发布时下载图片的按域名 Referer 映射（§15.5） |
 
 ## 15.8 实战验证
 
 - yituyu 详情页图实测 3600×2400、~600KB；tuzi/meitui 详情图 800×1200。
 - 已用两站高清图完成小规模真实发布（5 用户 × 2 帖，10/10 成功；
-  20 用户 × 2-3 帖，53/53 成功），均走"预下载 + 两阶段发布"。
+  20 用户 × 2-3 帖，53/53 成功）。
+- Referer 自适应修复后，yituyu / tuzi 高清图**无需预下载**即可直接
+  下载 → S3 上传 → 发布（已实测 2/2 通过）。

@@ -16,10 +16,9 @@ Note on yituyu / tuzi (HD photo sites)
     These pull *full-resolution* gallery photos (not thumbnails):
     yituyu -> img.yituyu.com/pic/<gid>/NN_*.jpg
     tuzi   -> tuziyouwang.com/d/file/<date>/<hash>.jpg
-    Their CDNs are Referer-sensitive; publish_from_tokens.py downloads with a
-    fixed Referer, so for these two sources pre-download images with the correct
-    per-site Referer into the local images/ cache before publishing
-    (see docs/15-image-hd-sources.md §15.5).
+    Their CDNs are Referer-sensitive, but publish_from_tokens.py now resolves the
+    Referer per image host automatically (resolve_referer), so no pre-download is
+    needed. See docs/15-image-hd-sources.md §15.5.
 
 Note on tophub
     tophub yields *text-only* trending topics (no images). It is handy for a

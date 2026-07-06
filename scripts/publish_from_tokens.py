@@ -50,6 +50,7 @@ import sys
 import time
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlsplit
 
 import requests
 
@@ -141,6 +142,46 @@ def sequential_login(
 # phase 2: S3 upload
 # ---------------------------------------------------------------------------
 
+# Per-host Referer map for CDNs that reject cross-site / empty Referer.
+# Extend via the POST_REFERER_MAP env var (JSON: {"host substring": "referer url"}).
+_DEFAULT_REFERER_MAP: dict[str, str] = {
+    "opennana.com": "https://opennana.com/",
+    "yituyu.com": "https://www.yituyu.com/",
+    "tuziyouwang.com": "http://tuziyouwang.com/",
+    "open-prompts.com": "https://www.open-prompts.com/",
+    "lovimg.com": "https://lovimg.com/",
+    "twimg.com": "https://twitter.com/",
+    "pbs.twimg.com": "https://twitter.com/",
+}
+
+
+def _referer_map() -> dict[str, str]:
+    m = dict(_DEFAULT_REFERER_MAP)
+    raw = os.getenv("POST_REFERER_MAP", "")
+    if raw:
+        try:
+            m.update(json.loads(raw))
+        except Exception:  # noqa: BLE001
+            pass
+    return m
+
+
+def resolve_referer(image_url: str) -> str:
+    """Pick a Referer matching the image host, so CDNs that check Referer
+    (yituyu / tuzi / opennana / twimg …) don't reject the download.
+
+    Falls back to the image's own scheme://host, which is the safest default
+    for an unknown host (self-referential requests are rarely blocked)."""
+    host = (urlsplit(image_url).hostname or "").lower()
+    for needle, referer in _referer_map().items():
+        if needle in host:
+            return referer
+    parts = urlsplit(image_url)
+    if parts.scheme and parts.netloc:
+        return f"{parts.scheme}://{parts.netloc}/"
+    return "https://opennana.com/"
+
+
 def get_s3_creds(token: str, *, upload_url: str, timeout: int) -> dict:
     r = requests.post(upload_url,
                       headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
@@ -171,19 +212,26 @@ def upload_url_to_s3(
             break
     images_dir.mkdir(parents=True, exist_ok=True)
     local = images_dir / f"downloaded_{url_hash}{ext}"
-    if not local.exists():
+    if not (local.exists() and local.stat().st_size > 0):
+        referer = resolve_referer(image_url)
+        last_err: Exception | None = None
         for attempt in range(3):
             try:
                 r = requests.get(image_url, timeout=30,
-                                 headers={"User-Agent": "Mozilla/5.0",
-                                          "Referer": "https://opennana.com/"})
-                if r.status_code == 200:
+                                 headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                                          "AppleWebKit/537.36 (KHTML, like Gecko) "
+                                          "Chrome/120.0.0.0 Safari/537.36",
+                                          "Referer": referer})
+                if r.status_code == 200 and len(r.content) > 0:
                     local.write_bytes(r.content)
                     break
-            except Exception:  # noqa: BLE001
-                if attempt == 2:
-                    raise
+                last_err = RuntimeError(f"HTTP {r.status_code} ({len(r.content)}B) for {image_url}")
+            except Exception as e:  # noqa: BLE001
+                last_err = e
+            if attempt < 2:
                 time.sleep(1)
+        if not (local.exists() and local.stat().st_size > 0):
+            raise RuntimeError(f"download failed (referer={referer}): {last_err}")
     s3 = boto3.client(
         "s3",
         aws_access_key_id=creds["access_key_id"],
