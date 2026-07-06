@@ -358,6 +358,28 @@ export const tools = [
     },
   },
   {
+    name: "fetch_xhs",
+    description:
+      "Call scripts/crawl_xhs.py to crawl Xiaohongshu (小红书) explore-feed notes into a moments CSV. " +
+      "Multi-threaded, real-time CSV dedupe, unified retry; downloads note images/videos into images_dir " +
+      "and writes local paths. Public explore feed, no login. See docs/16-xiaohongshu-square.md. " +
+      "(For CDN-url lightweight rows without downloads, use fetch_multi_source with sources=xhs.)",
+    inputSchema: {
+      type: "object",
+      properties: {
+        csv: { type: "string", description: "output CSV path (crawl_xhs uses --csv)" },
+        target: { type: "integer", default: 50, minimum: 1, maximum: 2000, description: "target new deduped notes" },
+        max_requests: { type: "integer", default: 30, minimum: 1, maximum: 200 },
+        delay: { type: "number", default: 1.5, minimum: 0, description: "seconds between requests" },
+        workers: { type: "integer", default: 2, minimum: 1, maximum: 16 },
+        timeout: { type: "integer", default: 20, minimum: 1, maximum: 120 },
+        images_dir: { type: "string", description: "where to save downloaded images/videos" },
+      },
+      required: ["csv"],
+      additionalProperties: false,
+    },
+  },
+  {
     name: "fetch_multi_source",
     description:
       "Call scripts/multi_source_fetch.py to aggregate materials across opennana / open-prompts / lovimg " +
@@ -366,7 +388,7 @@ export const tools = [
       type: "object",
       properties: {
         sources: { type: "string", default: "opennana,openprompts,lovimg",
-                   description: "comma-separated: opennana / openprompts / lovimg / yituyu / tuzi (image), tophub (text)" },
+                   description: "comma-separated: opennana / openprompts / lovimg / yituyu / tuzi / xhs (image), tophub (text)" },
         theme: {
           type: "string",
           enum: ["beauty", "portrait", "sport", "travel", "food", "all"],
@@ -650,6 +672,20 @@ export async function callTool(name: string, args: Record<string, unknown>): Pro
         if (a.exclude_ads) flags.push("--exclude-ads");
         if (a.dedupe_file) flags.push("--dedupe-file", String(a.dedupe_file));
         return runPython("fetch_tuzi.py", flags);
+      }
+
+      case "fetch_xhs": {
+        const a = args as Record<string, any>;
+        const flags = [
+          "--csv", String(a.csv),
+          "--target", String(a.target ?? 50),
+          "--max-requests", String(a.max_requests ?? 30),
+          "--delay", String(a.delay ?? 1.5),
+          "--workers", String(a.workers ?? 2),
+          "--timeout", String(a.timeout ?? 20),
+        ];
+        if (a.images_dir) flags.push("--images-dir", String(a.images_dir));
+        return runPython("crawl_xhs.py", flags, 20 * 60 * 1000);
       }
 
       case "fetch_multi_source": {

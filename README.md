@@ -134,6 +134,7 @@ py -3 scripts/post_moments.py --accounts-csv accounts_10.csv --csv moments.csv \
 | `fetch_tophub`                | 从 tophub.today/hot 拉热榜话题（纯文本）             |
 | `fetch_yituyu`                | 从 yituyu.com 拉高清写真图                            |
 | `fetch_tuzi`                  | 从 tuziyouwang.com 拉高清图（meitui 等栏目）          |
+| `fetch_xhs`                   | 从小红书 explore 采集笔记（图/视频，多线程去重）      |
 | `fetch_multi_source`          | 多源统一采集（默认过滤广告 + 跨源去重）              |
 | `generate_multilang_captions` | 多语言主体视角文案改写                                |
 | `plan_lang_ratio`             | 按精确配比分配 `_lang`（英+日80%/繁中20% 等，禁简体） |

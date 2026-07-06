@@ -11,6 +11,13 @@ Sources
     yituyu           (via scripts/fetch_yituyu.py helpers)        [image, HD]
     tuzi             (via scripts/fetch_tuzi.py helpers)          [image, HD]
     tophub           (via scripts/fetch_tophub.py helpers)        [text]
+    xhs              (via scripts/crawl_xhs.py helpers)           [image, 小红书]
+
+Note on xhs (小红书)
+    Uses crawl_xhs.iter_rows() — the lightweight explore-feed path that yields
+    note title + cover-image CDN url (no local download). The full crawler in
+    crawl_xhs.main() (per-note detail + local image/video download) remains the
+    standalone workflow. See docs/16-xiaohongshu-square.md.
 
 Note on yituyu / tuzi (HD photo sites)
     These pull *full-resolution* gallery photos (not thumbnails):
@@ -70,6 +77,9 @@ from fetch_yituyu import (  # noqa: E402
 from fetch_tuzi import (  # noqa: E402
     iter_rows as tuzi_iter_rows,
 )
+from crawl_xhs import (  # noqa: E402
+    iter_rows as xhs_iter_rows,
+)
 
 
 def _load_dedupe(path: str | None) -> set[str]:
@@ -103,7 +113,7 @@ def main() -> int:
     )
     ap.add_argument("--sources", default="opennana,openprompts,lovimg",
                     help="comma-separated sources to draw from "
-                         "(opennana/openprompts/lovimg/yituyu/tuzi = image, tophub = text)")
+                         "(opennana/openprompts/lovimg/yituyu/tuzi/xhs = image, tophub = text)")
     ap.add_argument("--theme", default="beauty",
                     help="beauty / portrait / sport / travel / food / all")
     ap.add_argument("--model", default=None,
@@ -247,6 +257,15 @@ def main() -> int:
             ))
             for r in new_rows:
                 r["_source"] = "tuzi"
+                rows.append(r)
+        elif src == "xhs":
+            new_rows = list(xhs_iter_rows(
+                want,
+                exclude_ads=args.exclude_ads,
+                seen_urls=seen, fetched_urls=picked_slugs,
+            ))
+            for r in new_rows:
+                r["_source"] = "xhs"
                 rows.append(r)
         else:
             print(f"[warn] unknown source: {src}", file=sys.stderr)

@@ -25,6 +25,17 @@ from utils import (
 from retry import robust_request, RetryError
 
 
+def _ensure_utf8_stdout():
+    """On Windows the console is often GBK (cp936); emoji / CJK in log lines
+    then crash with UnicodeEncodeError. Force UTF-8 stdout/stderr."""
+    import io
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", write_through=True)
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", write_through=True)
+    except Exception:
+        pass
+
+
 def parse_args():
     parser = argparse.ArgumentParser(description="小红书热门帖子批量爬取与去重脚本")
     parser.add_argument(
@@ -446,6 +457,78 @@ def fetch_xhs_explore_feeds(timeout: int) -> List[Dict[str, Any]]:
         raise Exception(f"抓取列表重试失败: {e}")
 
 
+# ---------------------------------------------------------------------------
+# multi_source integration (lightweight: explore feed -> CDN-url moments rows)
+# ---------------------------------------------------------------------------
+
+# Ad-marker words, same spirit as docs/11-anti-ad-filtering.md.
+XHS_AD_KEYWORDS = [
+    "广告", "推广", "优惠", "折扣", "促销", "招商", "加盟", "代理", "vip", "付费",
+    "扫码", "关注公众", "私信", "商务合作", "微信", "qq群", "下载app", "破解", "福利群",
+    "团购", "拼单", "带货", "种草", "下单", "coupon", "discount", "promo",
+    "sponsor", "advertisement",
+]
+
+
+def _xhs_looks_like_ad(title: str) -> bool:
+    low = (title or "").lower()
+    return any(k.lower() in low for k in XHS_AD_KEYWORDS)
+
+
+def iter_rows(
+    limit: int,
+    *,
+    exclude_ads: bool = False,
+    seen_urls=None,
+    fetched_urls=None,
+    timeout: int = 20,
+):
+    """Yield moments rows from the XHS explore feed, uniform with the other
+    fetch_* sources (see multi_source_fetch.py).
+
+    Lightweight path: uses the note's display title as ``content`` and the note
+    cover image **CDN url** (not a local download) as ``image_urls``. Dedupe is
+    by cover-image url via ``seen_urls``. This is what multi_source_fetch.py
+    calls; the full ``main()`` crawler (with per-note detail + local downloads)
+    stays available for the standalone CSV workflow."""
+    if seen_urls is None:
+        seen_urls = set()
+    if fetched_urls is None:
+        fetched_urls = set()
+
+    try:
+        briefs = fetch_xhs_explore_feeds(timeout=timeout)
+    except Exception as e:  # noqa: BLE001
+        print(f"[xhs] explore fetch failed: {e}", file=sys.stderr)
+        return
+
+    yielded = 0
+    for b in briefs:
+        if limit and yielded >= limit:
+            return
+        title = (b.get("fallback_title") or "").strip()
+        img = (b.get("fallback_image") or "").strip()
+        if not img.startswith("http"):
+            continue
+        if img in seen_urls:
+            continue
+        if exclude_ads and _xhs_looks_like_ad(title):
+            continue
+        yield {
+            "content": title or "小红书分享",
+            "visibility": 0,
+            "room_id": "",
+            "image_urls": img,
+            "location_name": "",
+            "location_address": "",
+            "location_lat": "",
+            "location_lon": "",
+        }
+        seen_urls.add(img)
+        fetched_urls.add(img)
+        yielded += 1
+
+
 def load_existing_data(csv_path: str) -> Tuple[set, set]:
     """读取已有的 CSV，获取已有帖子内容和note_id的集合进行去重"""
     existing_contents = set()
@@ -564,6 +647,7 @@ def process_single_note(brief: Dict, existing_contents: set, timeout: int, image
 
 
 def main():
+    _ensure_utf8_stdout()
     start_time = time.time()
     args = parse_args()
     csv_path = args.csv
