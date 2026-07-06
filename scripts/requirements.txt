@@ -1,6 +1,7 @@
 requests>=2.31.0
 python-dotenv>=1.0.0
 boto3>=1.34.0
+Pillow>=10.0.0  # 发布前裁切图片去除小红书右下角水印（publish_from_tokens.py）
 
 # Playwright - 浏览器自动化（用于获取小红书完整详情）
 playwright>=1.40.0

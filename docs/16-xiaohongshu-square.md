@@ -99,10 +99,29 @@ py -3 scripts/publish_from_tokens.py `
 若走路径 B（本地图片），发布前需先把本地图上传或改写为可访问 URL；
 `publish_from_tokens.py` 的两阶段发布默认消费 http 直链。
 
+### 去除小红书右下角水印（发布上传时自动裁切）
+
+小红书图片把水印烧录在**右下角**，无法用 URL 参数关闭，只能裁掉底部一条。
+`publish_from_tokens.py` 在下载图片、上传 S3 之前会自动裁切：
+
+- `POST_CROP_BOTTOM_HOSTS`：需裁切的图片域名子串，默认 `xhscdn.com,xiaohongshu.com`
+  （即默认只对小红书生效，其它源不动）；置空 `""` 可完全关闭。
+- `POST_CROP_BOTTOM_PCT`：裁掉的底部高度比例，默认 `0.08`（8%）。水印偏大时调到 0.10~0.12。
+
+```powershell
+# 例：把小红书图底部裁 10%
+$env:POST_CROP_BOTTOM_PCT = "0.10"
+py -3 scripts/publish_from_tokens.py --accounts-csv accounts.csv --csv moments.csv --concurrency 4
+```
+
+- 依赖 Pillow（`pip install pillow`）；未安装时自动跳过裁切、原图上传（有告警）。
+- 实测：小红书封面图 640×853 → 裁后 640×785（去掉底部 8% 水印带），非小红书图不受影响。
+
 ## 16.5 与 main 的关系
 
 - 小红书源已**合并进 `main`**：`crawl_xhs.iter_rows()` + `multi_source_fetch.py`
-  的 `xhs` 分支 + MCP `fetch_xhs` + `publish_from_tokens.py` 的 xhscdn Referer 映射。
+  的 `xhs` 分支 + MCP `fetch_xhs` + `publish_from_tokens.py` 的 xhscdn Referer 映射
+  与右下角水印裁切。
 - 与图库/文本源并存，可 `--sources xhs` 单独用，也可与其它源混排。
 
 ## 16.6 安全

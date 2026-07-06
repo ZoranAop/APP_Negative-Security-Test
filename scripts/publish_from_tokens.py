@@ -195,6 +195,76 @@ def get_s3_creds(token: str, *, upload_url: str, timeout: int) -> dict:
     return j["data"]
 
 
+# ---------------------------------------------------------------------------
+# watermark crop: some sources (e.g. Xiaomi/小红书) burn a watermark into the
+# bottom-right of the image. Crop off a bottom strip to remove it.
+#   POST_CROP_BOTTOM_HOSTS  comma list of host substrings to crop (default: xhs)
+#   POST_CROP_BOTTOM_PCT    fraction of height to crop off the bottom (default 0.08)
+# Set POST_CROP_BOTTOM_HOSTS="" to disable entirely.
+# ---------------------------------------------------------------------------
+
+_DEFAULT_CROP_HOSTS = "xhscdn.com,xiaohongshu.com"
+
+
+def _crop_hosts() -> list[str]:
+    raw = os.getenv("POST_CROP_BOTTOM_HOSTS", _DEFAULT_CROP_HOSTS)
+    return [h.strip().lower() for h in raw.split(",") if h.strip()]
+
+
+def _crop_bottom_pct() -> float:
+    try:
+        v = float(os.getenv("POST_CROP_BOTTOM_PCT", "0.08"))
+    except ValueError:
+        v = 0.08
+    return min(max(v, 0.0), 0.5)  # clamp to a sane range
+
+
+def _should_crop(image_url: str) -> bool:
+    hosts = _crop_hosts()
+    if not hosts:
+        return False
+    host = (urlsplit(image_url).hostname or "").lower()
+    return any(h in host for h in hosts)
+
+
+def _maybe_crop_bottom(local: Path, image_url: str) -> None:
+    """If the image host is in the crop list, crop off the bottom strip
+    (removing the burned-in bottom-right watermark) and overwrite `local`.
+
+    Silently no-ops if Pillow is unavailable or the image can't be processed —
+    the original file is left intact so the upload still proceeds."""
+    if not _should_crop(image_url):
+        return
+    pct = _crop_bottom_pct()
+    if pct <= 0:
+        return
+    try:
+        from PIL import Image  # local import; optional dependency
+    except ImportError:
+        log_warn("  Pillow not installed; skipping watermark crop "
+                 "(pip install pillow)")
+        return
+    try:
+        with Image.open(local) as im:
+            im.load()
+            w, h = im.size
+            new_h = int(round(h * (1.0 - pct)))
+            if new_h <= 0 or new_h >= h:
+                return
+            cropped = im.crop((0, 0, w, new_h))
+            fmt = (im.format or "").upper()
+            save_kwargs = {}
+            if fmt in ("JPEG", "JPG"):
+                cropped = cropped.convert("RGB")
+                save_kwargs = {"quality": 92}
+            elif fmt == "WEBP":
+                save_kwargs = {"quality": 92}
+            cropped.save(local, format=im.format, **save_kwargs)
+    except Exception as e:  # noqa: BLE001
+        log_warn(f"  watermark crop skipped ({e}); using original")
+
+
+
 def upload_url_to_s3(
     image_url: str,
     creds: dict,
@@ -226,6 +296,7 @@ def upload_url_to_s3(
                                           "Referer": referer})
                 if r.status_code == 200 and len(r.content) > 0:
                     local.write_bytes(r.content)
+                    _maybe_crop_bottom(local, image_url)
                     break
                 last_err = RuntimeError(f"HTTP {r.status_code} ({len(r.content)}B) for {image_url}")
             except Exception as e:  # noqa: BLE001
