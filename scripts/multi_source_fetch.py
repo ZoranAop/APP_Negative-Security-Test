@@ -8,7 +8,18 @@ Sources
     opennana         (via scripts/opennana_fetch.py helpers)      [image]
     openprompts      (via scripts/fetch_openprompts.py helpers)   [image]
     lovimg           (via scripts/fetch_lovimg.py helpers)        [image]
+    yituyu           (via scripts/fetch_yituyu.py helpers)        [image, HD]
+    tuzi             (via scripts/fetch_tuzi.py helpers)          [image, HD]
     tophub           (via scripts/fetch_tophub.py helpers)        [text]
+
+Note on yituyu / tuzi (HD photo sites)
+    These pull *full-resolution* gallery photos (not thumbnails):
+    yituyu -> img.yituyu.com/pic/<gid>/NN_*.jpg
+    tuzi   -> tuziyouwang.com/d/file/<date>/<hash>.jpg
+    Their CDNs are Referer-sensitive; publish_from_tokens.py downloads with a
+    fixed Referer, so for these two sources pre-download images with the correct
+    per-site Referer into the local images/ cache before publishing
+    (see docs/15-image-hd-sources.md §15.5).
 
 Note on tophub
     tophub yields *text-only* trending topics (no images). It is handy for a
@@ -54,6 +65,12 @@ from fetch_lovimg import (  # noqa: E402
 from fetch_tophub import (  # noqa: E402
     iter_rows as tophub_iter_rows,
 )
+from fetch_yituyu import (  # noqa: E402
+    iter_rows as yituyu_iter_rows,
+)
+from fetch_tuzi import (  # noqa: E402
+    iter_rows as tuzi_iter_rows,
+)
 
 
 def _load_dedupe(path: str | None) -> set[str]:
@@ -87,7 +104,7 @@ def main() -> int:
     )
     ap.add_argument("--sources", default="opennana,openprompts,lovimg",
                     help="comma-separated sources to draw from "
-                         "(opennana/openprompts/lovimg = image, tophub = text)")
+                         "(opennana/openprompts/lovimg/yituyu/tuzi = image, tophub = text)")
     ap.add_argument("--theme", default="beauty",
                     help="beauty / portrait / sport / travel / food / all")
     ap.add_argument("--model", default=None,
@@ -105,6 +122,14 @@ def main() -> int:
     ap.add_argument("--opennana-pages", type=int, default=8)
     ap.add_argument("--openprompts-pages", type=int, default=3)
     ap.add_argument("--lovimg-max-pages", type=int, default=15)
+    # yituyu / tuzi (HD photo sites)
+    ap.add_argument("--yituyu-imgs-per-gallery", type=int, default=3)
+    ap.add_argument("--tuzi-column", default="meitui",
+                    help="tuziyouwang EmpireCMS column slug (meitui / gengduo / ...)")
+    ap.add_argument("--tuzi-pages", type=int, default=5)
+    ap.add_argument("--tuzi-imgs-per-article", type=int, default=3)
+    ap.add_argument("--hd-min-side", type=int, default=0,
+                    help="for yituyu/tuzi: require min(w,h) >= N (0 = skip HD check)")
     ap.add_argument("--shuffle", action="store_true",
                     help="shuffle final rows for a more mixed feed")
     ap.add_argument("--source-weights", default="",
@@ -198,6 +223,31 @@ def main() -> int:
             ))
             for r in new_rows:
                 r["_source"] = "tophub"
+                rows.append(r)
+        elif src == "yituyu":
+            new_rows = list(yituyu_iter_rows(
+                want,
+                theme=args.theme,
+                exclude_ads=args.exclude_ads,
+                imgs_per_gallery=args.yituyu_imgs_per_gallery,
+                min_side=args.hd_min_side,
+                seen_urls=seen, fetched_urls=picked_slugs,
+            ))
+            for r in new_rows:
+                r["_source"] = "yituyu"
+                rows.append(r)
+        elif src == "tuzi":
+            new_rows = list(tuzi_iter_rows(
+                want,
+                column=args.tuzi_column,
+                pages=args.tuzi_pages,
+                exclude_ads=args.exclude_ads,
+                imgs_per_article=args.tuzi_imgs_per_article,
+                min_side=args.hd_min_side,
+                seen_urls=seen, fetched_urls=picked_slugs,
+            ))
+            for r in new_rows:
+                r["_source"] = "tuzi"
                 rows.append(r)
         else:
             print(f"[warn] unknown source: {src}", file=sys.stderr)

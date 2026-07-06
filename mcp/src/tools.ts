@@ -315,6 +315,49 @@ export const tools = [
     },
   },
   {
+    name: "fetch_yituyu",
+    description:
+      "Call scripts/fetch_yituyu.py to pull HIGH-RESOLUTION gallery photos from yituyu.com " +
+      "(takes the per-gallery /pic/<gid>/NN_*.jpg originals, not thumbnails). Public, no login. " +
+      "NOTE: yituyu CDN is Referer-sensitive — pre-download images before publishing (docs/15 §15.5).",
+    inputSchema: {
+      type: "object",
+      properties: {
+        limit: { type: "integer", default: 50, minimum: 1, maximum: 500 },
+        theme: { type: "string", enum: ["beauty", "portrait", "ootd", "all"], default: "all" },
+        exclude_ads: { type: "boolean", default: false },
+        imgs_per_gallery: { type: "integer", default: 3, minimum: 1, maximum: 20 },
+        min_side: { type: "integer", default: 0, description: "require min(w,h) >= N; 0 = skip" },
+        dedupe_file: { type: "string", description: "JSON of already-used image urls" },
+        output: { type: "string" },
+      },
+      required: ["output"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "fetch_tuzi",
+    description:
+      "Call scripts/fetch_tuzi.py to pull HIGH-RESOLUTION photos from tuziyouwang.com (EmpireCMS). " +
+      "Takes the article body /d/file/* originals, not the titlepic thumbnails. Choose a column " +
+      "(e.g. meitui / gengduo). Public, no login. NOTE: Referer-sensitive — pre-download before publishing (docs/15 §15.5).",
+    inputSchema: {
+      type: "object",
+      properties: {
+        column: { type: "string", default: "meitui", description: "EmpireCMS column slug, e.g. meitui / gengduo" },
+        pages: { type: "integer", default: 5, minimum: 1, maximum: 50 },
+        limit: { type: "integer", default: 50, minimum: 1, maximum: 500 },
+        exclude_ads: { type: "boolean", default: false },
+        imgs_per_article: { type: "integer", default: 3, minimum: 1, maximum: 20 },
+        min_side: { type: "integer", default: 0, description: "require min(w,h) >= N; 0 = skip" },
+        dedupe_file: { type: "string", description: "JSON of already-used image urls" },
+        output: { type: "string" },
+      },
+      required: ["output"],
+      additionalProperties: false,
+    },
+  },
+  {
     name: "fetch_multi_source",
     description:
       "Call scripts/multi_source_fetch.py to aggregate materials across opennana / open-prompts / lovimg " +
@@ -323,7 +366,7 @@ export const tools = [
       type: "object",
       properties: {
         sources: { type: "string", default: "opennana,openprompts,lovimg",
-                   description: "comma-separated: opennana / openprompts / lovimg / tophub (tophub = text-only)" },
+                   description: "comma-separated: opennana / openprompts / lovimg / yituyu / tuzi (image), tophub (text)" },
         theme: {
           type: "string",
           enum: ["beauty", "portrait", "sport", "travel", "food", "all"],
@@ -339,6 +382,9 @@ export const tools = [
         opennana_pages: { type: "integer", default: 8, minimum: 1, maximum: 30 },
         openprompts_pages: { type: "integer", default: 3, minimum: 1, maximum: 10 },
         lovimg_max_pages: { type: "integer", default: 15, minimum: 1, maximum: 60 },
+        tuzi_column: { type: "string", description: "tuzi column slug when sources include tuzi (default meitui)" },
+        tuzi_pages: { type: "integer", minimum: 1, maximum: 50 },
+        hd_min_side: { type: "integer", description: "for yituyu/tuzi: require min(w,h) >= N" },
         output: { type: "string" },
       },
       required: ["output"],
@@ -577,6 +623,35 @@ export async function callTool(name: string, args: Record<string, unknown>): Pro
         return runPython("fetch_tophub.py", flags);
       }
 
+      case "fetch_yituyu": {
+        const a = args as Record<string, any>;
+        const flags = [
+          "--limit", String(a.limit ?? 50),
+          "--imgs-per-gallery", String(a.imgs_per_gallery ?? 3),
+          "--min-side", String(a.min_side ?? 0),
+          "--output", String(a.output),
+        ];
+        if (a.theme && a.theme !== "all") flags.push("--theme", String(a.theme));
+        if (a.exclude_ads) flags.push("--exclude-ads");
+        if (a.dedupe_file) flags.push("--dedupe-file", String(a.dedupe_file));
+        return runPython("fetch_yituyu.py", flags);
+      }
+
+      case "fetch_tuzi": {
+        const a = args as Record<string, any>;
+        const flags = [
+          "--column", String(a.column ?? "meitui"),
+          "--pages", String(a.pages ?? 5),
+          "--limit", String(a.limit ?? 50),
+          "--imgs-per-article", String(a.imgs_per_article ?? 3),
+          "--min-side", String(a.min_side ?? 0),
+          "--output", String(a.output),
+        ];
+        if (a.exclude_ads) flags.push("--exclude-ads");
+        if (a.dedupe_file) flags.push("--dedupe-file", String(a.dedupe_file));
+        return runPython("fetch_tuzi.py", flags);
+      }
+
       case "fetch_multi_source": {
         const a = args as Record<string, any>;
         const flags = [
@@ -593,6 +668,9 @@ export async function callTool(name: string, args: Record<string, unknown>): Pro
         // exclude_ads default = true, no flag needed then
         if (a.source_weights) flags.push("--source-weights", String(a.source_weights));
         if (a.dedupe_file) flags.push("--dedupe-file", String(a.dedupe_file));
+        if (a.tuzi_column) flags.push("--tuzi-column", String(a.tuzi_column));
+        if (a.tuzi_pages) flags.push("--tuzi-pages", String(a.tuzi_pages));
+        if (a.hd_min_side) flags.push("--hd-min-side", String(a.hd_min_side));
         if (a.shuffle !== false) flags.push("--shuffle");
         return runPython("multi_source_fetch.py", flags);
       }

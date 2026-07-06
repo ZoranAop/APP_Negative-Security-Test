@@ -32,6 +32,7 @@ xxai-square-publisher/
 │   ├── 12-multi-source.md          # 多源素材采集（opennana / openprompts / lovimg）
 │   ├── 13-multilang-captions.md    # 多语言主体视角文案改写
 │   ├── 14-tophub-source.md         # tophub 热榜文本源（纯文本话题 → 多语言发布）
+│   ├── 15-image-hd-sources.md      # 高清图片源 yituyu / tuzi（含 Referer 反爬处理）
 │   └── runbooks/                   # 可直接照抄的 runbook
 │       ├── run-image-post.md
 │       └── run-video-post.md
@@ -44,6 +45,8 @@ xxai-square-publisher/
 │   ├── fetch_openprompts.py        # 从 open-prompts.com 拉图
 │   ├── fetch_lovimg.py             # 从 lovimg.com 拉图（SSR 反解）
 │   ├── fetch_tophub.py             # 从 tophub.today/hot 拉热榜话题（纯文本，公开无需登录）
+│   ├── fetch_yituyu.py             # 从 yituyu.com 拉高清写真图（gallery 详情页原图）
+│   ├── fetch_tuzi.py               # 从 tuziyouwang.com 拉高清图（meitui 等栏目详情页原图）
 │   ├── multi_source_fetch.py       # 多源统一入口（默认过滤广告 + 主题过滤 + 跨源去重）
 │   ├── caption_multilang.py        # 三语言/四语言主体视角文案改写
 │   ├── plan_lang_ratio.py          # 按精确配比分配 _lang（如 英+日80%/繁中20%，禁简体）
@@ -129,6 +132,8 @@ py -3 scripts/post_moments.py --accounts-csv accounts_10.csv --csv moments.csv \
 | `fetch_openprompts`           | 从 open-prompts.com 拉素材                            |
 | `fetch_lovimg`                | 从 lovimg.com 拉素材                                  |
 | `fetch_tophub`                | 从 tophub.today/hot 拉热榜话题（纯文本）             |
+| `fetch_yituyu`                | 从 yituyu.com 拉高清写真图                            |
+| `fetch_tuzi`                  | 从 tuziyouwang.com 拉高清图（meitui 等栏目）          |
 | `fetch_multi_source`          | 多源统一采集（默认过滤广告 + 跨源去重）              |
 | `generate_multilang_captions` | 多语言主体视角文案改写                                |
 | `plan_lang_ratio`             | 按精确配比分配 `_lang`（英+日80%/繁中20% 等，禁简体） |
@@ -162,3 +167,11 @@ v0.3 增量：
 - 精确配比：新增 `plan_lang_ratio.py`，按最大余数法给 `_lang` 精确配额
   （如 英+日 80% / 繁中 20%，默认禁简体）；`caption_multilang.py` 加 `--use-existing-lang` 沿用该配额
 - 实战验证：100 条热榜话题 → 英/繁中(台湾)/日多语言（英+日 80%、繁中 20%）→ 20 企管账号，100/100 成功
+
+v0.4 增量：
+
+- 高清图片源：新增 `fetch_yituyu.py`（yituyu.com 写真高清图）与 `fetch_tuzi.py`（tuziyouwang.com
+  meitui 等栏目高清图），只取详情页原图而非缩略图，支持 `--min-side` 分辨率门槛与广告过滤；
+  纳入 `multi_source_fetch.py`（`--sources ...,yituyu,tuzi`）与 MCP `fetch_yituyu` / `fetch_tuzi`
+- Referer 反爬：文档化"发布前按各站正确 Referer 预下载到 images/ 缓存"的处理方式（`docs/15-image-hd-sources.md`）
+- 实战验证：两站高清图完成 5×2=10/10、20×(2-3)=53/53 真实发布
