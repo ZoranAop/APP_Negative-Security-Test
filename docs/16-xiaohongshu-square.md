@@ -1,71 +1,109 @@
-# 16. 小红书广场自动发送（分支：xiaohongshu-square-publisher）
+# 16. 小红书广场自动发送（小红书源 xhs）
 
-> 分支中文名：**小红书广场自动发送**
-> 分支 slug：`xiaohongshu-square-publisher`
-> 基线：从 `main` 拉出，继承全部广场发布工具链（登录 / 两阶段发布 / 多语言文案 / 多源采集）。
+> 来源：原 `xiaohongshu-square-publisher` 分支（中文名 **小红书广场自动发送**），
+> 已合并进 `main`；小红书现已作为一等采集源 `xhs` 接入统一管线。
 
-## 16.1 这个分支是做什么的
+## 16.1 这个能力是做什么的
 
-`main` 分支的采集源偏图库（opennana / open-prompts / lovimg / yituyu / tuzi）
-与热榜文本（tophub）。本分支在此基础上**把小红书（XHS）作为内容来源**，
-形成"从小红书广场采集 → 文案改写 → 广场自动发送"的闭环。
+`main` 的采集源原本偏图库（opennana / open-prompts / lovimg / yituyu / tuzi）
+与热榜文本（tophub）。本能力**把小红书（XHS）作为内容来源**，
+形成「从小红书广场采集 → 文案改写 → 广场自动发送」的闭环。
 
 小红书采集脚本沿用并取代自 [`tester/auto-poster`](http://100.64.0.45:8999/tester/auto-poster)
-的 `crawl_xhs.py`（多线程并发抓取 + CSV 实时去重 + 富脚本回滚 + 统一重试）。
+的 `crawl_xhs.py`（多线程并发抓取 + CSV 实时去重 + 统一重试）。
 
-## 16.2 新增/提升的文件
+## 16.2 相关文件
 
 | 文件                     | 说明                                                     |
 | ------------------------ | -------------------------------------------------------- |
-| `scripts/crawl_xhs.py`   | 小红书笔记采集脚本（从 `scripts/legacy/` 提升为一等公民） |
+| `scripts/crawl_xhs.py`   | 小红书采集脚本：独立命令行爬虫 + `iter_rows()`（供多源统一调度） |
+| `scripts/multi_source_fetch.py` | 已注册 `xhs` 源（`--sources ...,xhs`）             |
+| `mcp/src/tools.ts`       | 提供 `fetch_xhs` MCP 工具                                 |
 | `docs/16-xiaohongshu-square.md` | 本文档                                            |
 
 其余脚本（`post_moments.py` / `publish_from_tokens.py` / `caption_multilang.py`
-/ `config.py` / `utils.py` / `retry.py` / `validation.py`）与 `main` 完全一致，
-直接复用。`config.py` 已内置 `XHS_EXPLORE_URL` / `XHS_HEADERS` /
-`XHS_NOTE_URL_TEMPLATE` / `CRAWL_DEFAULT_*` 等小红书相关配置。
+/ `config.py` / `utils.py` / `retry.py` / `validation.py`）直接复用。
+`config.py` 已内置 `XHS_EXPLORE_URL` / `XHS_HEADERS` / `XHS_NOTE_URL_TEMPLATE`
+/ `CRAWL_DEFAULT_*` 等小红书相关配置。
 
-## 16.3 采集：crawl_xhs.py
+## 16.3 两条采集路径
+
+小红书采集有两条路径，按需选用：
+
+### A. 多源统一入口（推荐，产出 CDN 直链，直接可发）
+
+`multi_source_fetch.py --sources xhs` 调用 `crawl_xhs.iter_rows()`：
+取小红书 explore 推荐流的**笔记标题 + 封面图 CDN 直链**，
+**不落地本地图片**，输出与其他源一致的 moments CSV，可直接进两阶段发布。
 
 ```powershell
-# 目标新增 200 条、最多 30 次请求、请求间隔 1.5s，输出到 moments.csv
+py -3 scripts/multi_source_fetch.py `
+    --sources xhs `
+    --exclude-ads `
+    --limit 100 `
+    --output moments_raw.csv `
+    --shuffle
+```
+
+- 产出行的 `image_urls` 是 `sns-webpic-*.xhscdn.com/...` 直链。
+- `--exclude-ads` 按标题关键词过滤广告/带货/种草等条目。
+
+### B. 独立爬虫（抓正文详情 + 本地下载图片/视频）
+
+`crawl_xhs.py` 的完整流程：进每条笔记详情页、下载图片/视频到本地、
+CSV 实时去重。适合需要本地素材归档的场景。
+
+```powershell
+# 目标新增 200 条、最多 30 次请求、间隔 1.5s、2 线程；注意用 --csv 与 --images-dir
 py -3 scripts/crawl_xhs.py `
     --target 200 `
     --max-requests 30 `
     --delay 1.5 `
-    --output moments_xhs.csv
+    --workers 2 `
+    --csv moments_xhs.csv `
+    --images-dir images
 ```
 
-- 多线程并发抓取，CSV 实时去重（重复笔记不会重复写入）。
-- 统一走 `retry.py` 的 `robust_request` 做退避重试。
-- 相关默认值见 `config.py` 的 `CRAWL_DEFAULT_TARGET / CRAWL_DEFAULT_MAX_REQUESTS
-  / CRAWL_DEFAULT_DELAY` 与 `.env` 的 `CRAWL_*`。
+- CSV 的 `image_urls` 写的是**本地文件路径**（非直链）。
+- 多线程并发 + CSV 实时去重；统一走 `retry.py` 的 `robust_request` 退避重试。
+- 相关默认值见 `config.py` 的 `CRAWL_DEFAULT_*` 与 `.env` 的 `CRAWL_*`。
+- 已内置 UTF-8 stdout 包装（`_ensure_utf8_stdout`），Windows GBK 控制台下 emoji/中文日志不再崩。
 
 > 合规提示：小红书对抓取有风控与版权要求。仅在获授权/合规范围内使用，
 > 控制频率（`--delay`）、遵守站点条款，勿抓取敏感或侵权内容。
 
 ## 16.4 端到端 runbook（小红书 → 文案 → 广场发送）
 
-```powershell
-# 1. 从小红书采集素材
-py -3 scripts/crawl_xhs.py --target 200 --output moments_xhs.csv
+推荐走路径 A（CDN 直链，无需本地下载）：
 
-# 2.（可选）多语言主体视角文案改写
-py -3 scripts/caption_multilang.py --input moments_xhs.csv --output moments.csv `
+```powershell
+# 1. 采集小红书素材（explore 推荐流 → CDN 直链，规避广告）
+py -3 scripts/multi_source_fetch.py --sources xhs --exclude-ads `
+    --limit 100 --output moments_raw.csv --shuffle
+
+# 2.（可选）多语言主体视角文案改写（en / 繁中(台湾) / 日）
+py -3 scripts/caption_multilang.py --input moments_raw.csv --output moments.csv `
     --langs en,zh_hant,ja
 
-# 3. 两阶段安全发布（顺序登录避 429 → 并发发布；图片 Referer 已自动处理）
+# 3. 两阶段安全发布（顺序登录避 429 → 并发发布）
+#    小红书图 CDN(xhscdn) 的 Referer 已在 publish_from_tokens.py 中自动匹配
+#    (xhscdn.com / xiaohongshu.com -> https://www.xiaohongshu.com/)，无需预下载。
 py -3 scripts/publish_from_tokens.py `
     --accounts-csv accounts.csv --csv moments.csv `
     --concurrency 4 --tokens-out result/tokens.json
 ```
 
+> 实测验证：3 账号 × 2 帖 = **6/6** 成功，Phase2 图片上传 6/6（小红书 CDN 图
+> 经自动 Referer 下载 → S3 上传 → 发布）。
+
+若走路径 B（本地图片），发布前需先把本地图上传或改写为可访问 URL；
+`publish_from_tokens.py` 的两阶段发布默认消费 http 直链。
+
 ## 16.5 与 main 的关系
 
-- 本分支是 `main` 的**平行（对立）分支**，聚焦小红书源；
-- 不改动 main 的图库/文本源逻辑；
-- 若小红书采集成熟，可考虑把 `crawl_xhs.py` 以 `xhs` 源形式接入
-  `multi_source_fetch.py`（后续工作），再合回 main。
+- 小红书源已**合并进 `main`**：`crawl_xhs.iter_rows()` + `multi_source_fetch.py`
+  的 `xhs` 分支 + MCP `fetch_xhs` + `publish_from_tokens.py` 的 xhscdn Referer 映射。
+- 与图库/文本源并存，可 `--sources xhs` 单独用，也可与其它源混排。
 
 ## 16.6 安全
 
