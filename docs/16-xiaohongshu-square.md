@@ -26,6 +26,18 @@
 `config.py` 已内置 `XHS_EXPLORE_URL` / `XHS_HEADERS` / `XHS_NOTE_URL_TEMPLATE`
 / `CRAWL_DEFAULT_*` 等小红书相关配置。
 
+### 小红书能力清单（均已在 `main`）
+
+| # | 能力 | 落地位置 | 关键配置 |
+| - | ---- | -------- | -------- |
+| 1 | 采集 `iter_rows()`（供多源统一调度）+ UTF-8 日志包装 | `scripts/crawl_xhs.py`（`iter_rows` / `_ensure_utf8_stdout`） | `CRAWL_DEFAULT_*` |
+| 2 | `xhs` 源接入（import + dispatch） | `scripts/multi_source_fetch.py`（`from crawl_xhs import iter_rows`；`--sources ...,xhs`） | — |
+| 3 | MCP `fetch_xhs` 工具 + README 登记 | `mcp/src/tools.ts` / `README.md` | — |
+| 4 | xhscdn Referer 自动映射（避免 403） | `publish_from_tokens.py` `resolve_referer` | `POST_REFERER_MAP` |
+| 5 | 底部 8% 水印裁切（默认 0.08、仅 xhs） | `publish_from_tokens.py` `_maybe_crop_bottom` | `POST_CROP_BOTTOM_PCT` / `POST_CROP_BOTTOM_HOSTS` |
+| 6 | 裁切依赖 + 环境变量登记 | `scripts/requirements.txt`（Pillow） / `.env.example` | — |
+| 7 | 端到端 runbook（采集→文案→发布） | 本文档 §16.3–§16.4 | — |
+
 ## 16.3 两条采集路径
 
 小红书采集有两条路径，按需选用：
@@ -93,8 +105,9 @@ py -3 scripts/publish_from_tokens.py `
     --concurrency 4 --tokens-out result/tokens.json
 ```
 
-> 实测验证：3 账号 × 2 帖 = **6/6** 成功，Phase2 图片上传 6/6（小红书 CDN 图
-> 经自动 Referer 下载 → S3 上传 → 发布）。
+> 实测验证：5 账号 × 2 帖 = **10/10** 成功，Phase2 图片上传 10/10（小红书 CDN 图
+> 经自动 Referer 下载 → 底部 8% 水印裁切 → S3 上传 → 发布）；抽查上传图 640×853 → 640×785（height_ratio≈0.920）。
+> 早前另一批 3 账号 × 2 帖 = 6/6 亦全部成功。
 
 若走路径 B（本地图片），发布前需先把本地图上传或改写为可访问 URL；
 `publish_from_tokens.py` 的两阶段发布默认消费 http 直链。
