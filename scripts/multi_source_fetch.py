@@ -5,9 +5,16 @@ into a single moments CSV, with shared theme / ad filters and a shared
 dedupe list.
 
 Sources
-    opennana         (via scripts/opennana_fetch.py helpers)
-    openprompts      (via scripts/fetch_openprompts.py helpers)
-    lovimg           (via scripts/fetch_lovimg.py helpers)
+    opennana         (via scripts/opennana_fetch.py helpers)      [image]
+    openprompts      (via scripts/fetch_openprompts.py helpers)   [image]
+    lovimg           (via scripts/fetch_lovimg.py helpers)        [image]
+    tophub           (via scripts/fetch_tophub.py helpers)        [text]
+
+Note on tophub
+    tophub yields *text-only* trending topics (no images). It is handy for a
+    talk/reaction feed and pairs well with caption_multilang.py. When you mix
+    tophub with the image galleries the output CSV simply carries some rows
+    with an empty ``image_urls``.
 
 Typical usage
     py -3 scripts/multi_source_fetch.py \\
@@ -44,6 +51,9 @@ from fetch_lovimg import (  # noqa: E402
     fetch as lovimg_fetch,
     build_caption as lovimg_caption,
 )
+from fetch_tophub import (  # noqa: E402
+    iter_rows as tophub_iter_rows,
+)
 
 
 def _load_dedupe(path: str | None) -> set[str]:
@@ -76,7 +86,8 @@ def main() -> int:
         description="Aggregate materials from multiple gallery sites → CSV",
     )
     ap.add_argument("--sources", default="opennana,openprompts,lovimg",
-                    help="comma-separated sources to draw from")
+                    help="comma-separated sources to draw from "
+                         "(opennana/openprompts/lovimg = image, tophub = text)")
     ap.add_argument("--theme", default="beauty",
                     help="beauty / portrait / sport / travel / food / all")
     ap.add_argument("--model", default=None,
@@ -178,6 +189,16 @@ def main() -> int:
                     "location_lon": "",
                     "_source": "lovimg",
                 })
+        elif src == "tophub":
+            # text-only trending topics; ad filter shares the same spirit
+            new_rows = list(tophub_iter_rows(
+                want,
+                exclude_ads=args.exclude_ads,
+                seen_hashes=seen, fetched_hashes=picked_slugs,
+            ))
+            for r in new_rows:
+                r["_source"] = "tophub"
+                rows.append(r)
         else:
             print(f"[warn] unknown source: {src}", file=sys.stderr)
 

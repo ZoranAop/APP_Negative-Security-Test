@@ -297,6 +297,24 @@ export const tools = [
     },
   },
   {
+    name: "fetch_tophub",
+    description:
+      "Call scripts/fetch_tophub.py to pull trending topic titles from tophub.today/hot and write a " +
+      "text-only moments CSV (image_urls empty). Public source, no login. Pair with " +
+      "generate_multilang_captions for EN/繁中/日 output. See docs/14-tophub-source.md.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        limit: { type: "integer", default: 100, minimum: 1, maximum: 500 },
+        exclude_ads: { type: "boolean", default: false },
+        dedupe_file: { type: "string", description: "JSON of already-used topic hashes" },
+        output: { type: "string" },
+      },
+      required: ["output"],
+      additionalProperties: false,
+    },
+  },
+  {
     name: "fetch_multi_source",
     description:
       "Call scripts/multi_source_fetch.py to aggregate materials across opennana / open-prompts / lovimg " +
@@ -305,7 +323,7 @@ export const tools = [
       type: "object",
       properties: {
         sources: { type: "string", default: "opennana,openprompts,lovimg",
-                   description: "comma-separated: opennana / openprompts / lovimg" },
+                   description: "comma-separated: opennana / openprompts / lovimg / tophub (tophub = text-only)" },
         theme: {
           type: "string",
           enum: ["beauty", "portrait", "sport", "travel", "food", "all"],
@@ -517,6 +535,17 @@ export async function callTool(name: string, args: Record<string, unknown>): Pro
         if (a.exclude_ads) flags.push("--exclude-ads");
         if (a.dedupe_file) flags.push("--dedupe-file", String(a.dedupe_file));
         return runPython("fetch_lovimg.py", flags);
+      }
+
+      case "fetch_tophub": {
+        const a = args as Record<string, any>;
+        const flags = [
+          "--limit", String(a.limit ?? 100),
+          "--output", String(a.output),
+        ];
+        if (a.exclude_ads) flags.push("--exclude-ads");
+        if (a.dedupe_file) flags.push("--dedupe-file", String(a.dedupe_file));
+        return runPython("fetch_tophub.py", flags);
       }
 
       case "fetch_multi_source": {

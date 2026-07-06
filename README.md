@@ -5,7 +5,7 @@
 
 最近更新：2026-07-04
 
-- 加入 **多源采集**（opennana / open-prompts / lovimg）+ **广告过滤**
+- 加入 **多源采集**（opennana / open-prompts / lovimg / tophub）+ **广告过滤**
 - 加入 **多语言主体视角文案**（EN / 繁中 / 简中 / 日）
 - 加入 **两阶段发布**（避开并发登录 429），支持 token 复用
 
@@ -31,6 +31,7 @@ xxai-square-publisher/
 │   ├── 11-anti-ad-filtering.md     # 广告 / 商业素材过滤规则
 │   ├── 12-multi-source.md          # 多源素材采集（opennana / openprompts / lovimg）
 │   ├── 13-multilang-captions.md    # 多语言主体视角文案改写
+│   ├── 14-tophub-source.md         # tophub 热榜文本源（纯文本话题 → 多语言发布）
 │   └── runbooks/                   # 可直接照抄的 runbook
 │       ├── run-image-post.md
 │       └── run-video-post.md
@@ -42,6 +43,7 @@ xxai-square-publisher/
 │   ├── opennana_fetch.py           # 从 OpenNana 拉图/视频（含 --exclude-ads / --theme / --dedupe-file）
 │   ├── fetch_openprompts.py        # 从 open-prompts.com 拉图
 │   ├── fetch_lovimg.py             # 从 lovimg.com 拉图（SSR 反解）
+│   ├── fetch_tophub.py             # 从 tophub.today/hot 拉热榜话题（纯文本，公开无需登录）
 │   ├── multi_source_fetch.py       # 多源统一入口（默认过滤广告 + 主题过滤 + 跨源去重）
 │   ├── caption_multilang.py        # 三语言/四语言主体视角文案改写
 │   ├── gitlab_pull.py              # 从 GitLab 拉取真实账号 CSV
@@ -125,6 +127,7 @@ py -3 scripts/post_moments.py --accounts-csv accounts_10.csv --csv moments.csv \
 | `fetch_opennana`              | 从 OpenNana 拉素材（图片 / 视频 + 提示词）           |
 | `fetch_openprompts`           | 从 open-prompts.com 拉素材                            |
 | `fetch_lovimg`                | 从 lovimg.com 拉素材                                  |
+| `fetch_tophub`                | 从 tophub.today/hot 拉热榜话题（纯文本）             |
 | `fetch_multi_source`          | 多源统一采集（默认过滤广告 + 跨源去重）              |
 | `generate_multilang_captions` | 多语言主体视角文案改写                                |
 | `rewrite_caption`             | 返回「英文提示词 → 中文用户口吻文案」的改写指令      |
@@ -149,3 +152,9 @@ py -3 scripts/post_moments.py --accounts-csv accounts_10.csv --csv moments.csv \
 - 多语言文案：`caption_multilang.py` 内建 EN / 简中 / 繁中 / 日 模板池
 - 两阶段发布：`publish_from_tokens.py` 顺序登录 + 429 退避 + token 复用
 - 三批实战验证：300/300 帖全部成功（详见 `docs/05-batch-records.md`）
+
+v0.3 增量：
+
+- tophub 文本源：新增 `fetch_tophub.py`，从 tophub.today/hot 抓取热榜话题（纯文本、公开无需登录），
+  纳入 `multi_source_fetch.py`（`--sources ...,tophub`）与 MCP `fetch_tophub`，文档见 `docs/14-tophub-source.md`
+- 实战验证：100 条热榜话题 → 英/繁中(台湾)/日多语言（英+日 80%、繁中 20%）→ 20 企管账号，100/100 成功
