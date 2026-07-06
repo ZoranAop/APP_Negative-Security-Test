@@ -152,6 +152,8 @@ _DEFAULT_REFERER_MAP: dict[str, str] = {
     "lovimg.com": "https://lovimg.com/",
     "twimg.com": "https://twitter.com/",
     "pbs.twimg.com": "https://twitter.com/",
+    "xhscdn.com": "https://www.xiaohongshu.com/",
+    "xiaohongshu.com": "https://www.xiaohongshu.com/",
 }
 
 
