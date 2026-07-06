@@ -57,6 +57,9 @@ py -3 scripts/caption_multilang.py `
 - `--use-llm`：如果配置了 `LLM_TEXT_API_BASE / LLM_TEXT_API_KEY / LLM_TEXT_MODEL`
   或通用的 `LLM_*`，会调用 OpenAI 兼容 `chat/completions` 接口生成文案；
   失败时自动回退到内置模板池。
+- `--use-existing-lang`：沿用输入 CSV 里已有的 `_lang` 列（例如
+  `scripts/plan_lang_ratio.py` 按精确配比生成的），不再用均匀分配覆盖。
+  需要「英+日=80%、繁中=20%」这类**精确**比例时用它，见 docs/14 §14.5。
 - `--seed`：随机种子（用来生成语言排布 & 模板抽签），复现用。
 
 ## 13.5 场景检测

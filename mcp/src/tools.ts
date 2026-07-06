@@ -359,6 +359,35 @@ export const tools = [
         langs: { type: "string", default: "en,zh_hant,ja",
                  description: "comma-separated: en / zh / zh_hant / ja" },
         use_llm: { type: "boolean", default: false },
+        use_existing_lang: { type: "boolean", default: false,
+                             description: "respect a pre-assigned _lang column (e.g. from plan_lang_ratio)" },
+        seed: { type: "integer", default: 20260703 },
+      },
+      required: ["input", "output"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "plan_lang_ratio",
+    description:
+      "Call scripts/plan_lang_ratio.py to assign a `_lang` column to a moments CSV by an EXACT ratio " +
+      "(e.g. English+Japanese = 80%, Traditional Chinese = 20%). Uses largest-remainder rounding so " +
+      "quotas sum to N exactly; rejects Simplified Chinese by default. Pair with " +
+      "generate_multilang_captions(use_existing_lang=true). See docs/14 §14.5.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        input: { type: "string", description: "input moments CSV" },
+        output: { type: "string", description: "output CSV with _lang column" },
+        minor_lang: { type: "string", default: "zh_hant",
+                      description: "the small-slice language" },
+        minor_ratio: { type: "number", default: 0.20, minimum: 0, maximum: 1 },
+        major_langs: { type: "string", default: "en,ja",
+                       description: "comma list sharing the remaining slice" },
+        major_split: { type: "string",
+                       description: 'optional fixed split of the WHOLE file, e.g. "en=0.30,ja=0.50"' },
+        allow_simplified: { type: "boolean", default: false },
+        tolerance: { type: "number", default: 0.02 },
         seed: { type: "integer", default: 20260703 },
       },
       required: ["input", "output"],
@@ -577,7 +606,24 @@ export async function callTool(name: string, args: Record<string, unknown>): Pro
           "--seed", String(a.seed ?? 20260703),
         ];
         if (a.use_llm) flags.push("--use-llm");
+        if (a.use_existing_lang) flags.push("--use-existing-lang");
         return runPython("caption_multilang.py", flags);
+      }
+
+      case "plan_lang_ratio": {
+        const a = args as Record<string, any>;
+        const flags = [
+          "--input", String(a.input),
+          "--output", String(a.output),
+          "--minor-lang", String(a.minor_lang ?? "zh_hant"),
+          "--minor-ratio", String(a.minor_ratio ?? 0.20),
+          "--major-langs", String(a.major_langs ?? "en,ja"),
+          "--tolerance", String(a.tolerance ?? 0.02),
+          "--seed", String(a.seed ?? 20260703),
+        ];
+        if (a.major_split) flags.push("--major-split", String(a.major_split));
+        if (a.allow_simplified) flags.push("--allow-simplified");
+        return runPython("plan_lang_ratio.py", flags);
       }
 
       case "run_publish_from_tokens": {

@@ -267,10 +267,16 @@ def rewrite_csv(
     langs: list[str],
     use_llm: bool,
     seed: int,
+    use_existing_lang: bool = False,
 ) -> tuple[int, dict[str, int]]:
     """Rewrite ``content`` column into subject-voice captions.
 
-    Returns (rows_written, {lang: count})."""
+    Returns (rows_written, {lang: count}).
+
+    When ``use_existing_lang`` is True, each row's language is taken from its
+    existing ``_lang`` column (e.g. produced by ``plan_lang_ratio.py`` for an
+    exact ratio); rows without a valid ``_lang`` fall back to the even plan.
+    """
     from collections import Counter
 
     with src.open("r", encoding="utf-8-sig") as fh:
@@ -279,6 +285,14 @@ def rewrite_csv(
         return 0, {}
 
     plan = _lang_plan(langs, len(rows), seed)
+    if use_existing_lang:
+        # keep the pre-assigned _lang where present & supported
+        plan = [
+            (row.get("_lang") or "").strip()
+            if (row.get("_lang") or "").strip() in SUPPORTED_LANGS
+            else plan[i]
+            for i, row in enumerate(rows)
+        ]
     used_counts: dict[tuple[str, str], int] = {}
     lang_stats: Counter = Counter()
 
@@ -316,6 +330,9 @@ def main() -> int:
                     help=f"comma list; supported: {','.join(SUPPORTED_LANGS)}")
     ap.add_argument("--use-llm", action="store_true",
                     help="use LLM_TEXT_* / LLM_* env vars if configured")
+    ap.add_argument("--use-existing-lang", action="store_true",
+                    help="respect a pre-assigned _lang column (e.g. from "
+                         "plan_lang_ratio.py) instead of the even split")
     ap.add_argument("--seed", type=int, default=20260703)
     args = ap.parse_args()
 
@@ -329,6 +346,7 @@ def main() -> int:
     n, stats = rewrite_csv(
         Path(args.input), Path(args.output),
         langs=langs, use_llm=args.use_llm, seed=args.seed,
+        use_existing_lang=args.use_existing_lang,
     )
     print(f"[OK] rewrote {n} rows → {args.output}")
     print(f"[OK] language stats: {stats}")

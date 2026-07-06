@@ -77,12 +77,19 @@ py -3 scripts/fetch_tophub.py --limit 100 --exclude-ads `
     --dedupe-file result/used_topics.json --output tophub_raw.csv
 
 # 2. 多语言主体视角改写：英 / 繁中 / 日
-#    需要「英+日合计 80%、繁中 20%」这类分布时，可多次调用并按比例合并，
-#    或直接用 --langs 控制语言集合（详见 docs/13-multilang-captions.md）。
-py -3 scripts/caption_multilang.py `
+#    需要「英+日合计 80%、繁中 20%」这类分布时，先用 plan_lang_ratio.py
+#    精确分配 _lang，再用 caption_multilang.py --use-existing-lang 保持比例。
+py -3 scripts/plan_lang_ratio.py `
     --input tophub_raw.csv `
+    --output tophub_planned.csv `
+    --minor-lang zh_hant --minor-ratio 0.20 `
+    --major-langs en,ja                 # 省略 --major-split 则英/日在 80% 内随机拆分
+
+py -3 scripts/caption_multilang.py `
+    --input tophub_planned.csv `
     --output moments.csv `
-    --langs en,zh_hant,ja
+    --langs en,zh_hant,ja `
+    --use-existing-lang
 
 # 3. 从 500 企管账号 CSV 中随机抽 20 个（见 docs/05-batch-records.md 的抽样约定），
 #    落地为 accounts_20.csv（列：邮箱,密码,昵称）。
@@ -98,10 +105,26 @@ py -3 scripts/publish_from_tokens.py `
 
 ### 语言分布小抄（英+日 80% / 繁中 20%）
 
-`caption_multilang.py --langs` 会把语言集合按行均匀轮询后打乱。
-若要严格控制「英+日=80%、繁中=20%」的比例，先按目标条数生成语言排布再喂给它：
+`caption_multilang.py --langs` 默认把语言集合**均匀**轮询后打乱，不保证 80/20。
+要**严格**控制比例，用 `scripts/plan_lang_ratio.py` 先按精确配额写入 `_lang`：
 
-- 100 条 → 繁中 20 条；剩下 80 条在 en / ja 之间随机拆分（如 en 30 / ja 50）。
+```powershell
+# 随机拆分英/日（合计 80%），繁中固定 20%，禁用简体
+py -3 scripts/plan_lang_ratio.py --input tophub_raw.csv --output tophub_planned.csv `
+    --minor-lang zh_hant --minor-ratio 0.20 --major-langs en,ja
+
+# 固定英 30% / 日 50% / 繁中 20%
+py -3 scripts/plan_lang_ratio.py --input tophub_raw.csv --output tophub_planned.csv `
+    --major-split "en=0.30,ja=0.50"
+```
+
+- 采用最大余数法分配，配额之和恒等于总行数 N。
+- 默认**拒绝** `zh`（简体），符合「不要简体中文」；如需放开加 `--allow-simplified`。
+- 结尾会打印实际分布并做 `PASS/FAIL` 比例校验（默认容差 ±2%）。
+- 随后 `caption_multilang.py` 必须带 `--use-existing-lang` 才会沿用该 `_lang`，
+  否则会用自己的均匀分配覆盖。
+
+- 100 条 → 繁中 20 条；剩下 80 条在 en / ja 之间拆分（随机或固定，如 en 30 / ja 50）。
 - 关键校验：`en + ja == 80`（占比 80%），`zh_hant == 20`（占比 20%），**不含简体**。
 
 ## 14.6 环境变量

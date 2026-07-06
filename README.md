@@ -46,6 +46,7 @@ xxai-square-publisher/
 │   ├── fetch_tophub.py             # 从 tophub.today/hot 拉热榜话题（纯文本，公开无需登录）
 │   ├── multi_source_fetch.py       # 多源统一入口（默认过滤广告 + 主题过滤 + 跨源去重）
 │   ├── caption_multilang.py        # 三语言/四语言主体视角文案改写
+│   ├── plan_lang_ratio.py          # 按精确配比分配 _lang（如 英+日80%/繁中20%，禁简体）
 │   ├── gitlab_pull.py              # 从 GitLab 拉取真实账号 CSV
 │   ├── config.py utils.py retry.py validation.py
 │   └── legacy/README.md            # 历史脚本说明
@@ -130,6 +131,7 @@ py -3 scripts/post_moments.py --accounts-csv accounts_10.csv --csv moments.csv \
 | `fetch_tophub`                | 从 tophub.today/hot 拉热榜话题（纯文本）             |
 | `fetch_multi_source`          | 多源统一采集（默认过滤广告 + 跨源去重）              |
 | `generate_multilang_captions` | 多语言主体视角文案改写                                |
+| `plan_lang_ratio`             | 按精确配比分配 `_lang`（英+日80%/繁中20% 等，禁简体） |
 | `rewrite_caption`             | 返回「英文提示词 → 中文用户口吻文案」的改写指令      |
 
 详细参数与启动方式见 [`mcp/README.md`](mcp/README.md)。
@@ -157,4 +159,6 @@ v0.3 增量：
 
 - tophub 文本源：新增 `fetch_tophub.py`，从 tophub.today/hot 抓取热榜话题（纯文本、公开无需登录），
   纳入 `multi_source_fetch.py`（`--sources ...,tophub`）与 MCP `fetch_tophub`，文档见 `docs/14-tophub-source.md`
+- 精确配比：新增 `plan_lang_ratio.py`，按最大余数法给 `_lang` 精确配额
+  （如 英+日 80% / 繁中 20%，默认禁简体）；`caption_multilang.py` 加 `--use-existing-lang` 沿用该配额
 - 实战验证：100 条热榜话题 → 英/繁中(台湾)/日多语言（英+日 80%、繁中 20%）→ 20 企管账号，100/100 成功
