@@ -196,8 +196,8 @@ def get_s3_creds(token: str, *, upload_url: str, timeout: int) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# watermark crop: some sources (e.g. Xiaomi/小红书) burn a watermark into the
-# bottom-right of the image. Crop off a bottom strip to remove it.
+# watermark crop: some sources (e.g. Xiaohongshu / 小红书) burn a watermark into
+# the bottom-right of the image. Crop off a bottom strip to remove it.
 #   POST_CROP_BOTTOM_HOSTS  comma list of host substrings to crop (default: xhs)
 #   POST_CROP_BOTTOM_PCT    fraction of height to crop off the bottom (default 0.08)
 # Set POST_CROP_BOTTOM_HOSTS="" to disable entirely.
