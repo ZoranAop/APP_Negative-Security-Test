@@ -97,6 +97,41 @@ POST_CROP_BOTTOM_PCT   = 0.08                                   # 底部 8%
 
 ## 17.4 端到端 runbook（马来西亚）
 
+### 一键脚本（推荐）
+
+`scripts/run_malaysia.py` 把「采集 → 马来语文案 → 底部水印裁切 → 发布」串成一条命令：
+
+```powershell
+# 默认：backpackers 论坛，5 账号 CSV，10 个多图帖，马来语，自动裁 bbkz 底部水印
+py -3 scripts/run_malaysia.py --accounts-csv accounts_5.csv --posts 10
+
+# 图库源（Pexels + Pixabay，需要 Playwright）
+py -3 scripts/run_malaysia.py --source stock --accounts-csv accounts_10.csv --posts 50
+
+# 只采集 + 文案、不发布（预演产素材）
+py -3 scripts/run_malaysia.py --posts 5 --skip-publish
+
+# 跳过发布前确认（无人值守）
+py -3 scripts/run_malaysia.py --accounts-csv accounts_5.csv --posts 10 --yes
+```
+
+关键参数：
+
+| 参数 | 说明 | 默认 |
+| ---- | ---- | ---- |
+| `--source` | `backpackers`（论坛多图） / `stock`（Pexels+Pixabay 图库） | `backpackers` |
+| `--accounts-csv` | 账号 CSV（不入库） | `accounts_5.csv` |
+| `--posts` | 发布帖子数（=采集条数） | `10` |
+| `--langs` | 文案语言 | `ms`（马来语） |
+| `--crop-pct` | 底部水印裁切比例（bbkz/小红书生效） | `0.08` |
+| `--skip-publish` | 只产素材不发布 | 关 |
+| `--yes` | 跳过发布前确认 | 关 |
+
+中间产物落在 `--workdir`（默认 `my_run/`）：`<source>_raw_<ts>.csv` 与 `moments_<source>_<ts>.csv`。
+发布报告见 `result/publish_*.csv`。
+
+### 分步执行（等价手动流程）
+
 ```powershell
 # 1. 采集（二选一或混用）
 py -3 scripts/fetch_backpackers_my.py --fid 111 --posts 10 --imgs-per-post 9 `
