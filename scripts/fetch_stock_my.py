@@ -138,6 +138,8 @@ def main() -> int:
                     help="max images to take from each source")
     ap.add_argument("--dedupe-file", default=None)
     ap.add_argument("--output", required=True)
+    ap.add_argument("--locale", default="ms-MY",
+                    help="browser locale (e.g. ms-MY for Malaysia, id-ID for Indonesia)")
     ap.add_argument("--headful", action="store_true", help="show browser (debug)")
     args = ap.parse_args()
 
@@ -149,7 +151,7 @@ def main() -> int:
 
     with sync_playwright() as p:
         b = p.chromium.launch(headless=not args.headful)
-        ctx = b.new_context(user_agent=UA, locale="ms-MY",
+        ctx = b.new_context(user_agent=UA, locale=args.locale,
                             viewport={"width": 1366, "height": 900})
         pg = ctx.new_page()
         for src in sources:
