@@ -28,6 +28,7 @@ import csv
 import json
 import os
 import random
+import re
 import sys
 from pathlib import Path
 from typing import Iterable
@@ -337,6 +338,95 @@ def llm_caption(raw: str, scene: str, lang: str) -> str | None:
 
 
 # ---------------------------------------------------------------------------
+# content-aware captions (differentiated, built from the article's own
+# title + excerpt) — avoids the homogeneous template output for TW media.
+# ---------------------------------------------------------------------------
+
+# opener phrases keyed by scene, in 繁體中文 (Taiwan tone); rotated for variety
+_ZH_OPENERS = {
+    "night":   ["夜裡的台灣，", "入夜後，", "華燈初上，"],
+    "street":  ["走進巷弄，", "在街角遇見，", "漫步老城，"],
+    "beach":   ["海風一吹，", "面對這片海，", "浪聲裡，"],
+    "winter":  ["山上的清晨，", "在高處，", "帶點涼意的一天，"],
+    "cafe":    ["坐下來喝一杯，", "找了間店，", "慢下來的午後，"],
+    "goldenhour": ["黃昏時分，", "夕陽落下時，", "光線正好的時候，"],
+    "travel":  ["這趟旅程，", "又走了一個地方，", "把台灣走一遍，"],
+    "portrait": ["定格這一刻，", "留下這個畫面，", "隨手記錄，"],
+    "flower":  ["花開的時候，", "被這片色彩吸引，", "季節限定，"],
+    "cinema":  ["像電影的一幕，", "有種故事感，", "光影之間，"],
+}
+_ZH_CLOSERS = ["值得記錄一下。", "先收藏了。", "推薦給你。",
+               "下次還想再來。", "分享給大家。", "這種感覺很難得。"]
+
+_STOPWORDS = set("的了是在也和與及並而或但很更最都會就把讓從對於這那些一個我們你他她它"
+                 "台灣台湾之美日常分享推薦介紹如何為何什麼怎麼可以已經還有這樣那樣")
+
+
+def _zh_hashtags_from(text: str, scene: str, source: str) -> list[str]:
+    """Derive up to 3 topical hashtags from the article's own words."""
+    tags: list[str] = []
+    # source-flavoured base tag
+    base = {"gq": "#GQ品味", "sony": "#攝影日常", "shoppingdesign": "#設計生活"}.get(source, "#台灣")
+    tags.append(base)
+    # named-place / keyword hits from the text
+    KEY = ["台北", "台南", "高雄", "台中", "花蓮", "台東", "宜蘭", "九份", "墾丁",
+           "阿里山", "合歡山", "日月潭", "太魯閣", "淡水", "北投", "夜市", "老街",
+           "咖啡", "美食", "設計", "展覽", "攝影", "鏡頭", "人像", "風景", "旅行",
+           "建築", "文創", "海邊", "山", "祭典", "部落", "小旅行"]
+    low = text or ""
+    for k in KEY:
+        if k in low and ("#" + k) not in tags:
+            tags.append("#" + k)
+        if len(tags) >= 3:
+            break
+    if len(tags) < 3:
+        for extra in ["#台灣旅遊", "#生活記錄", "#走走停停"]:
+            if extra not in tags:
+                tags.append(extra)
+            if len(tags) >= 3:
+                break
+    return tags[:3]
+
+
+def _first_sentence(excerpt: str, limit: int = 46) -> str:
+    if not excerpt:
+        return ""
+    # split on Chinese/English sentence enders, keep first solid clause
+    parts = re.split(r"[。！？!?；;\n]", excerpt)
+    for p in parts:
+        p = p.strip()
+        if len(p) >= 10:
+            if len(p) <= limit:
+                return p
+            # too long: cut at last comma/、before the limit for a clean break
+            head = p[:limit]
+            m = max(head.rfind("，"), head.rfind("、"), head.rfind("："), head.rfind(" "))
+            return head[:m] if m >= 12 else head
+    return excerpt[:limit].strip()
+
+
+def content_aware_caption(title: str, excerpt: str, scene: str, source: str,
+                          idx: int) -> str:
+    """Build a differentiated zh_hant caption from the article's own title +
+    excerpt, so each post reads uniquely (no template homogeneity)."""
+    title = re.sub(r"\s+", " ", (title or "")).strip()
+    pool = _ZH_OPENERS.get(scene) or _ZH_OPENERS["travel"]
+    opener = pool[idx % len(pool)]
+    sentence = _first_sentence(excerpt)
+    # core line: prefer the article's own sentence; else the title
+    if sentence and len(sentence) >= 12:
+        core = sentence
+    elif title:
+        core = title[:46]
+    else:
+        core = "台灣的日常風景"
+    closer = _ZH_CLOSERS[idx % len(_ZH_CLOSERS)]
+    tags = " ".join(_zh_hashtags_from((title + " " + (excerpt or "")), scene, source))
+    body = f"{opener}{core}，{closer}"
+    return f"{body} {tags}"
+
+
+# ---------------------------------------------------------------------------
 # main
 # ---------------------------------------------------------------------------
 
@@ -358,6 +448,7 @@ def rewrite_csv(
     use_llm: bool,
     seed: int,
     use_existing_lang: bool = False,
+    content_aware: bool = False,
 ) -> tuple[int, dict[str, int]]:
     """Rewrite ``content`` column into subject-voice captions.
 
@@ -397,10 +488,16 @@ def rewrite_csv(
         writer.writeheader()
         for i, row in enumerate(rows):
             lang = plan[i]
-            scene = detect_scene(row.get("content", "") or "")
+            orig_title = row.get("content", "") or ""
+            excerpt = row.get("_excerpt", "") or ""
+            scene = detect_scene((orig_title + " " + excerpt))
             caption: str | None = None
-            if use_llm:
-                caption = llm_caption(row.get("content", ""), scene, lang)
+            if content_aware:
+                # differentiated caption built from the article's own text
+                caption = content_aware_caption(
+                    orig_title, excerpt, scene, row.get("_source", ""), i)
+            if not caption and use_llm:
+                caption = llm_caption(orig_title, scene, lang)
             if not caption:
                 caption = pick_template(scene, lang, used_counts)
             row["content"] = caption
@@ -423,6 +520,9 @@ def main() -> int:
     ap.add_argument("--use-existing-lang", action="store_true",
                     help="respect a pre-assigned _lang column (e.g. from "
                          "plan_lang_ratio.py) instead of the even split")
+    ap.add_argument("--content-aware", action="store_true",
+                    help="build differentiated captions from each row's own "
+                         "title + _excerpt (avoids template homogeneity; TW media)")
     ap.add_argument("--seed", type=int, default=20260703)
     args = ap.parse_args()
 
@@ -437,6 +537,7 @@ def main() -> int:
         Path(args.input), Path(args.output),
         langs=langs, use_llm=args.use_llm, seed=args.seed,
         use_existing_lang=args.use_existing_lang,
+        content_aware=args.content_aware,
     )
     print(f"[OK] rewrote {n} rows → {args.output}")
     print(f"[OK] language stats: {stats}")

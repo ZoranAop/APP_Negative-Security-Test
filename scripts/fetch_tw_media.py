@@ -153,29 +153,71 @@ def sony_article_links(pg) -> list[str]:
     return out
 
 
-def article_photos(pg, url: str, source: str) -> tuple[str, list[str]]:
+def article_photos(pg, url: str, source: str) -> tuple[str, list[str], str]:
+    """Open the article page and extract, from the ARTICLE BODY only:
+      - the content images (NOT the first-screen / hero KV image, NOT header/logo)
+      - a text excerpt (title + first meaningful paragraphs) for caption matching
+
+    Returns (title, [content_image_urls], excerpt).
+    """
     pg.goto(url, wait_until="domcontentloaded", timeout=60000)
     pg.wait_for_timeout(3000)
-    _scroll(pg, 4)
+    _scroll(pg, 5)
     title = _title(pg)
-    imgs = _imgs_on(pg)
+
+    host = {"shoppingdesign": SD_HOST, "gq": "media.gq.com.tw/photos",
+            "sony": "files/images"}[source]
+
+    data = pg.evaluate(
+        """(host) => {
+            // article body container (falls back to main/document)
+            const art = document.querySelector('article, .article__body, [itemprop=articleBody]')
+                        || document.querySelector('main') || document.body;
+            const imgs = Array.from(art.querySelectorAll('img'))
+                .map(i => i.currentSrc || i.src || i.getAttribute('data-src') || '')
+                .filter(u => u && u.includes(host));
+            const paras = Array.from(art.querySelectorAll('p,h2,h3,li,figcaption'))
+                .map(e => (e.innerText || '').trim())
+                .filter(t => t.length >= 15);
+            return {imgs, paras};
+        }""", host)
+
+    raw_imgs = data.get("imgs", [])
+    paras = data.get("paras", [])
+
+    # de-dup + per-source cleanup, keeping order
     urls, seen = [], set()
-    for s in imgs:
-        clean = s.split("?")[0] if source == "gq" else s
-        if source == "shoppingdesign":
-            ok = SD_HOST in s and not _is_junk(s)
-        elif source == "gq":
-            ok = _gq_ok(s)
-        else:  # sony
-            ok = SONY_HOST in s and not _is_junk(s)
-        if not ok:
-            continue
-        key = clean.split("?")[0]
+    for s in raw_imgs:
+        if source == "gq":
+            if not _gq_ok(s):
+                continue
+            u = s  # keep sizing query
+        else:
+            if _is_junk(s):
+                continue
+            u = s.split("?")[0]
+        key = u.split("?")[0]
         if key in seen:
             continue
         seen.add(key)
-        urls.append(s.split("?")[0] if source != "gq" else s)
-    return title, urls
+        urls.append(u)
+
+    # SKIP the first-screen / hero (KV) image = first image in the article body.
+    if len(urls) > 1:
+        urls = urls[1:]
+
+    # build a text excerpt from title + first paragraphs (deduped, trimmed)
+    seen_p, picked = set(), []
+    for t in paras:
+        t = re.sub(r"\s+", " ", t).strip()
+        if len(t) < 15 or t in seen_p:
+            continue
+        seen_p.add(t)
+        picked.append(t)
+        if len(picked) >= 4:
+            break
+    excerpt = " ".join(picked)[:400]
+    return title, urls, excerpt
 
 
 DISCOVER = {
@@ -196,7 +238,7 @@ def iter_posts(pg, source: str, *, want_posts, imgs_per_post, min_imgs,
         if url in seen_articles:
             continue
         try:
-            title, photos = article_photos(pg, url, source)
+            title, photos, excerpt = article_photos(pg, url, source)
         except Exception as e:  # noqa: BLE001
             print(f"[{source}] {url[:50]} err: {e}", file=sys.stderr)
             continue
@@ -213,9 +255,11 @@ def iter_posts(pg, source: str, *, want_posts, imgs_per_post, min_imgs,
             "location_name": "", "location_address": "",
             "location_lat": "", "location_lon": "",
             "_source": source,
+            "_excerpt": excerpt,
+            "_url": url,
         }
         yielded += 1
-        print(f"[{source}] + ({len(photos[:imgs_per_post])} imgs) {title[:34]}", file=sys.stderr)
+        print(f"[{source}] + ({len(photos[:imgs_per_post])} imgs, body-only, no-hero) {title[:34]}", file=sys.stderr)
         time.sleep(0.3)
 
 
@@ -285,7 +329,8 @@ def main() -> int:
     out = Path(args.output)
     out.parent.mkdir(parents=True, exist_ok=True)
     fields = ["content", "visibility", "room_id", "image_urls",
-              "location_name", "location_address", "location_lat", "location_lon", "_source"]
+              "location_name", "location_address", "location_lat", "location_lon",
+              "_source", "_excerpt", "_url"]
     with out.open("w", newline="", encoding="utf-8-sig") as fh:
         w = csv.DictWriter(fh, fieldnames=fields)
         w.writeheader()
