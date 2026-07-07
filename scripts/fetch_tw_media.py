@@ -15,7 +15,11 @@ Ad / non-content filtering
     - keep only real content-image hosts per source
 
 Each qualifying article (>= --min-imgs photos) -> one moments row whose
-``image_urls`` is a comma-joined list of up to --imgs-per-post images.
+``image_urls`` is a comma-joined list of body-only images (variable count,
+capped at --imgs-per-post). The FIRST (hero/首圖) and LAST (尾圖) images are
+dropped, and images are de-duplicated by photo identity so the same picture in
+different sizes/crops never repeats within one post. Single-image pages are
+skipped (only multi-image articles are used).
 ``content`` is the article title (a scene/topic hint); rewrite later with
 caption_multilang.py --langs zh_hant for 繁體中文 / Taiwan captions.
 
@@ -77,6 +81,38 @@ def _gq_ok(url: str) -> bool:
     if m and int(m.group(1)) < 600:
         return False
     return not _is_junk(url)
+
+
+def _gq_normalize(url: str) -> str:
+    """GQ CDN urls contain a literal comma (…/w_1600,c_limit/…) which would break
+    the comma-separated image_urls CSV field. Rewrite to a comma-free variant
+    (…/w_1440/…) that the CDN serves identically."""
+    u = url.split("?")[0]
+    # replace the "w_<n>,c_limit" (or similar) segment with a plain "w_1440"
+    u = re.sub(r"/w_\d+(?:%2C|,)[^/]*/", "/w_1440/", u)
+    # any stray remaining comma → drop the trailing modifier token
+    u = re.sub(r",[^/]*/", "/", u)
+    return u
+
+
+
+def _photo_id(url: str, source: str) -> str:
+    """Return a stable identity for a photo so the SAME image in different
+    sizes/crops is de-duplicated within one post.
+      gq   -> the /photos/<id>/ segment (crop/size vary but id is stable)
+      sd   -> the album filename (…/<name>.jpg)
+      sony -> the files/images/<hash>_… filename stem
+    """
+    if source == "gq":
+        m = re.search(r"/photos/([a-f0-9]+)/", url)
+        if m:
+            return "gq:" + m.group(1)
+    base = url.split("?")[0].rsplit("/", 1)[-1]
+    if source == "sony":
+        # strip trailing size suffixes, keep the leading hash/name
+        base = re.sub(r"(_article|_\d{6,}).*$", "", base)
+    return f"{source}:{base}"
+
 
 
 def _scroll(pg, rounds=4, pause=1200):
@@ -185,26 +221,32 @@ def article_photos(pg, url: str, source: str) -> tuple[str, list[str], str]:
     raw_imgs = data.get("imgs", [])
     paras = data.get("paras", [])
 
-    # de-dup + per-source cleanup, keeping order
-    urls, seen = [], set()
+    # de-dup by PHOTO IDENTITY (same image in different sizes/crops counts once),
+    # per-source cleanup, keeping document order.
+    urls, seen_id = [], set()
     for s in raw_imgs:
         if source == "gq":
             if not _gq_ok(s):
                 continue
-            u = s  # keep sizing query
+            u = _gq_normalize(s)  # comma-free, CSV-safe
         else:
             if _is_junk(s):
                 continue
             u = s.split("?")[0]
-        key = u.split("?")[0]
-        if key in seen:
+        pid = _photo_id(u, source)
+        if pid in seen_id:
             continue
-        seen.add(key)
+        seen_id.add(pid)
         urls.append(u)
 
-    # SKIP the first-screen / hero (KV) image = first image in the article body.
-    if len(urls) > 1:
+    # Drop the FIRST (hero/首圖) and LAST (尾圖：常為推薦/看更多/footer 圖) images.
+    # Only when there are enough images so we still keep real body photos.
+    if len(urls) >= 4:
+        urls = urls[1:-1]
+    elif len(urls) >= 2:
+        # too few to drop both ends → just drop the hero
         urls = urls[1:]
+    # (single-image articles fall through with 1 img and get filtered by --min-imgs)
 
     # build a text excerpt from title + first paragraphs (deduped, trimmed)
     seen_p, picked = set(), []
@@ -259,7 +301,7 @@ def iter_posts(pg, source: str, *, want_posts, imgs_per_post, min_imgs,
             "_url": url,
         }
         yielded += 1
-        print(f"[{source}] + ({len(photos[:imgs_per_post])} imgs, body-only, no-hero) {title[:34]}", file=sys.stderr)
+        print(f"[{source}] + ({len(photos[:imgs_per_post])} imgs, body-only, no first/last, deduped) {title[:32]}", file=sys.stderr)
         time.sleep(0.3)
 
 
@@ -292,8 +334,10 @@ def main() -> int:
     ap.add_argument("--sources", default="shoppingdesign,gq,sony",
                     help="comma list: shoppingdesign,gq,sony")
     ap.add_argument("--posts", type=int, default=15, help="total posts across sources")
-    ap.add_argument("--imgs-per-post", type=int, default=9)
-    ap.add_argument("--min-imgs", type=int, default=3)
+    ap.add_argument("--imgs-per-post", type=int, default=9,
+                    help="每帖圖片數上限（後端上限 9）；實際張數依文章而定，不強制補滿")
+    ap.add_argument("--min-imgs", type=int, default=3,
+                    help="正文有效圖少於 N 張的文章直接跳過（只發多圖文章）")
     ap.add_argument("--include-ads", dest="exclude_ads", action="store_false")
     ap.add_argument("--dedupe-file", default=None)
     ap.add_argument("--output", required=True)
