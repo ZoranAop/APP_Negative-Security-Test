@@ -196,14 +196,16 @@ def get_s3_creds(token: str, *, upload_url: str, timeout: int) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# watermark crop: some sources (e.g. Xiaohongshu / 小红书) burn a watermark into
-# the bottom-right of the image. Crop off a bottom strip to remove it.
-#   POST_CROP_BOTTOM_HOSTS  comma list of host substrings to crop (default: xhs)
+# watermark crop: some sources burn a watermark into the bottom / bottom-right
+# of the image. Crop off a bottom strip to remove it. Same treatment for:
+#   - Xiaohongshu / 小红书  (xhscdn.com / xiaohongshu.com)
+#   - backpackers.com.tw    (sa.bbkz.net / sa1.bbkz.net attachment photos)
+#   POST_CROP_BOTTOM_HOSTS  comma list of host substrings to crop
 #   POST_CROP_BOTTOM_PCT    fraction of height to crop off the bottom (default 0.08)
 # Set POST_CROP_BOTTOM_HOSTS="" to disable entirely.
 # ---------------------------------------------------------------------------
 
-_DEFAULT_CROP_HOSTS = "xhscdn.com,xiaohongshu.com"
+_DEFAULT_CROP_HOSTS = "xhscdn.com,xiaohongshu.com,bbkz.net"
 
 
 def _crop_hosts() -> list[str]:

@@ -40,13 +40,13 @@ SCENE_RULES = [
     ("kimono",   ["kimono", "yukata", "和服", "浴衣"]),
     ("hanfu",    ["hanfu", "汉服", "国风", "chinese traditional"]),
     ("bride",    ["bride", "wedding", "新娘", "婚"]),
-    ("beach",    ["beach", "海边", "海滩", "seaside", "surf"]),
-    ("goldenhour", ["golden hour", "sunset", "夕阳", "落日", "黄金时刻"]),
-    ("winter",   ["snow", "雪", "winter", "冬"]),
-    ("rain",     ["rain", "雨"]),
-    ("cafe",     ["cafe", "coffee", "咖啡"]),
-    ("night",    ["night", "midnight", "夜", "neon", "霓虹"]),
-    ("street",   ["street", "sidewalk", "街", "urban"]),
+    ("beach",    ["beach", "海边", "海滩", "seaside", "surf", "island", "pulau", "pantai", "redang", "langkawi", "perhentian", "sea", "ocean"]),
+    ("goldenhour", ["golden hour", "sunset", "夕阳", "落日", "黄金时刻", "senja", "sunrise"]),
+    ("winter",   ["snow", "雪", "winter", "冬", "cameron", "highlands", "genting", "mountain", "kinabalu", "gunung", "bukit", "神山", "云顶", "雲頂", "高原", "金馬倫", "金马仑"]),
+    ("rain",     ["rain", "雨", "hujan"]),
+    ("cafe",     ["cafe", "coffee", "咖啡", "kopi", "food", "makan", "makanan", "restoran", "餐廳", "餐厅", "美食", "小吃", "夜市", "白咖啡"]),
+    ("night",    ["night", "midnight", "夜", "neon", "霓虹", "malam", "petronas", "klcc", "skyline", "tower", "menara", "夜景", "雙子星", "双子星", "地標", "地标"]),
+    ("street",   ["street", "sidewalk", "街", "urban", "city", "bandar", "town", "market", "pasar", "lorong", "heritage", "melaka", "penang", "georgetown", "檳城", "槟城", "怡保", "喬治市", "乔治市", "老街", "壁畫", "壁画", "馬六甲", "马六甲"]),
     ("gym",      ["gym", "yoga", "workout", "健身", "瑜伽"]),
     ("running",  ["running", "run", "runner", "跑步"]),
     ("swim",     ["swim", "pool", "泳装", "bikini", "比基尼"]),
@@ -55,7 +55,7 @@ SCENE_RULES = [
     ("ootd",     ["outfit", "fashion", "ootd", "streetwear", "穿搭", "editorial"]),
     ("bedroom",  ["bedroom", "居家", "宅", "at home"]),
     ("flower",   ["flower", "bouquet", "花"]),
-    ("travel",   ["travel", "旅行", "tokyo", "paris", "london", "new york"]),
+    ("travel",   ["travel", "旅行", "tokyo", "paris", "london", "new york", "malaysia", "asia", "kuala lumpur", "sabah", "sarawak", "borneo", "temple", "kuil", "mosque", "masjid", "batu caves", "landmark", "nature", "landscape", "waterfall", "air terjun", "lake", "tasik", "bridge", "jambatan", "馬來西亞", "马来西亚", "吉隆坡", "沙巴", "砂拉越", "自由行", "自助", "旅遊", "旅游", "遊", "转机", "轉機", "攻略", "假期", "開齋節", "开斋节", "神山"]),
     ("cinema",   ["cinematic", "editorial", "film", "vogue", "campaign"]),
     ("portrait", ["portrait", "肖像", "人像", "close-up", "写真"]),
 ]
@@ -67,7 +67,7 @@ def detect_scene(text: str) -> str:
         for kw in kws:
             if kw in t:
                 return s
-    return "portrait"
+    return os.getenv("DEFAULT_SCENE", "portrait")
 
 
 # ---------------------------------------------------------------------------
@@ -175,7 +175,42 @@ TEMPLATES: dict[str, dict[str, list[str]]] = {
         "cinema":    ["まだ上映されてない映画の一コマみたい。🎬 #シネマ #ポートレート #日常"],
         "portrait":  ["物語がなくても、雰囲気だけで残したいコマってある。📷 #ポートレート #日常 #気分",
                        "逆光にふと切り取られて、思わずお気に入りになった。 #ポートレート #自然光 #日常",
-                       "ただ残しておきたかった、静かな一瞬。 #日常 #ポートレート #気分"],
+                        "ただ残しておきたかった、静かな一瞬。 #日常 #ポートレート #気分"],
+    },
+    "ms": {
+        "kimono":    ["Hujung minggu pakai kimono, secawan teh di tangan — rasa macam masa berjalan perlahan. 🍵 #kimono #gayaharian #tenang"],
+        "hanfu":     ["Hari beraya budaya, lengan baju berkibar, hati pun rasa ringan. 🌸 #busanatradisi #gayaharian #budaya"],
+        "bride":     ["Cuba baju pengantin ni buat hati sebak tak sangka. 🤍 #bakalpengantin #detikmanis #cinta"],
+        "winter":    ["Sejuk Cameron Highlands pagi ni, berbaloi bangun awal. 🧣 #cameronhighlands #cutimalaysia #sejukmanja"],
+        "rain":      ["Hujan renyai, payung terkembang, jalan-jalan tanpa hala tuju. ☔ #hujan #santai #jomjalan"],
+        "cafe":      ["Order kopi tiga lapis dengan kuih — memang tak menyesal. ☕ #kopimalaysia #jomlepak #harianku"],
+        "night":     ["Lampu KLCC waktu malam memang tak pernah gagal buat terpukau. 🌃 #kualalumpur #malamKL #jelajahmalaysia",
+                       "Menara berkembar bergemerlapan, malam KL memang ada auranya. ✨ #petronas #malamKL #malaysiaindah",
+                       "Skyline bandar waktu malam — pemandangan yang tak pernah jemu. 🌆 #cityscape #malamKL #jelajahmalaysia"],
+        "street":    ["Sesat-sesat di lorong bandar tua ni pun satu keseronokan. 🚶 #bandartua #jelajahmalaysia #harianku",
+                       "Warna-warni rumah kedai di Melaka memang buat hati ceria. 🏘️ #melaka #warisan #jelajahmalaysia",
+                       "Jalan-jalan di George Town, setiap dinding ada seni tersendiri. 🎨 #penang #georgetown #cutimalaysia"],
+        "gym":       ["Setiap set hari ni lagi kuat daripada alasan semalam. 💪 #jomgym #konsisten #sihatselalu"],
+        "running":   ["Berlari petang tepi tasik, hati terus cerah. 🏃 #lariharian #cergas #rutinku"],
+        "swim":      ["Berendam kejap dalam kolam terus rasa segar semula. 💦 #cutimalaysia #musimpanas #santai"],
+        "dance":     ["Bila menari, dunia rasa senyap seketika. 💃 #menari #minat #gembira"],
+        "selfie":    ["Hari ni berdamai dengan cermin. Kemenangan kecil, tapi cukup. 🤳 #swafoto #harianku #tenang"],
+        "ootd":      ["Baju tak perlu menyerlah pun boleh rasa selesa. Gaya simple hari ni. 👗 #ootd #gayaharian #simple"],
+        "bedroom":   ["Baju tidur selesa, selimut tebal, dan tiada rancangan. Inilah mood hujung minggu. 🛌 #santai #hariberehat #selesa"],
+        "flower":    ["Bunga raya berkembang penuh — macam alam ucap selamat pagi. 🌺 #bungaraya #alammalaysia #tenang"],
+        "travel":    ["Jelajah Malaysia memang tak pernah kekurangan tempat cantik. ✈️ #cutimalaysia #jomjalan #malaysiaindah",
+                       "Dari Melaka ke Sabah, setiap tempat ada cerita sendiri. 🧳 #jelajahmalaysia #jomcuti #harianku",
+                       "Malaysia ni kecil, tapi keindahannya tak terhingga. 🇲🇾 #malaysiaindah #cutimalaysia #jomjalan",
+                       "Setiap kali melancong, mesti jumpa sudut baru yang buat terpegun. 📸 #jelajahmalaysia #jomjalan #kembara"],
+        "goldenhour":["Waktu senja di sini buat benda biasa jadi kenangan. 🌅 #senja #jelajahmalaysia #tenang",
+                       "Langit jingga waktu maghrib memang hadiah percuma paling cantik. 🌇 #senja #malaysiaindah #tenang"],
+        "beach":     ["Angin laut, kaki atas pasir, fikiran terus lapang. Mod pantai penuh! ☀️ #pantai #cutimalaysia #santai",
+                       "Ombak Pulau Redang memang tak pernah mengecewakan. 🌊 #pulaumalaysia #jomcuti #santai",
+                       "Air laut jernih macam kaca, terus rasa nak lompat masuk. 🏝️ #pulaumalaysia #cutimalaysia #santai"],
+        "cinema":    ["Rasa macam satu babak dalam filem yang belum ditayang. 🎬 #sinematik #mood #fotografi"],
+        "portrait":  ["Sesetengah gambar tak perlu cerita — cukup dengan suasana. 📷 #potret #harianku #tenang",
+                       "Cahaya senja tangkap saat ni, terus jatuh cinta. #potret #cahayasemulajadi #mood",
+                       "Sekadar satu detik tenang yang ingin ku simpan. #harianku #potret #malaysiaindah"],
     },
 }
 
@@ -220,6 +255,10 @@ def llm_caption(raw: str, scene: str, lang: str) -> str | None:
         "ja": "若い女性が自分で投稿するような日本語の一人称短文（3行以内）を書いてください。"
               "2-4個のハッシュタグと1-2個の絵文字を含めて。AIやプロンプトについては触れないで。"
               f"シーン: {scene}。元説明: {raw}",
+        "ms": "Tulis satu kapsyen ringkas dalam Bahasa Melayu (maksimum 3 baris) dengan gaya "
+              "orang Malaysia berkongsi gambar sendiri di media sosial. Sertakan 2-4 hashtag "
+              "dan 1-2 emoji. Jangan sebut ini janaan AI atau prompt. Gunakan nada santai dan "
+              f"mesra Malaysia. Petunjuk suasana: {scene}. Penerangan asal: {raw}",
     }
     user_msg = prompts.get(lang, prompts["en"])
     try:
