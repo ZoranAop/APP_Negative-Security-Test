@@ -205,7 +205,7 @@ def get_s3_creds(token: str, *, upload_url: str, timeout: int) -> dict:
 # Set POST_CROP_BOTTOM_HOSTS="" to disable entirely.
 # ---------------------------------------------------------------------------
 
-_DEFAULT_CROP_HOSTS = "xhscdn.com,xiaohongshu.com,bbkz.net"
+_DEFAULT_CROP_HOSTS = "xhscdn.com,xiaohongshu.com,bbkz.net,erv-nsa.gov.tw"
 
 
 def _crop_hosts() -> list[str]:
@@ -288,10 +288,20 @@ def upload_url_to_s3(
     local = images_dir / f"downloaded_{url_hash}{ext}"
     if not (local.exists() and local.stat().st_size > 0):
         referer = resolve_referer(image_url)
+        # Some hosts (e.g. gov sites like erv-nsa.gov.tw) ship an incomplete TLS
+        # chain; allow host-scoped verify=False via POST_NO_VERIFY_HOSTS.
+        _nv = os.getenv("POST_NO_VERIFY_HOSTS", "erv-nsa.gov.tw")
+        _host = (urlsplit(image_url).hostname or "").lower()
+        _verify = not any(h.strip() and h.strip() in _host for h in _nv.split(","))
+        if not _verify:
+            try:
+                requests.packages.urllib3.disable_warnings()  # type: ignore[attr-defined]
+            except Exception:  # noqa: BLE001
+                pass
         last_err: Exception | None = None
         for attempt in range(3):
             try:
-                r = requests.get(image_url, timeout=30,
+                r = requests.get(image_url, timeout=30, verify=_verify,
                                  headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
                                           "AppleWebKit/537.36 (KHTML, like Gecko) "
                                           "Chrome/120.0.0.0 Safari/537.36",
