@@ -119,6 +119,9 @@ def main() -> int:
     print("\n=== Step 2/3: 繁體中文文案 ===")
     cmd = PY + [str(HERE / "caption_multilang.py"),
                 "--input", str(raw), "--output", str(moments), "--langs", args.langs]
+    # media 源帶有文章正文 _excerpt → 用內容感知文案，結合網頁內容差異化，避免同質化
+    if args.source == "media":
+        cmd.append("--content-aware")
     if _run(cmd, env_extra={"DEFAULT_SCENE": args.default_scene}) != 0 or not moments.exists():
         print("[run_taiwan] 文案改寫失敗，終止。", file=sys.stderr)
         return 1

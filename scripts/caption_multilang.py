@@ -28,6 +28,7 @@ import csv
 import json
 import os
 import random
+import re
 import sys
 from pathlib import Path
 from typing import Iterable
@@ -337,6 +338,212 @@ def llm_caption(raw: str, scene: str, lang: str) -> str | None:
 
 
 # ---------------------------------------------------------------------------
+# content-aware captions (differentiated, built from the article's own
+# title + excerpt) — avoids the homogeneous template output for TW media.
+# ---------------------------------------------------------------------------
+
+_STOPWORDS = set("的了是在也和與及並而或但很更最都會就把讓從對於這那些一個我們你他她它"
+                 "台灣台湾之美日常分享推薦介紹如何為何什麼怎麼可以已經還有這樣那樣")
+
+
+def _zh_hashtags_from(text: str, scene: str, source: str) -> list[str]:
+    """Derive up to 3 topical hashtags from the article's own words."""
+    tags: list[str] = []
+    base = {"gq": "#GQ品味", "sony": "#攝影日常", "shoppingdesign": "#設計生活"}.get(source, "#台灣")
+    tags.append(base)
+    KEY = ["台北", "台南", "高雄", "台中", "花蓮", "台東", "宜蘭", "九份", "墾丁",
+           "阿里山", "合歡山", "日月潭", "太魯閣", "淡水", "北投", "夜市", "老街",
+           "咖啡", "美食", "設計", "展覽", "攝影", "鏡頭", "人像", "風景", "旅行",
+           "建築", "文創", "海邊", "山", "祭典", "部落", "小旅行", "電影", "音樂",
+           "時尚", "穿搭", "球鞋", "手錶", "旅宿", "選物"]
+    low = text or ""
+    for k in KEY:
+        if k in low and ("#" + k) not in tags:
+            tags.append("#" + k)
+        if len(tags) >= 3:
+            break
+    if len(tags) < 3:
+        for extra in ["#台灣", "#生活記錄", "#編輯精選"]:
+            if extra not in tags:
+                tags.append(extra)
+            if len(tags) >= 3:
+                break
+    return tags[:3]
+
+
+# ---- title semantics → rewritten caption (no fixed opener/closer template) ----
+
+# strip site suffix / decorative marks, keep the meaningful topic phrase
+def _clean_title(title: str) -> str:
+    t = re.sub(r"\s+", " ", (title or "")).strip()
+    t = re.split(r"[|｜\-–—]{1,}\s*(?:GQ|Shopping ?Design|SONY|Alpha).*$", t)[0].strip()
+    # strip decorative interview marks ❰ ❱ and leading brackets/labels
+    t = t.replace("❰", "").replace("❱", "")
+    t = re.sub(r"^[【】\[\]（）()、，,\s]+", "", t)
+    # drop trailing "feat. …" credit tails and dangling separators
+    t = re.split(r"\s*feat\.\s*", t, flags=re.I)[0].strip()
+    return t.strip("｜|-–—、，, ").strip()
+
+
+# intent classification from title keywords → varied comment sentence banks.
+# Each bank has many options; a title-seeded pick keeps posts differentiated.
+_COMMENT_BANKS = {
+    "interview": [
+        "聽他們聊創作的心路，收穫比想像中多。",
+        "這場對談把幕後的堅持都講透了。",
+        "專訪裡的每句話都很有份量。",
+        "看完更懂一件作品背後要花多少功夫。",
+    ],
+    "gear": [
+        "器材的細節決定成品的質感，這篇講得很到位。",
+        "看完對這組配置更有感覺了。",
+        "規格之外，實拍的手感才是重點。",
+        "工欲善其事，這些眉角值得記下來。",
+    ],
+    "exhibition": [
+        "光是看展場照就想親自跑一趟。",
+        "策展的巧思藏在每個角落。",
+        "這種把生活變成展覽的做法太迷人。",
+        "展期內一定要找時間去朝聖。",
+    ],
+    "travel": [
+        "這個地方被拍得讓人很想立刻出發。",
+        "台灣的風景總是不經意就驚豔到你。",
+        "把這裡加進口袋名單了。",
+        "旅途中最迷人的往往是這些日常畫面。",
+    ],
+    "food": [
+        "光看照片就餓了，這間必須排進口袋名單。",
+        "在地的味道最能打動人。",
+        "這一桌看起來就很療癒。",
+        "美食配上這種氛圍，誰能抵擋。",
+    ],
+    "design": [
+        "好的設計會讓日常變得更有溫度。",
+        "細節裡的美學最耐看。",
+        "這種質感的東西總讓人多看兩眼。",
+        "設計把功能與美感揉在一起，很加分。",
+    ],
+    "culture": [
+        "在地文化的故事總是特別動人。",
+        "這些畫面藏著台灣的生活感。",
+        "把台灣感性拍得恰到好處。",
+        "越熟悉的日常，越值得被記錄。",
+    ],
+    "generic": [
+        "這篇的視角很對我的味。",
+        "把細節拍得很有感覺。",
+        "看完心情都變好了。",
+        "這種內容百看不膩。",
+    ],
+}
+
+
+def _title_intent(title: str, source: str) -> str:
+    t = title or ""
+    if any(k in t for k in ["專訪", "訪談", "對談", "專欄", "人物", "封面"]):
+        return "interview"
+    if any(k in t for k in ["鏡頭", "相機", "麥克風", "α", "拍攝", "攝影", "收音", "GM", "F1", "F2", "mm"]):
+        return "gear"
+    if any(k in t for k in ["展", "博覽", "美術館", "特展", "策展"]):
+        return "exhibition"
+    if any(k in t for k in ["咖啡", "美食", "餐", "吃", "料理", "甜點", "小吃"]):
+        return "food"
+    if any(k in t for k in ["設計", "選物", "品牌", "家具", "文創", "工藝"]):
+        return "design"
+    if any(k in t for k in ["旅", "遊", "景點", "秘境", "住宿", "旅宿", "步道", "小鎮", "地圖"]):
+        return "travel"
+    if any(k in t for k in ["台灣感性", "文化", "在地", "部落", "祭"]):
+        return "culture"
+    if source == "sony":
+        return "gear"
+    if source == "shoppingdesign":
+        return "design"
+    return "generic"
+
+
+def content_aware_caption(title: str, excerpt: str, scene: str, source: str,
+                          idx: int) -> str:
+    """Rewrite a differentiated zh_hant caption based on the TITLE's semantics.
+
+    Strategy (no LLM): take the article's own topic phrase from the title, add a
+    freshly-composed comment chosen from an intent-specific bank, seeded by the
+    title so different titles yield different phrasing (avoids homogeneity)."""
+    ct = _clean_title(title)
+    topic = ct[:38] if ct else _first_sentence(excerpt, 34) or "台灣的日常風景"
+    intent = _title_intent(ct + " " + (excerpt or ""), source)
+    bank = _COMMENT_BANKS.get(intent, _COMMENT_BANKS["generic"])
+    # seed choice by the title text so it's deterministic yet varied per article
+    seed = sum(ord(c) for c in ct) if ct else idx
+    comment = bank[(seed + idx) % len(bank)]
+
+    # vary the sentence structure by a title-seeded pattern (not a fixed opener)
+    patterns = [
+        "{topic}｜{comment}",
+        "{topic}。{comment}",
+        "分享一篇：{topic}——{comment}",
+        "{comment}《{topic}》",
+        "最近在看《{topic}》，{comment}",
+    ]
+    pat = patterns[seed % len(patterns)]
+    body = pat.format(topic=topic, comment=comment)
+    body = body[:120]
+    tags = " ".join(_zh_hashtags_from((ct + " " + (excerpt or "")), scene, source))
+    return f"{body} {tags}"
+
+
+def _first_sentence(excerpt: str, limit: int = 46) -> str:
+    if not excerpt:
+        return ""
+    parts = re.split(r"[。！？!?；;\n]", excerpt)
+    for p in parts:
+        p = p.strip()
+        if len(p) >= 10:
+            if len(p) <= limit:
+                return p
+            head = p[:limit]
+            m = max(head.rfind("，"), head.rfind("、"), head.rfind("："), head.rfind(" "))
+            return head[:m] if m >= 12 else head
+    return excerpt[:limit].strip()
+
+
+def llm_rewrite_from_title(title: str, excerpt: str, source: str) -> str | None:
+    """If an OpenAI-compatible text LLM is configured, rewrite a fresh, natural
+    繁體中文（台灣語境）first-person caption from the article's TITLE semantics
+    (paraphrase — do NOT copy the title verbatim). Returns None if no LLM."""
+    api_base = os.getenv("LLM_TEXT_API_BASE") or os.getenv("LLM_API_BASE")
+    api_key = os.getenv("LLM_TEXT_API_KEY") or os.getenv("LLM_API_KEY")
+    model = os.getenv("LLM_TEXT_MODEL") or os.getenv("LLM_MODEL")
+    if not (api_base and api_key and model):
+        return None
+    import requests
+    ct = _clean_title(title)
+    prompt = (
+        "你是台灣在地的社群小編。根據以下文章標題（與摘要）的語意，"
+        "用『繁體中文、台灣語氣』重新改寫一段第一人稱分享文案（1~2 句，不超過 3 行）。"
+        "要求：不要照抄標題原句、用自己的話重新表達；語氣自然口語、每則都要不一樣；"
+        "帶 2-3 個貼近主題的 hashtag、最多 1 個 emoji；不要提到 AI/生成/提示詞。\n"
+        f"來源：{source}\n標題：{ct}\n摘要：{(excerpt or '')[:200]}"
+    )
+    try:
+        r = requests.post(
+            api_base.rstrip("/") + "/chat/completions",
+            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+            json={"model": model,
+                  "messages": [
+                      {"role": "system", "content": "只輸出文案本身，使用繁體中文。"},
+                      {"role": "user", "content": prompt}],
+                  "temperature": 0.9, "max_tokens": 160},
+            timeout=30)
+        if r.status_code == 200:
+            return r.json()["choices"][0]["message"]["content"].strip()
+        print(f"[warn] LLM rewrite {r.status_code} {r.text[:150]}", file=sys.stderr)
+    except Exception as e:  # noqa: BLE001
+        print(f"[warn] LLM rewrite err {e}", file=sys.stderr)
+    return None
+
+
+# ---------------------------------------------------------------------------
 # main
 # ---------------------------------------------------------------------------
 
@@ -358,6 +565,7 @@ def rewrite_csv(
     use_llm: bool,
     seed: int,
     use_existing_lang: bool = False,
+    content_aware: bool = False,
 ) -> tuple[int, dict[str, int]]:
     """Rewrite ``content`` column into subject-voice captions.
 
@@ -397,10 +605,21 @@ def rewrite_csv(
         writer.writeheader()
         for i, row in enumerate(rows):
             lang = plan[i]
-            scene = detect_scene(row.get("content", "") or "")
+            orig_title = row.get("content", "") or ""
+            excerpt = row.get("_excerpt", "") or ""
+            scene = detect_scene((orig_title + " " + excerpt))
             caption: str | None = None
-            if use_llm:
-                caption = llm_caption(row.get("content", ""), scene, lang)
+            if content_aware:
+                # 1) prefer an LLM rewrite from the title semantics if configured
+                if use_llm:
+                    caption = llm_rewrite_from_title(
+                        orig_title, excerpt, row.get("_source", ""))
+                # 2) else deterministic semantic rewriter (title-driven, varied)
+                if not caption:
+                    caption = content_aware_caption(
+                        orig_title, excerpt, scene, row.get("_source", ""), i)
+            if not caption and use_llm:
+                caption = llm_caption(orig_title, scene, lang)
             if not caption:
                 caption = pick_template(scene, lang, used_counts)
             row["content"] = caption
@@ -423,6 +642,9 @@ def main() -> int:
     ap.add_argument("--use-existing-lang", action="store_true",
                     help="respect a pre-assigned _lang column (e.g. from "
                          "plan_lang_ratio.py) instead of the even split")
+    ap.add_argument("--content-aware", action="store_true",
+                    help="build differentiated captions from each row's own "
+                         "title + _excerpt (avoids template homogeneity; TW media)")
     ap.add_argument("--seed", type=int, default=20260703)
     args = ap.parse_args()
 
@@ -437,6 +659,7 @@ def main() -> int:
         Path(args.input), Path(args.output),
         langs=langs, use_llm=args.use_llm, seed=args.seed,
         use_existing_lang=args.use_existing_lang,
+        content_aware=args.content_aware,
     )
     print(f"[OK] rewrote {n} rows → {args.output}")
     print(f"[OK] language stats: {stats}")
