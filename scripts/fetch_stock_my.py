@@ -105,6 +105,31 @@ def fetch_pixabay(pg, query: str, want: int) -> list[dict]:
     return out
 
 
+def fetch_unsplash(pg, query: str, want: int) -> list[dict]:
+    pg.goto(f"https://unsplash.com/s/photos/{query}",
+            wait_until="domcontentloaded", timeout=60000)
+    pg.wait_for_timeout(7000)
+    _scroll(pg, rounds=max(4, want // 10 + 2))
+    items = pg.eval_on_selector_all(
+        "img",
+        "els => els.map(e => ({src: e.src||'', alt: e.alt||''}))"
+        ".filter(o => o.src.includes('images.unsplash.com/photo-'))",
+    )
+    out, seen = [], set()
+    for it in items:
+        clean = it["src"].split("?")[0]
+        if clean in seen:
+            continue
+        seen.add(clean)
+        # request a reasonable download size; original is watermark free
+        url = clean + "?fm=jpg&q=80&w=1440&fit=max"
+        out.append({"image_urls": url, "content": (it.get("alt") or "").strip(),
+                    "_source": "unsplash"})
+        if len(out) >= want:
+            break
+    return out
+
+
 def _load_dedupe(path: str | None) -> set[str]:
     if not path:
         return set()
@@ -132,7 +157,7 @@ def main() -> int:
     _ensure_utf8_stdout()
     ap = argparse.ArgumentParser(description="Fetch watermark-free Malaysia photos (Pexels+Pixabay) → CSV")
     ap.add_argument("--sources", default="pexels,pixabay",
-                    help="comma list: pexels,pixabay")
+                    help="comma list: pexels,pixabay,unsplash")
     ap.add_argument("--query", default="malaysia")
     ap.add_argument("--per-source", type=int, default=30,
                     help="max images to take from each source")
@@ -160,6 +185,8 @@ def main() -> int:
                     got = fetch_pexels(pg, args.query, args.per_source)
                 elif src == "pixabay":
                     got = fetch_pixabay(pg, args.query, args.per_source)
+                elif src == "unsplash":
+                    got = fetch_unsplash(pg, args.query, args.per_source)
                 else:
                     print(f"[warn] unknown source {src}", file=sys.stderr)
                     continue
