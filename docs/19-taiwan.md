@@ -18,14 +18,28 @@
 | ---- | ---- | -------- | ---- |
 | `scripts/fetch_ervnsa_tw.py` | erv-nsa.gov.tw 觀光署相簿分享 | Playwright（JS 渲染 + 忽略 TLS）逐相簿取 `/image/<id>/1024x768` | **多圖** moments 行（每相簿一帖） |
 | `scripts/fetch_stock_my.py --sources pexels,unsplash --query taiwan --locale zh-TW` | Pexels / Unsplash | Playwright 繞過反爬，取原圖直鏈（無浮水印、免 API key） | 單圖 moments 行 |
+| `scripts/fetch_tw_media.py --sources shoppingdesign,gq,sony` | shoppingdesign.com.tw／gq.com.tw／alphauniverse.sony.com.tw | Playwright 逐文章取內文圖，**規避廣告/logo/banner/縮圖** | **多圖** moments 行（每文章一帖） |
 
-> 三個來源網址：
-> - `https://www.erv-nsa.gov.tw/zh-tw/service/albumlist`（觀光署官方相簿，台灣風景／部落／活動）
+> 五個來源網址：
+> - `https://www.erv-nsa.gov.tw/zh-tw/service/albumlist`（觀光署官方相簿）
 > - `https://www.pexels.com/zh-cn/search/台灣/`
 > - `https://unsplash.com/s/photos/taiwan`
+> - `https://www.shoppingdesign.com.tw/`（設計／生活文章，內文圖 image-cdn.learnin.tw）
+> - `https://www.gq.com.tw/article/...`（名人／生活文章，內文圖 media.gq.com.tw）
+> - `https://alphauniverse.sony.com.tw/`（攝影專訪／作品，內文圖 files/images）
 >
 > erv-nsa 為政府網站，TLS 憑證鏈不完整，採集端以 `ignore_https_errors` 處理；
 > 發布端下載時對 `erv-nsa.gov.tw` 走 `verify=False`（`POST_NO_VERIFY_HOSTS` 預設含此域名）。
+>
+> **廣告規避**：`fetch_tw_media.py` 依標題關鍵字（贊助/業配/開箱抽/優惠/限時…）與
+> 圖片特徵（logo/banner/doubleclick/縮圖）過濾非內容素材。
+
+### C. 台灣媒體（多圖，內文圖）
+
+```powershell
+py -3 scripts/fetch_tw_media.py --sources shoppingdesign,gq,sony --posts 15 `
+    --imgs-per-post 9 --min-imgs 3 --dedupe-file tw_used_media.json --output tw_raw.csv
+```
 
 ### A. 觀光署相簿（多圖，預設）
 
@@ -63,18 +77,15 @@ py -3 scripts/caption_multilang.py --input tw_raw.csv --output moments_tw.csv --
 
 ---
 
-## 19.3 底部浮水印裁切（小紅書 / backpackers / 觀光署 統一）
+## 19.3 圖片裁切（台灣分支：預設不裁切）
 
-`publish_from_tokens.py` 上傳 S3 前，對命中域名圖片**整條裁掉底部**去浮水印，預設：
+依需求，**台灣分支所有來源的圖片一律不做底部裁切**（觀光署／Pexels／Unsplash／
+shoppingdesign／GQ／Sony 都是無浮水印的編輯/風景圖，不需裁切）。
 
-```
-POST_CROP_BOTTOM_HOSTS = xhscdn.com,xiaohongshu.com,bbkz.net,erv-nsa.gov.tw
-POST_CROP_BOTTOM_PCT   = 0.08
-POST_NO_VERIFY_HOSTS   = erv-nsa.gov.tw   # 政府站 TLS 鏈不完整 → 下載時 verify=False
-```
-
-- 觀光署相簿圖（`erv-nsa.gov.tw`）**開箱即用**自動裁切。
-- Pexels / Unsplash 原圖無浮水印，不在裁切列表，原樣上傳。
+- `run_taiwan.py` 發布時**預設關閉裁切**（等同 `POST_CROP_BOTTOM_HOSTS=""`）。
+- 本分支 `.env` 亦將 `POST_CROP_BOTTOM_HOSTS` 置空。
+- 若日後某來源確有浮水印需裁切，`run_taiwan.py --crop [--crop-pct 0.08]` 可臨時開啟。
+- `POST_NO_VERIFY_HOSTS=erv-nsa.gov.tw` 仍保留（政府站 TLS 鏈容錯，與裁切無關）。
 
 ---
 

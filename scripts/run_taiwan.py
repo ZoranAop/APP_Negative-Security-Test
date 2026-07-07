@@ -45,8 +45,9 @@ def main() -> int:
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     PY = [sys.executable]
-    ap.add_argument("--source", choices=["ervnsa", "stock"], default="ervnsa",
-                    help="採集源：ervnsa 觀光署相簿多圖 / stock 圖庫(Pexels+Unsplash)")
+    ap.add_argument("--source", choices=["ervnsa", "stock", "media"], default="ervnsa",
+                    help="採集源：ervnsa 觀光署相簿 / stock 圖庫(Pexels+Unsplash) / "
+                         "media 台灣媒體(shoppingdesign+gq+sony)")
     ap.add_argument("--accounts-csv", default="accounts_5.csv")
     ap.add_argument("--posts", type=int, default=10)
     # ervnsa options
@@ -59,12 +60,17 @@ def main() -> int:
     ap.add_argument("--query", default="taiwan")
     ap.add_argument("--per-source", type=int, default=30)
     ap.add_argument("--locale", default="zh-TW")
+    # media options
+    ap.add_argument("--media-sources", default="shoppingdesign,gq,sony")
     # caption
     ap.add_argument("--langs", default="zh_hant")
     ap.add_argument("--default-scene", default="travel")
     # publish
     ap.add_argument("--concurrency", type=int, default=3)
     ap.add_argument("--tokens", default="result/tokens.json")
+    # 台灣分支：預設「不裁切」任何圖片。若確有需要可用 --crop 開啟並用 --crop-pct 指定比例。
+    ap.add_argument("--crop", action="store_true",
+                    help="開啟底部浮水印裁切（預設關閉，台灣分支圖片不裁切）")
     ap.add_argument("--crop-pct", default="0.08")
     # control
     ap.add_argument("--workdir", default="tw_run")
@@ -87,6 +93,15 @@ def main() -> int:
                     "--imgs-per-post", str(args.imgs_per_post),
                     "--min-imgs", str(args.min_imgs),
                     "--listing-pages", str(args.listing_pages),
+                    "--output", str(raw)]
+        if args.dedupe_file:
+            cmd += ["--dedupe-file", str(ROOT / args.dedupe_file)]
+    elif args.source == "media":
+        cmd = PY + [str(HERE / "fetch_tw_media.py"),
+                    "--sources", args.media_sources,
+                    "--posts", str(args.posts),
+                    "--imgs-per-post", str(args.imgs_per_post),
+                    "--min-imgs", str(args.min_imgs),
                     "--output", str(raw)]
         if args.dedupe_file:
             cmd += ["--dedupe-file", str(ROOT / args.dedupe_file)]
@@ -121,7 +136,7 @@ def main() -> int:
     if not acc.exists():
         print(f"[run_taiwan] 帳號 CSV 不存在: {acc}", file=sys.stderr)
         return 2
-    print(f"  帳號 CSV : {acc}\n  素材帖數 : {len(rows)}  併發: {args.concurrency}  裁切: bottom {args.crop_pct}")
+    print(f"  帳號 CSV : {acc}\n  素材帖數 : {len(rows)}  併發: {args.concurrency}  裁切: {'bottom '+str(args.crop_pct) if args.crop else '關閉（不裁切）'}")
     if not args.yes:
         if input("  確認發布真實帖子？輸入 y 繼續：").strip().lower() not in ("y", "yes"):
             print("[run_taiwan] 已取消。素材已保存：", moments)
@@ -131,7 +146,12 @@ def main() -> int:
                 "--concurrency", str(args.concurrency),
                 "--tokens-in", str(ROOT / args.tokens),
                 "--tokens-out", str(ROOT / args.tokens)]
-    rc = _run(cmd, env_extra={"POST_CROP_BOTTOM_PCT": str(args.crop_pct)})
+    # 台灣分支預設不裁切：把裁切域名清空（覆蓋 .env / 代碼預設）。--crop 才啟用。
+    if args.crop:
+        pub_env = {"POST_CROP_BOTTOM_PCT": str(args.crop_pct)}
+    else:
+        pub_env = {"POST_CROP_BOTTOM_HOSTS": ""}
+    rc = _run(cmd, env_extra=pub_env)
     if rc != 0:
         print("[run_taiwan] 發布返回非零，請查看日誌與 result/ 報告。", file=sys.stderr)
         return rc
