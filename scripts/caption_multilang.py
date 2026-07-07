@@ -40,13 +40,13 @@ SCENE_RULES = [
     ("kimono",   ["kimono", "yukata", "和服", "浴衣"]),
     ("hanfu",    ["hanfu", "汉服", "国风", "chinese traditional"]),
     ("bride",    ["bride", "wedding", "新娘", "婚"]),
-    ("beach",    ["beach", "海边", "海滩", "seaside", "surf", "island", "pulau", "pantai", "redang", "langkawi", "perhentian", "sea", "ocean"]),
-    ("goldenhour", ["golden hour", "sunset", "夕阳", "落日", "黄金时刻", "senja", "sunrise"]),
-    ("winter",   ["snow", "雪", "winter", "冬", "cameron", "highlands", "genting", "mountain", "kinabalu", "gunung", "bukit", "神山", "云顶", "雲頂", "高原", "金馬倫", "金马仑"]),
+    ("beach",    ["beach", "海边", "海滩", "seaside", "surf", "island", "pulau", "pantai", "redang", "langkawi", "perhentian", "sea", "ocean", "bali", "kuta", "seminyak", "nusa", "gili", "lombok", "raja ampat", "bunaken", "峇里", "巴厘", "海島"]),
+    ("goldenhour", ["golden hour", "sunset", "夕阳", "落日", "黄金时刻", "senja", "sunrise", "matahari terbenam"]),
+    ("winter",   ["snow", "雪", "winter", "冬", "cameron", "highlands", "genting", "mountain", "kinabalu", "gunung", "bukit", "神山", "云顶", "雲頂", "高原", "金馬倫", "金马仑", "bromo", "dieng", "ijen", "rinjani", "merapi", "火山"]),
     ("rain",     ["rain", "雨", "hujan"]),
-    ("cafe",     ["cafe", "coffee", "咖啡", "kopi", "food", "makan", "makanan", "restoran", "餐廳", "餐厅", "美食", "小吃", "夜市", "白咖啡"]),
-    ("night",    ["night", "midnight", "夜", "neon", "霓虹", "malam", "petronas", "klcc", "skyline", "tower", "menara", "夜景", "雙子星", "双子星", "地標", "地标"]),
-    ("street",   ["street", "sidewalk", "街", "urban", "city", "bandar", "town", "market", "pasar", "lorong", "heritage", "melaka", "penang", "georgetown", "檳城", "槟城", "怡保", "喬治市", "乔治市", "老街", "壁畫", "壁画", "馬六甲", "马六甲"]),
+    ("cafe",     ["cafe", "coffee", "咖啡", "kopi", "food", "makan", "makanan", "restoran", "餐廳", "餐厅", "美食", "小吃", "夜市", "白咖啡", "warung", "kuliner", "sate", "nasi"]),
+    ("night",    ["night", "midnight", "夜", "neon", "霓虹", "malam", "petronas", "klcc", "skyline", "tower", "menara", "夜景", "雙子星", "双子星", "地標", "地标", "jakarta", "雅加達", "雅加达"]),
+    ("street",   ["street", "sidewalk", "街", "urban", "city", "bandar", "town", "market", "pasar", "lorong", "heritage", "melaka", "penang", "georgetown", "檳城", "槟城", "怡保", "喬治市", "乔治市", "老街", "壁畫", "壁画", "馬六甲", "马六甲", "kota tua", "yogyakarta", "jogja", "malioboro", "bandung", "solo", "borobudur", "prambanan", "candi", "日惹"]),
     ("gym",      ["gym", "yoga", "workout", "健身", "瑜伽"]),
     ("running",  ["running", "run", "runner", "跑步"]),
     ("swim",     ["swim", "pool", "泳装", "bikini", "比基尼"]),
@@ -55,7 +55,7 @@ SCENE_RULES = [
     ("ootd",     ["outfit", "fashion", "ootd", "streetwear", "穿搭", "editorial"]),
     ("bedroom",  ["bedroom", "居家", "宅", "at home"]),
     ("flower",   ["flower", "bouquet", "花"]),
-    ("travel",   ["travel", "旅行", "tokyo", "paris", "london", "new york", "malaysia", "asia", "kuala lumpur", "sabah", "sarawak", "borneo", "temple", "kuil", "mosque", "masjid", "batu caves", "landmark", "nature", "landscape", "waterfall", "air terjun", "lake", "tasik", "bridge", "jambatan", "馬來西亞", "马来西亚", "吉隆坡", "沙巴", "砂拉越", "自由行", "自助", "旅遊", "旅游", "遊", "转机", "轉機", "攻略", "假期", "開齋節", "开斋节", "神山"]),
+    ("travel",   ["travel", "旅行", "tokyo", "paris", "london", "new york", "malaysia", "asia", "kuala lumpur", "sabah", "sarawak", "borneo", "temple", "kuil", "mosque", "masjid", "batu caves", "landmark", "nature", "landscape", "waterfall", "air terjun", "lake", "tasik", "bridge", "jambatan", "馬來西亞", "马来西亚", "吉隆坡", "沙巴", "砂拉越", "自由行", "自助", "旅遊", "旅游", "遊", "转机", "轉機", "攻略", "假期", "開齋節", "开斋节", "神山", "indonesia", "印尼", "印度尼西亞", "印度尼西亚", "wonderful indonesia", "danau", "air terjun", "curug", "wisata", "jalan-jalan", "liburan", "komodo", "toba", "sumatra", "sulawesi", "jawa", "flores", "labuan bajo"]),
     ("cinema",   ["cinematic", "editorial", "film", "vogue", "campaign"]),
     ("portrait", ["portrait", "肖像", "人像", "close-up", "写真"]),
 ]
@@ -212,6 +212,41 @@ TEMPLATES: dict[str, dict[str, list[str]]] = {
                        "Cahaya senja tangkap saat ni, terus jatuh cinta. #potret #cahayasemulajadi #mood",
                        "Sekadar satu detik tenang yang ingin ku simpan. #harianku #potret #malaysiaindah"],
     },
+    "id": {
+        "kimono":    ["Akhir pekan pakai baju tradisional, secangkir teh di tangan — rasanya waktu jadi pelan. 🍵 #tradisi #gayaharian #tenang"],
+        "hanfu":     ["Hari pakai busana tradisional, lengannya melambai, hati pun ikut ringan. 🌸 #busanatradisi #ootd #budaya"],
+        "bride":     ["Coba gaun pengantin bikin hati haru nggak nyangka. 🤍 #calonpengantin #momenmanis #cinta"],
+        "beach":     ["Angin laut, kaki di pasir, pikiran langsung plong. Mode pantai aktif! ☀️ #pantai #liburanindonesia #santai",
+                       "Ombak Bali emang nggak pernah bikin kecewa. 🌊 #bali #pesonaindonesia #santai",
+                       "Air lautnya bening banget, pengen langsung nyebur. 🏝️ #rajaampat #wonderfulindonesia #santai"],
+        "goldenhour":["Senja di sini bikin hal biasa jadi kenangan. 🌅 #senja #pesonaindonesia #tenang",
+                       "Langit jingga waktu magrib emang hadiah paling cantik. 🌇 #sunset #wonderfulindonesia #tenang"],
+        "winter":    ["Dinginnya pagi di dataran tinggi, worth it bangun subuh. 🧣 #dieng #liburanindonesia #sejuk"],
+        "rain":      ["Gerimis, payung kebuka, jalan-jalan tanpa tujuan. ☔ #hujan #santai #jalanjalan"],
+        "cafe":      ["Pesan kopi susu sama gorengan — nggak ada nyesel sama sekali. ☕ #kopiindonesia #ngopi #harianku"],
+        "night":     ["Lampu kota malam hari emang nggak pernah gagal bikin terpukau. 🌃 #jakarta #malamkota #pesonaindonesia",
+                       "Skyline kota waktu malam, pemandangan yang nggak ada bosennya. 🌆 #cityscape #malamkota #wonderfulindonesia",
+                       "Gemerlap lampu malam, suasananya beda banget. ✨ #malamkota #jalanjalan #pesonaindonesia"],
+        "street":    ["Nyasar-nyasar di gang kota tua malah jadi seru sendiri. 🚶 #kotatua #jalanjalan #harianku",
+                       "Warna-warni bangunan tua di sini bikin hati senang. 🏘️ #kotatua #wisatabudaya #pesonaindonesia",
+                       "Jalan kaki keliling kota, tiap sudut punya cerita. 🎨 #jalanjalan #wisatakota #liburanindonesia"],
+        "gym":       ["Tiap set hari ini lebih kuat dari alasan kemarin. 💪 #ndolahraga #konsisten #sehatselalu"],
+        "running":   ["Lari sore di tepi danau, hati langsung cerah. 🏃 #lariharian #sehat #rutinku"],
+        "swim":      ["Berendam sebentar di kolam langsung berasa segar lagi. 💦 #liburan #musimpanas #santai"],
+        "dance":     ["Pas nari, dunia rasanya hening sejenak. 💃 #nari #hobi #bahagia"],
+        "selfie":    ["Hari ini berdamai sama cermin. Kemenangan kecil, tapi cukup. 🤳 #swafoto #harianku #tenang"],
+        "ootd":      ["Baju nggak perlu mencolok buat berasa nyaman. Gaya simpel hari ini. 👗 #ootd #gayaharian #simpel"],
+        "bedroom":   ["Piyama nyaman, selimut tebal, dan nggak ada rencana. Ini baru mood akhir pekan. 🛌 #santai #harilibur #nyaman"],
+        "flower":    ["Bunga mekar penuh — kayak alam bilang selamat pagi. 🌺 #bunga #alamindonesia #tenang"],
+        "travel":    ["Jelajah Indonesia emang nggak pernah kehabisan tempat cantik. ✈️ #wonderfulindonesia #jalanjalan #pesonaindonesia",
+                       "Dari Bali sampai Raja Ampat, tiap tempat punya cerita sendiri. 🧳 #jelajahindonesia #liburan #harianku",
+                       "Indonesia itu luas, keindahannya nggak ada habisnya. 🇮🇩 #pesonaindonesia #wonderfulindonesia #jalanjalan",
+                       "Tiap kali traveling, selalu nemu sudut baru yang bikin terpukau. 📸 #jelajahindonesia #jalanjalan #petualangan"],
+        "cinema":    ["Berasa kayak satu adegan dari film yang belum tayang. 🎬 #sinematik #mood #fotografi"],
+        "portrait":  ["Beberapa foto nggak butuh cerita — cukup sama suasananya. 📷 #potret #harianku #tenang",
+                       "Cahaya senja nangkep momen ini, langsung jatuh cinta. #potret #cahayaalami #mood",
+                       "Sekadar satu momen tenang yang pengen ku simpan. #harianku #potret #pesonaindonesia"],
+    },
 }
 
 SUPPORTED_LANGS = tuple(TEMPLATES.keys())
@@ -259,6 +294,10 @@ def llm_caption(raw: str, scene: str, lang: str) -> str | None:
               "orang Malaysia berkongsi gambar sendiri di media sosial. Sertakan 2-4 hashtag "
               "dan 1-2 emoji. Jangan sebut ini janaan AI atau prompt. Gunakan nada santai dan "
               f"mesra Malaysia. Petunjuk suasana: {scene}. Penerangan asal: {raw}",
+        "id": "Tulis satu caption singkat dalam Bahasa Indonesia (maksimal 3 baris) dengan gaya "
+              "orang Indonesia yang membagikan fotonya sendiri di media sosial. Sertakan 2-4 hashtag "
+              "dan 1-2 emoji. Jangan menyebut ini buatan AI atau prompt. Pakai nada santai dan "
+              f"akrab khas Indonesia. Petunjuk suasana: {scene}. Deskripsi asli: {raw}",
     }
     user_msg = prompts.get(lang, prompts["en"])
     try:
