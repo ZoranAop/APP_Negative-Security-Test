@@ -54,7 +54,10 @@ def main() -> int:
     ap.add_argument("--imgs-per-post", type=int, default=9)
     ap.add_argument("--min-imgs", type=int, default=3)
     ap.add_argument("--listing-pages", type=int, default=8)
-    ap.add_argument("--dedupe-file", default="tw_used_albums.json")
+    ap.add_argument("--dedupe-file", default=None,
+                    help="去重檔路徑（預設按源自動放 state/seen_tw_<source>.json，持久保留）")
+    ap.add_argument("--reset-dedupe", action="store_true",
+                    help="清空該源的去重紀錄，允許重新抓取已抓過的內容")
     # stock options
     ap.add_argument("--stock-sources", default="pexels,unsplash")
     ap.add_argument("--query", default="taiwan")
@@ -87,30 +90,44 @@ def main() -> int:
     print(f"[run_taiwan] source={args.source} posts={args.posts} langs={args.langs}")
 
     print("\n=== Step 1/3: 採集 ===")
+    # 持久去重：每個源用固定的 dedupe 檔（放 state/），下次自動跳過已抓內容。
+    # --dedupe-file 可覆蓋；--reset-dedupe 清空重抓。
+    state_dir = ROOT / "state"
+    state_dir.mkdir(exist_ok=True)
+    default_dd = {
+        "ervnsa": state_dir / "seen_tw_ervnsa.json",
+        "media": state_dir / "seen_tw_media.json",
+        "stock": state_dir / "seen_tw_stock.json",
+    }[args.source]
+    dedupe_path = (ROOT / args.dedupe_file) if args.dedupe_file else default_dd
+    if args.reset_dedupe and dedupe_path.exists():
+        dedupe_path.unlink()
+        print(f"[run_taiwan] 已重置去重檔：{dedupe_path.name}")
+    print(f"[run_taiwan] 去重檔：{dedupe_path}（自動跳過已抓內容）")
+
     if args.source == "ervnsa":
         cmd = PY + [str(HERE / "fetch_ervnsa_tw.py"),
                     "--posts", str(args.posts),
                     "--imgs-per-post", str(args.imgs_per_post),
                     "--min-imgs", str(args.min_imgs),
                     "--listing-pages", str(args.listing_pages),
+                    "--dedupe-file", str(dedupe_path),
                     "--output", str(raw)]
-        if args.dedupe_file:
-            cmd += ["--dedupe-file", str(ROOT / args.dedupe_file)]
     elif args.source == "media":
         cmd = PY + [str(HERE / "fetch_tw_media.py"),
                     "--sources", args.media_sources,
                     "--posts", str(args.posts),
                     "--imgs-per-post", str(args.imgs_per_post),
                     "--min-imgs", str(args.min_imgs),
+                    "--dedupe-file", str(dedupe_path),
                     "--output", str(raw)]
-        if args.dedupe_file:
-            cmd += ["--dedupe-file", str(ROOT / args.dedupe_file)]
     else:
         cmd = PY + [str(HERE / "fetch_stock_my.py"),
                     "--sources", args.stock_sources,
                     "--query", args.query,
                     "--per-source", str(args.per_source),
                     "--locale", args.locale,
+                    "--dedupe-file", str(dedupe_path),
                     "--output", str(raw)]
     if _run(cmd) != 0 or not raw.exists():
         print("[run_taiwan] 採集失敗，終止。", file=sys.stderr)

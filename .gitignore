@@ -32,6 +32,12 @@ results/
 logs/
 *.log
 
+# ---------- crawl dedupe state (already-fetched records; local, persistent) ----------
+state/
+*_used_*.json
+*_dedupe*.json
+*_dd.json
+
 # ---------- python ----------
 __pycache__/
 *.py[cod]

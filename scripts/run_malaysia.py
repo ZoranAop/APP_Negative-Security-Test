@@ -56,8 +56,10 @@ def main() -> int:
     ap.add_argument("--imgs-per-post", type=int, default=9, help="[backpackers] 每帖最多图片数（后端上限 9）")
     ap.add_argument("--min-imgs", type=int, default=4, help="[backpackers] 少于 N 张图的贴跳过")
     ap.add_argument("--listing-pages", type=int, default=4, help="[backpackers] 扫描的论坛列表页数")
-    ap.add_argument("--dedupe-file", default="bp_used_threads.json",
-                    help="[backpackers] 已用过的 thread id JSON（保证取新贴）")
+    ap.add_argument("--dedupe-file", default=None,
+                    help="去重档路径（默认按源自动放 state/seen_my_<source>.json，持久保留，自动跳过已抓内容）")
+    ap.add_argument("--reset-dedupe", action="store_true",
+                    help="清空该源去重记录，允许重新抓取已抓过的内容")
     # stock options
     ap.add_argument("--query", default="malaysia", help="[stock] 搜索关键词")
     ap.add_argument("--per-source", type=int, default=30, help="[stock] 每个图库最多取图数")
@@ -85,20 +87,28 @@ def main() -> int:
 
     # ---- Step 1: fetch ----
     print("\n=== Step 1/3: 采集 ===")
+    # 持久去重：按源固定 dedupe 档（state/），下次自动跳过已抓内容
+    state_dir = ROOT / "state"; state_dir.mkdir(exist_ok=True)
+    default_dd = (state_dir / (f"seen_my_backpackers_f{args.fid}.json"
+                               if args.source == "backpackers" else "seen_my_stock.json"))
+    dedupe_path = (ROOT / args.dedupe_file) if args.dedupe_file else default_dd
+    if args.reset_dedupe and dedupe_path.exists():
+        dedupe_path.unlink(); print(f"[run_malaysia] 已重置去重档：{dedupe_path.name}")
+    print(f"[run_malaysia] 去重档：{dedupe_path}（自动跳过已抓内容）")
     if args.source == "backpackers":
         cmd = PY + [str(HERE / "fetch_backpackers_my.py"),
                     "--fid", str(args.fid), "--posts", str(args.posts),
                     "--imgs-per-post", str(args.imgs_per_post),
                     "--min-imgs", str(args.min_imgs),
                     "--listing-pages", str(args.listing_pages),
+                    "--dedupe-file", str(dedupe_path),
                     "--output", str(raw)]
-        if args.dedupe_file:
-            cmd += ["--dedupe-file", str(ROOT / args.dedupe_file)]
     else:  # stock
         cmd = PY + [str(HERE / "fetch_stock_my.py"),
                     "--sources", "pexels,pixabay",
                     "--query", args.query,
                     "--per-source", str(args.per_source),
+                    "--dedupe-file", str(dedupe_path),
                     "--output", str(raw)]
     if _run(cmd) != 0 or not raw.exists():
         print("[run_malaysia] 采集失败，终止。", file=sys.stderr)
