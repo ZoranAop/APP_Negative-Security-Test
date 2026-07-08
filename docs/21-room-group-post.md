@@ -98,7 +98,37 @@ PUT 一条 `xxai.fee_message`，把刚创建的 `moment_id` 作为 `post_id` 挂
 外部图片 URL 会**自动下载并转存 S3**（`POST ${UPLOAD_CREDENTIALS_URL}` 取临时凭证，
 `boto3` 上传到 `teststatic-x.tp-ex.com`），再用站内 URL 发布。
 
-## 21.7 快速命令
+## 21.7 去重（避免重复图片 / 文章 / 文案）
+
+脚本自带**持久化去重账本**（默认 `data/tuzi_used.json`），避免重复发布同一张图、
+同一篇 tuzi 文章、同一段文案（话题描述）。账本结构：
+
+| 键              | 含义                                   |
+| --------------- | -------------------------------------- |
+| `used_urls`     | 已发布过的**原始图片 URL**             |
+| `used_aids`     | 已抓取过的 **tuzi 文章 aid**           |
+| `used_captions` | 已用过的**文案 / 话题描述**            |
+
+- 抓 tuzi 时**跳过**账本里的 `aid` / 图片 URL，自动翻到更后面的文章取新图。
+- 装配时**跳过**已用过的文案；`--captions-file` 里只挑未用过的行依次分配，
+  不够时用带日期的占位文案，绝不重复话题描述。
+- 每次发布成功后，把本轮用到的图 / 文章 / 文案**写回账本**。
+
+```powershell
+# 默认就开启; 显式指定账本路径:
+py -3 scripts/post_room_moments.py --tuzi-column xiongqi --group-plan 5,5,5,7,7,7 `
+    --dedupe-file data/tuzi_used.json `
+    --captions-file templates/room_captions.example.txt
+
+# 关闭去重(允许重复):
+py -3 scripts/post_room_moments.py --tuzi-column xiongqi --num-posts 3 --no-dedupe
+```
+
+> 仓库已随附一份 `data/tuzi_used.json`，其中已标记先前批次用过的文章 aid、
+> 图片 URL 与文案。继续发帖时会自动跳过它们。
+
+## 21.8 快速命令
+
 
 ```powershell
 # UTF-8，避免 emoji 触发 GBK 报错
@@ -124,7 +154,7 @@ py -3 scripts/post_room_moments.py --csv moments_room.csv
 
 完整流程见 [`runbooks/run-room-group-post.md`](runbooks/run-room-group-post.md)。
 
-## 21.8 核对 / 验收
+## 21.9 核对 / 验收
 
 用同一账号 token 调 `GET ${ROOM_FEED_URL}?room_id=<room>&page_size=N` 看刚发的帖子
 是否在房间 feed 顶部、图片张数是否正确：
@@ -133,7 +163,7 @@ py -3 scripts/post_room_moments.py --csv moments_room.csv
 $env:ROOM_FEED_URL  # 默认 http://100.64.0.53:8889/api/v1/feed/room_moments
 ```
 
-## 21.9 注意事项
+## 21.10 注意事项
 
 - **不硬编码任何凭据**：账号 / 密码 / 房间 ID 一律走环境变量或 `.env`。
 - **`room_id` 是 Matrix 风格字符串**（`!xxx:xxai.com`），原样传，别当数字。
