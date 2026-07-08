@@ -18,6 +18,14 @@
           "img_host": "img.yituyu.com",
           "seed_pages": ["/", "/gallery/", "/rank/"],
           "referer": "https://www.yituyu.com/"
+        },
+        {
+          "site": "turismo",
+          "type": "turismo",
+          "base": "https://www.turismo.cc",
+          "columns": ["xiuren", "cosplay", "rosi", "youmi", "mygirl", "tuigirl"],
+          "imgs_per_post": 4,
+          "referer": "https://www.turismo.cc/"
         }
       ]
     }

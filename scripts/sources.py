@@ -160,7 +160,92 @@ def iter_yituyu(source: dict, need: int, has_id, has_url):
     return out
 
 
-_ITER = {"tuzi": iter_tuzi, "yituyu": iter_yituyu}
+# ---------------------------------------------------------------------------
+# turismo.cc (爱尤物) — WordPress 图站; 一级栏目列文章, 二级详情页正文区高清图
+#   一级: /<column>/ (如 /xiuren/ /cosplay/ /rosi/), 含文章链接 /<slug>.html
+#   二级: /<slug>.html, 正文 <div id="post_content"> 内 <img> 为高清原图
+#   站内唯一标记 id = "turismo:<slug>:<basename>"
+# ---------------------------------------------------------------------------
+def _turismo_list_slugs(base: str, column: str, want: int, has_id) -> list[str]:
+    slugs, seenset = [], set()
+    page = 1
+    while len(slugs) < want and page <= 15:
+        url = f"{base}/{column}/" if page == 1 else f"{base}/{column}/index_{page}.html"
+        try:
+            txt = _get(url, f"{base}/{column}/")
+        except Exception as e:  # noqa: BLE001
+            print(f"[warn] turismo list {url}: {e}")
+            break
+        found = re.findall(r'href="/([A-Za-z0-9]{5,8})\.html"', txt)
+        new = [s for s in found if s not in seenset]
+        for s in found:
+            seenset.add(s)
+        if not new:
+            break
+        slugs.extend(new)
+        page += 1
+        time.sleep(0.25)
+    return slugs
+
+
+def _turismo_content_photos(base: str, slug: str) -> list[str]:
+    txt = _get(f"{base}/{slug}.html", f"{base}/")
+    i = txt.find('id="post_content"')
+    if i < 0:
+        return []
+    end = txt.find('class="related', i)
+    if end < 0:
+        end = txt.find('id="footer"', i)
+    seg = txt[i: end if end > 0 else len(txt)]
+    urls = re.findall(
+        r'(?:data-original|src)="(//img\.youwushow\.top/[^"]+\.(?:jpg|jpeg|png|webp))"',
+        seg, re.I)
+    return ["https:" + u for u in urls if "/dy_img_" not in u]
+
+
+def iter_turismo(source: dict, need: int, has_id, has_url):
+    """从 turismo.cc 的多个栏目轮流进二级详情页, 取正文高清图。"""
+    base = source.get("base", "https://www.turismo.cc")
+    columns = source.get("columns") or ["xiuren"]
+    per_post = int(source.get("imgs_per_post", 4))
+    col_slugs = {c: _turismo_list_slugs(base, c, need + 10, has_id) for c in columns}
+    ptr = {c: 0 for c in columns}
+    out = []
+    while len(out) < need:
+        progressed = False
+        for c in columns:
+            if len(out) >= need:
+                break
+            slugs = col_slugs[c]
+            while ptr[c] < len(slugs):
+                slug = slugs[ptr[c]]
+                ptr[c] += 1
+                progressed = True
+                if has_id(f"turismo:{slug}"):
+                    continue
+                try:
+                    pics = _turismo_content_photos(base, slug)
+                except Exception as e:  # noqa: BLE001
+                    print(f"[warn] turismo {c}/{slug}: {e}")
+                    continue
+                if not pics:
+                    continue
+                taken = 0
+                for u in pics:
+                    if len(out) >= need or taken >= per_post:
+                        break
+                    uid = f"turismo:{slug}:{u.rsplit('/', 1)[-1]}"
+                    if has_id(uid) or has_url(u):
+                        continue
+                    out.append({"url": u, "id": uid, "site": "turismo"})
+                    taken += 1
+                break  # 取完这篇, 轮到下个栏目
+        if not progressed:
+            break
+    return out
+
+
+_ITER = {"tuzi": iter_tuzi, "yituyu": iter_yituyu, "turismo": iter_turismo}
 
 
 def collect_category(category: str, need: int, has_id, has_url,
