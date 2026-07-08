@@ -197,7 +197,8 @@ class Config:
 
     # 素材 CSV 可选字段
     MOMENTS_CSV_OPTIONAL_FIELDS = [
-        "visibility", "room_id", "image_urls",
+        "visibility", "room_id", "is_async", "is_vip_group", "image_urls",
+        "video_url", "thumbnail_url",
         "location_name", "location_address",
         "location_lat", "location_lon"
     ]

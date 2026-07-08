@@ -42,16 +42,18 @@ py -3 scripts/opennana_fetch.py `
 **用户第一人称的自主角色文案**，写回 `moments_room.csv`，并给每行填上 `room_id`：
 
 ```csv
-content,visibility,room_id,image_urls,location_name,location_address,location_lat,location_lon
-"周末打卡～今日穿搭分享 #今日穿搭",0,10086,https://.../a.jpg,,,,
-"深夜书房，安静地看会儿书 #清冷感",0,10086,https://.../b.jpg,,,,
+content,visibility,room_id,is_async,is_vip_group,image_urls,location_name,location_address,location_lat,location_lon
+"周末打卡～今日穿搭分享 #今日穿搭",0,!wYYcMFpnG0b0Keot:xxai.com,true,,https://.../a.jpg,,,,
+"深夜书房，安静地看会儿书 #清冷感",0,!wYYcMFpnG0b0Keot:xxai.com,true,,https://.../b.jpg,,,,
 ```
 
 - **整批发同一个房间**：所有行 `room_id` 填同一个值。
 - **不同房间**：逐行填不同 `room_id`。
 - **混合个人 + 房间**：部分行留空 `room_id` 即发个人动态。
+- `is_async=true`（配非空 `room_id`）：后端会同步再发一条公开帖，响应含 `public_moment_id`。
+- `is_vip_group=true`：收费 / VIP 群场景。
 
-> `room_id` 是字符串，注意保留前导 0（如有）。
+> `room_id` 是 **Matrix 风格字符串**（`!xxx:xxai.com`），原样填、别当数字。
 
 ### Step 3 — 批量发帖
 
@@ -101,22 +103,24 @@ Invoke-RestMethod -Method Get `
 
 ## 单条发到房间（不走 CSV，直接调接口）
 
-需要"发房间的同时同步发一条公开帖"（`is_async=true`）时，脚本暂未透传该字段，
-可直接调 HTTP：
+脚本已支持通过 CSV 的 `is_async` / `is_vip_group` 列透传，所以一般不需要手写 HTTP。
+但如果想临时验一条、或走客户端的 feed 域名，可直接调：
 
 ```powershell
 $token = "<token>"
 $body = @{
   content    = "群里也发一条～ #分享"
-  room_id    = "10086"
+  room_id    = "!wYYcMFpnG0b0Keot:xxai.com"
   visibility = 0
   is_async   = $true
   media_info = @{ type = "image"; images = @("https://.../a.jpg") }
 } | ConvertTo-Json -Depth 5
 Invoke-RestMethod -Method Post `
-  -Uri "http://100.64.0.47:8889/api/v1/moments/" `
+  -Uri "https://testapi-feed-x.tp-ex.com/api/v1/moments" `
   -Headers @{ Authorization = "Bearer $token"; "Content-Type" = "application/json" } `
   -Body $body
 ```
 
-返回里 `moment_id` 是房间帖、`public_moment_id` 是同步的公开帖。
+返回里 `moment_id` 是房间帖、`public_moment_id` 是同步的公开帖（均为字符串 id）。
+
+> 内网压测环境可把 URL 换成 `${MOMENTS_API_URL}`（如 `http://100.64.0.53:8889/api/v1/moments/`）。

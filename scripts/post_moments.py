@@ -123,6 +123,26 @@ def build_payload(row: Dict[str, str]) -> Dict[str, Any]:
     if room_id:
         payload["room_id"] = room_id
 
+    # 群组发帖可选布尔字段（详见 docs/14-room-moments.md）
+    #   is_async: room_id 非空且为 true 时，后端会同步再发一条 room_id 为空的
+    #             公开帖，响应里额外返回 public_moment_id。
+    #   is_vip_group: VIP 群组标识。
+    def _parse_bool(v: str):
+        v = (v or "").strip().lower()
+        if v in ("1", "true", "yes", "y", "t"):
+            return True
+        if v in ("0", "false", "no", "n", "f"):
+            return False
+        return None  # 空 / 无法识别 → 不透传，用后端默认值
+
+    is_async_val = _parse_bool(row.get("is_async", ""))
+    if is_async_val is not None:
+        payload["is_async"] = is_async_val
+
+    is_vip_group_val = _parse_bool(row.get("is_vip_group", ""))
+    if is_vip_group_val is not None:
+        payload["is_vip_group"] = is_vip_group_val
+
     # 媒体信息 - 优先级：视频 > 图片 > 纯文本
     video_url_str = row.get("video_url", "").strip()
     thumbnail_url_str = row.get("thumbnail_url", "").strip()
@@ -188,7 +208,7 @@ def get_aws_credentials(token: str, timeout: int = 15) -> Dict[str, Any]:
         "Content-Type": "application/json",
         "Authorization": f"Bearer {token}" if not token.lower().startswith("bearer ") else token
     }
-    url = "https://devapi-x.tp-ex.com/file/upload/credentials"
+    url = config.UPLOAD_CREDENTIALS_URL
     try:
         response = robust_request(
             method='POST',
