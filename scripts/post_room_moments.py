@@ -68,6 +68,12 @@ from typing import Iterable
 
 import requests
 
+# 同目录 sources.py: 图片源分类注册与统一抓取(可选; 仅 --category 时需要)
+try:
+    import sources as _sources  # type: ignore
+except ImportError:  # 允许作为模块导入时相对路径不同
+    _sources = None
+
 try:
     import boto3  # optional, only needed when uploading external images to S3
 except ImportError:  # pragma: no cover
@@ -111,10 +117,11 @@ def log(msg: str) -> None:
 
 # ---------------------------------------------------------------------------
 # 去重账本（Persistent dedupe ledger）
-#   避免重复发布同一张图片 / 同一篇 tuzi 文章 / 同一段文案(话题描述)。
-#   结构: {"used_urls": [...原图URL...],
-#          "used_aids": [...tuzi文章aid...],
-#          "used_captions": [...已用文案...]}
+#   避免重复发布同一张图片 / 同一篇文章 / 同一段文案(话题描述)。
+#   结构: {"used_urls":   [...原图URL...],
+#          "used_aids":   [...tuzi 文章 aid, 兼容旧账本...],
+#          "used_ids":    [...多源统一站内标记, 如 tuzi:xiongqi:123 / yituyu:456:07_x.jpg...],
+#          "used_captions":[...已用文案...]}
 # ---------------------------------------------------------------------------
 class Dedupe:
     def __init__(self, path: Path, enabled: bool = True):
@@ -122,18 +129,20 @@ class Dedupe:
         self.enabled = enabled
         self.urls: set[str] = set()
         self.aids: set[str] = set()
+        self.ids: set[str] = set()
         self.captions: set[str] = set()
         if enabled and path.exists():
             try:
                 d = json.loads(path.read_text(encoding="utf-8"))
                 self.urls = {str(x) for x in d.get("used_urls", [])}
                 self.aids = {str(x) for x in d.get("used_aids", [])}
+                self.ids = {str(x) for x in d.get("used_ids", [])}
                 self.captions = {str(x) for x in d.get("used_captions", [])}
             except Exception as e:  # noqa: BLE001
                 log(f"[warn] 读去重账本失败 {path}: {e}")
         if enabled:
             log(f"[dedupe] 账本 {path}: {len(self.urls)} 图 / "
-                f"{len(self.aids)} 文章 / {len(self.captions)} 文案")
+                f"{len(self.aids)} 文章 / {len(self.ids)} 源标记 / {len(self.captions)} 文案")
 
     def has_url(self, u: str) -> bool:
         return self.enabled and u in self.urls
@@ -141,14 +150,31 @@ class Dedupe:
     def has_aid(self, a: str) -> bool:
         return self.enabled and a in self.aids
 
+    def has_id(self, i: str) -> bool:
+        """多源统一站内标记去重(sources.py 用)。兼容旧账本: tuzi:<col>:<aid> 也查 used_aids。"""
+        if not self.enabled:
+            return False
+        if i in self.ids:
+            return True
+        if i.startswith("tuzi:"):
+            aid = i.rsplit(":", 1)[-1]
+            if aid in self.aids:
+                return True
+        return False
+
     def has_caption(self, c: str) -> bool:
         return self.enabled and c.strip() in self.captions
 
-    def add(self, *, urls=None, aids=None, captions=None) -> None:
+    def add(self, *, urls=None, aids=None, ids=None, captions=None) -> None:
         if urls:
             self.urls.update(urls)
         if aids:
             self.aids.update(str(a) for a in aids)
+        if ids:
+            for i in ids:
+                self.ids.add(str(i))
+                if str(i).startswith("tuzi:"):        # 同时回填 used_aids 保持兼容
+                    self.aids.add(str(i).rsplit(":", 1)[-1])
         if captions:
             self.captions.update(c.strip() for c in captions if c and c.strip())
 
@@ -159,10 +185,12 @@ class Dedupe:
         self.path.write_text(json.dumps({
             "used_urls": sorted(self.urls),
             "used_aids": sorted(self.aids),
+            "used_ids": sorted(self.ids),
             "used_captions": sorted(self.captions),
         }, ensure_ascii=False, indent=2), encoding="utf-8")
         log(f"[dedupe] 账本已更新 -> {self.path} "
-            f"({len(self.urls)} 图 / {len(self.aids)} 文章 / {len(self.captions)} 文案)")
+            f"({len(self.urls)} 图 / {len(self.aids)} 文章 / "
+            f"{len(self.ids)} 源标记 / {len(self.captions)} 文案)")
 
 
 # ---------------------------------------------------------------------------
@@ -458,6 +486,8 @@ def parse_args() -> argparse.Namespace:
     ap = argparse.ArgumentParser(description="发布动态到群组/房间(Matrix room)并在群聊显示")
     src = ap.add_mutually_exclusive_group(required=True)
     src.add_argument("--csv", help="moments CSV 素材文件")
+    src.add_argument("--category", help="按类别(标签)从该类下各网站混合选图, 如 --category 美女 "
+                                        "(类别配置见 sources/categories.json)")
     src.add_argument("--tuzi-column", help="从 tuziyouwang.com 抓某栏目(如 xiongqi/meitui)")
     src.add_argument("--text", help="发一条纯文字帖")
 
@@ -516,6 +546,32 @@ def main() -> int:
                 continue
             row["aids"] = []
             tasks.append(row)
+    elif args.category:
+        if _sources is None:
+            log("[error] 无法导入 sources 模块(scripts/sources.py), --category 不可用")
+            return 2
+        need = sum(group_plan) if group_plan else args.num_posts * max(1, args.group_size)
+        log(f"[类别] '{args.category}' 需要 {need} 张「未用过」的原图(从该类各网站混合)")
+        recs = _sources.collect_category(args.category, need,
+                                         dedupe.has_id, dedupe.has_url)
+        sites = ",".join(sorted({r["site"] for r in recs})) or "-"
+        log(f"[类别] 拿到 {len(recs)} 张新图 (站点: {sites})")
+        # recs: [{"url","id","site"}]
+        groups = plan_groups(recs, group_plan, args.group_size)
+        avail_caps = [c for c in captions if not dedupe.has_caption(c)]
+        if captions and len(avail_caps) < len(groups):
+            log(f"[warn] 可用(未重复)文案 {len(avail_caps)} < 帖子数 {len(groups)}; 不足用占位")
+        for i, g in enumerate(groups):
+            imgs = [r["url"] for r in g]
+            ids = [r["id"] for r in g]
+            if i < len(avail_caps):
+                cap = avail_caps[i]
+            elif captions:
+                cap = f"今日分享 · {time.strftime('%m%d')} #{i + 1}"
+            else:
+                cap = f"分享 #{i + 1}"
+            tasks.append({"content": cap, "images": imgs, "room_id": args.room_id,
+                          "aids": [], "src_ids": ids})
     elif args.tuzi_column:
         need = sum(group_plan) if group_plan else args.num_posts * max(1, args.group_size)
         log(f"[tuzi] 抓取栏目 {args.tuzi_column}, 需要 {need} 张「未用过」的原图")
@@ -570,10 +626,10 @@ def main() -> int:
         mid, eid = res
         log(f"    [OK] moment_id={mid} event_id={eid}")
         published.append((mid, eid, len(imgs)))
-        # 记入去重账本: 本帖用到的原始外部图片 URL、tuzi 文章 aid、文案(话题描述)。
+        # 记入去重账本: 本帖用到的原始外部图片 URL、tuzi 文章 aid、多源站内标记、文案。
         # 注意 t["images"] 此时仍是原始外部 URL(转存 S3 前), 正是要去重的键。
         dedupe.add(urls=t.get("images") or [], aids=t.get("aids") or [],
-                   captions=[t["content"]])
+                   ids=t.get("src_ids") or [], captions=[t["content"]])
         time.sleep(args.delay)
 
     if published:

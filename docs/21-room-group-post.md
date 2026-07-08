@@ -127,7 +127,44 @@ py -3 scripts/post_room_moments.py --tuzi-column xiongqi --num-posts 3 --no-dedu
 > 仓库已随附一份 `data/tuzi_used.json`，其中已标记先前批次用过的文章 aid、
 > 图片 URL 与文案。继续发帖时会自动跳过它们。
 
-## 21.8 快速命令
+## 21.8 图片源分类 / 标签（Categories）
+
+把不同图片网站按**标签(类别)**归组, 发帖时用 `--category <标签>` 从该类下**各网站
+混合选图**(自动去重、轮流取)。配置文件: `sources/categories.json`。
+
+已内置类别 **「美女」**, 含两个站:
+
+| 站点            | 类型   | 取图方式                                             |
+| --------------- | ------ | ---------------------------------------------------- |
+| tuziyouwang.com | tuzi   | EmpireCMS 栏目(meitui/fengtun/xiaoneinei/xiongqi/gengduo), 每篇详情页 1 张 `/d/file/*` 原图 |
+| yituyu.com      | yituyu | 画廊, 每个画廊多张 `img.yituyu.com/pic/<gid>/NN_*` 原图 |
+
+抓取由 `scripts/sources.py` 统一实现: `collect_category(标签, 需要张数, ...)`
+从该类各站**轮流**取「未用过」的新图, 返回统一记录 `{url, id, site}`。
+`id` 是跨站唯一标记(如 `tuzi:xiongqi:11379` / `yituyu:14617:01_x.jpg`), 记入去重账本
+的 `used_ids`, 保证同一张图/同一篇画廊不重复。
+
+```powershell
+# 从「美女」类(tuzi + yituyu 混合)发 5 帖, 每帖 4 图:
+py -3 scripts/post_room_moments.py --category 美女 --group-plan 4,4,4,4,4 `
+    --dedupe-file data/tuzi_used.json `
+    --captions-file templates/room_captions.example.txt
+```
+
+### 新增网站到某类别
+
+1. 在 `sources/categories.json` 对应类别的 `sources` 里加一项, 指定 `type` 与站点参数。
+2. 若是新 `type`, 在 `scripts/sources.py` 里实现一个 `iter_<type>(source, need, has_id, has_url)`
+   抓取器(返回 `[{"url","id","site"}, ...]`), 并注册进 `_ITER`。
+3. 之后 `--category <标签>` 就会自动把新站纳入混合选图。
+
+### 新增一个类别
+
+在 `categories.json` 的 `categories` 下加一个键(如 `"风景"`), 填 `label` 与 `sources` 即可,
+发帖用 `--category 风景`。
+
+## 21.9 快速命令
+
 
 
 ```powershell
@@ -154,7 +191,7 @@ py -3 scripts/post_room_moments.py --csv moments_room.csv
 
 完整流程见 [`runbooks/run-room-group-post.md`](runbooks/run-room-group-post.md)。
 
-## 21.9 核对 / 验收
+## 21.10 核对 / 验收
 
 用同一账号 token 调 `GET ${ROOM_FEED_URL}?room_id=<room>&page_size=N` 看刚发的帖子
 是否在房间 feed 顶部、图片张数是否正确：
@@ -163,7 +200,7 @@ py -3 scripts/post_room_moments.py --csv moments_room.csv
 $env:ROOM_FEED_URL  # 默认 http://100.64.0.53:8889/api/v1/feed/room_moments
 ```
 
-## 21.10 注意事项
+## 21.11 注意事项
 
 - **不硬编码任何凭据**：账号 / 密码 / 房间 ID 一律走环境变量或 `.env`。
 - **`room_id` 是 Matrix 风格字符串**（`!xxx:xxai.com`），原样传，别当数字。
