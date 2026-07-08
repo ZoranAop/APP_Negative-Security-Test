@@ -49,7 +49,7 @@ PUT 一条 `xxai.fee_message`，把刚创建的 `moment_id` 作为 `post_id` 挂
 | 字段          | 类型    | 说明                                                                 |
 | ------------- | ------- | -------------------------------------------------------------------- |
 | `content`     | string  | 正文                                                                 |
-| `room_id`     | string  | **Matrix 风格房间 ID**，如 `!wqYszkc39Y8lAA3C:xxai.com`（原样字符串） |
+| `room_id`     | string  | **Matrix 风格房间 ID**，如 `!yourRoomId:xxai.com`（原样字符串） |
 | `is_async`    | boolean | **广场发帖开关**，见 §21.5                                           |
 | `media_info`  | object  | `{"type":"text"}` 或 `{"type":"image","images":[...]}`（最多 9 张）  |
 
@@ -107,7 +107,7 @@ $env:PYTHONIOENCODING = "utf-8"; $env:PYTHONUTF8 = "1"
 # 账号 / 房间从环境变量读（不写进命令行历史）
 $env:ROOM_POST_EMAIL    = "your_account@example.com"
 $env:ROOM_POST_PASSWORD = "your_password"
-$env:ROOM_POST_ROOM_ID  = "!wqYszkc39Y8lAA3C:xxai.com"
+$env:ROOM_POST_ROOM_ID  = "!yourRoomId:xxai.com"
 
 # A. 纯文字帖
 py -3 scripts/post_room_moments.py --text "大家好呀～有一起玩的朋友吗？"

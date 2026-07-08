@@ -9,7 +9,7 @@
 
 - 已完成 [`docs/02-environment.md`](../02-environment.md) 的准备。
 - 有**目标房间的发帖权限**（发帖账号需为房间创建者，否则后端 `50006` 拒绝）。
-- 拿到目标房间的 **Matrix room_id**（形如 `!wqYszkc39Y8lAA3C:xxai.com`）。
+- 拿到目标房间的 **Matrix room_id**（形如 `!yourRoomId:xxai.com`）。
 - 依赖：`pip install requests boto3`（外部图片转存 S3 需要 boto3）。
 - PowerShell 先设 UTF-8：
 
@@ -23,7 +23,7 @@
   ```powershell
   $env:ROOM_POST_EMAIL    = "your_account@example.com"
   $env:ROOM_POST_PASSWORD = "your_password"
-  $env:ROOM_POST_ROOM_ID  = "!wqYszkc39Y8lAA3C:xxai.com"
+  $env:ROOM_POST_ROOM_ID  = "!yourRoomId:xxai.com"
   ```
 
 ## 场景 A — 纯文字帖
@@ -55,12 +55,12 @@ CSV 表头与个人发帖一致（`room_id` 列可留空，用 `--room-id` 覆�
 
 ```csv
 content,visibility,room_id,is_async,image_urls,location_name,location_address,location_lat,location_lon
-"周末打卡～今日穿搭分享",0,!wqYszkc39Y8lAA3C:xxai.com,false,https://.../a.jpg,,,,
+"周末打卡～今日穿搭分享",0,!yourRoomId:xxai.com,false,https://.../a.jpg,,,,
 ```
 
 ```powershell
 py -3 scripts/post_room_moments.py --csv moments_room.csv
-# 或统一覆盖房间：--room-id !wqYszkc39Y8lAA3C:xxai.com
+# 或统一覆盖房间：--room-id !yourRoomId:xxai.com
 ```
 
 - `image_urls` 里的**外部 URL** 会自动下载并转存 S3，再用站内 URL 发布。
