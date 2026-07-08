@@ -27,6 +27,24 @@
 
 > 抓取时务必带 `Referer: https://opennana.com/` 和正常 `User-Agent`，否则 403。
 
+### 去重：不重复发送已发过的图片（重要）
+
+`opennana_fetch.py` 输出会带一列 `_slug`（每个图库条目的唯一 slug），并支持
+`--dedupe-file`。推荐固定用 `data/used_slugs.json` 作为"已发图片账本"：
+
+- **拉图**时带 `--dedupe-file data/used_slugs.json`：脚本会跳过账本里所有
+  slug，只产出没发过的新图。
+- **发完**用 `scripts/record_sent_slugs.py` 把这一批实际发出的 slug 回写进账本：
+
+  ```powershell
+  py -3 scripts/record_sent_slugs.py `
+      --from-csv result/moments_fetched.csv `
+      --dedupe-file data/used_slugs.json
+  ```
+
+只要坚持"拉图带 dedupe → 发完回写 slug"，后续批次就永远不会重复发送已发图片。
+完整流程见 [`runbooks/run-image-post.md`](runbooks/run-image-post.md)。
+
 ### 其他可选数据源
 
 - https://www.open-prompts.com/zh/gallery — 见 `scripts/fetch_openprompts.py`
@@ -44,7 +62,7 @@ py -3 scripts/multi_source_fetch.py `
     --theme beauty `
     --exclude-ads `
     --limit 100 `
-    --dedupe-file result\used_slugs.json `
+    --dedupe-file data\used_slugs.json `
     --output moments.csv `
     --shuffle
 ```

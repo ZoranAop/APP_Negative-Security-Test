@@ -32,11 +32,9 @@ results/
 logs/
 *.log
 
-# ---------- crawl dedupe state (already-fetched records; local, persistent) ----------
-state/
-*_used_*.json
-*_dedupe*.json
-*_dd.json
+# ---------- dedupe ledger (versioned: tracks already-sent image slugs) ----------
+!data/
+!data/used_slugs.json
 
 # ---------- python ----------
 __pycache__/

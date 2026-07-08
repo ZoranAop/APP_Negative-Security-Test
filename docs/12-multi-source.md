@@ -28,7 +28,7 @@ py -3 scripts/multi_source_fetch.py `
     --exclude-ads `
     --limit 100 `
     --source-weights "opennana=40,openprompts=40,lovimg=20" `
-    --dedupe-file result\used_slugs.json `
+    --dedupe-file data\used_slugs.json `
     --output moments.csv `
     --shuffle
 ```
@@ -57,7 +57,7 @@ content,visibility,room_id,image_urls,location_name,location_address,location_la
 
 ## 12.4 去重策略
 
-`--dedupe-file result/used_slugs.json` 会存已用过的 slug 集合：
+`--dedupe-file data/used_slugs.json` 会存已用过的 slug 集合：
 
 ```json
 [

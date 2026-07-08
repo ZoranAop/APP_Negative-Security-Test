@@ -5,7 +5,7 @@
 
 最近更新：2026-07-04
 
-- 加入 **多源采集**（opennana / open-prompts / lovimg / tophub）+ **广告过滤**
+- 加入 **多源采集**（opennana / open-prompts / lovimg）+ **广告过滤**
 - 加入 **多语言主体视角文案**（EN / 繁中 / 简中 / 日）
 - 加入 **两阶段发布**（避开并发登录 429），支持 token 复用
 
@@ -31,8 +31,6 @@ xxai-square-publisher/
 │   ├── 11-anti-ad-filtering.md     # 广告 / 商业素材过滤规则
 │   ├── 12-multi-source.md          # 多源素材采集（opennana / openprompts / lovimg）
 │   ├── 13-multilang-captions.md    # 多语言主体视角文案改写
-│   ├── 14-tophub-source.md         # tophub 热榜文本源（纯文本话题 → 多语言发布）
-│   ├── 15-image-hd-sources.md      # 高清图片源 yituyu / tuzi（含 Referer 反爬处理）
 │   └── runbooks/                   # 可直接照抄的 runbook
 │       ├── run-image-post.md
 │       └── run-video-post.md
@@ -41,15 +39,12 @@ xxai-square-publisher/
 │   ├── publish_from_tokens.py      # 两阶段发帖：顺序登录 → 并发发布（≥15 账号）
 │   ├── post_single_moment_vision.py# 单条带 Vision LLM 的发帖
 │   ├── post_video.py               # 视频发帖
-│   ├── opennana_fetch.py           # 从 OpenNana 拉图/视频（含 --exclude-ads / --theme / --dedupe-file）
+│   ├── opennana_fetch.py           # 从 OpenNana 拉图/视频（含 --exclude-ads / --theme / --dedupe-file，输出 _slug 列）
 │   ├── fetch_openprompts.py        # 从 open-prompts.com 拉图
 │   ├── fetch_lovimg.py             # 从 lovimg.com 拉图（SSR 反解）
-│   ├── fetch_tophub.py             # 从 tophub.today/hot 拉热榜话题（纯文本，公开无需登录）
-│   ├── fetch_yituyu.py             # 从 yituyu.com 拉高清写真图（gallery 详情页原图）
-│   ├── fetch_tuzi.py               # 从 tuziyouwang.com 拉高清图（meitui 等栏目详情页原图）
 │   ├── multi_source_fetch.py       # 多源统一入口（默认过滤广告 + 主题过滤 + 跨源去重）
 │   ├── caption_multilang.py        # 三语言/四语言主体视角文案改写
-│   ├── plan_lang_ratio.py          # 按精确配比分配 _lang（如 英+日80%/繁中20%，禁简体）
+│   ├── record_sent_slugs.py        # 发完回写已发 slug 到 used_slugs.json（下次拉图自动排除）
 │   ├── gitlab_pull.py              # 从 GitLab 拉取真实账号 CSV
 │   ├── config.py utils.py retry.py validation.py
 │   └── legacy/README.md            # 历史脚本说明
@@ -81,7 +76,7 @@ py -3 scripts/multi_source_fetch.py `
     --theme beauty `
     --exclude-ads `
     --limit 100 `
-    --dedupe-file result/used_slugs.json `
+    --dedupe-file data/used_slugs.json `
     --output moments_raw.csv `
     --shuffle
 
@@ -131,13 +126,8 @@ py -3 scripts/post_moments.py --accounts-csv accounts_10.csv --csv moments.csv \
 | `fetch_opennana`              | 从 OpenNana 拉素材（图片 / 视频 + 提示词）           |
 | `fetch_openprompts`           | 从 open-prompts.com 拉素材                            |
 | `fetch_lovimg`                | 从 lovimg.com 拉素材                                  |
-| `fetch_tophub`                | 从 tophub.today/hot 拉热榜话题（纯文本）             |
-| `fetch_yituyu`                | 从 yituyu.com 拉高清写真图                            |
-| `fetch_tuzi`                  | 从 tuziyouwang.com 拉高清图（meitui 等栏目）          |
-| `fetch_xhs`                   | 从小红书 explore 采集笔记（图/视频，多线程去重）      |
 | `fetch_multi_source`          | 多源统一采集（默认过滤广告 + 跨源去重）              |
 | `generate_multilang_captions` | 多语言主体视角文案改写                                |
-| `plan_lang_ratio`             | 按精确配比分配 `_lang`（英+日80%/繁中20% 等，禁简体） |
 | `rewrite_caption`             | 返回「英文提示词 → 中文用户口吻文案」的改写指令      |
 
 详细参数与启动方式见 [`mcp/README.md`](mcp/README.md)。
@@ -160,19 +150,3 @@ py -3 scripts/post_moments.py --accounts-csv accounts_10.csv --csv moments.csv \
 - 多语言文案：`caption_multilang.py` 内建 EN / 简中 / 繁中 / 日 模板池
 - 两阶段发布：`publish_from_tokens.py` 顺序登录 + 429 退避 + token 复用
 - 三批实战验证：300/300 帖全部成功（详见 `docs/05-batch-records.md`）
-
-v0.3 增量：
-
-- tophub 文本源：新增 `fetch_tophub.py`，从 tophub.today/hot 抓取热榜话题（纯文本、公开无需登录），
-  纳入 `multi_source_fetch.py`（`--sources ...,tophub`）与 MCP `fetch_tophub`，文档见 `docs/14-tophub-source.md`
-- 精确配比：新增 `plan_lang_ratio.py`，按最大余数法给 `_lang` 精确配额
-  （如 英+日 80% / 繁中 20%，默认禁简体）；`caption_multilang.py` 加 `--use-existing-lang` 沿用该配额
-- 实战验证：100 条热榜话题 → 英/繁中(台湾)/日多语言（英+日 80%、繁中 20%）→ 20 企管账号，100/100 成功
-
-v0.4 增量：
-
-- 高清图片源：新增 `fetch_yituyu.py`（yituyu.com 写真高清图）与 `fetch_tuzi.py`（tuziyouwang.com
-  meitui 等栏目高清图），只取详情页原图而非缩略图，支持 `--min-side` 分辨率门槛与广告过滤；
-  纳入 `multi_source_fetch.py`（`--sources ...,yituyu,tuzi`）与 MCP `fetch_yituyu` / `fetch_tuzi`
-- Referer 反爬：文档化"发布前按各站正确 Referer 预下载到 images/ 缓存"的处理方式（`docs/15-image-hd-sources.md`）
-- 实战验证：两站高清图完成 5×2=10/10、20×(2-3)=53/53 真实发布

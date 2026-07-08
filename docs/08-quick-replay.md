@@ -29,7 +29,7 @@ py -3 scripts/multi_source_fetch.py `
     --theme beauty `
     --exclude-ads `
     --limit 100 `
-    --dedupe-file result\used_slugs.json `
+    --dedupe-file data\used_slugs.json `
     --output moments_raw.csv `
     --shuffle
 

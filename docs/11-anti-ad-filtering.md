@@ -65,7 +65,7 @@ py -3 scripts/fetch_openprompts.py `
     --page 1 --pages 1 --limit 100 `
     --theme beauty `
     --exclude-ads `
-    --dedupe-file result\used_slugs.json `
+    --dedupe-file data\used_slugs.json `
     --output moments_op.csv
 ```
 
@@ -77,7 +77,7 @@ py -3 scripts/multi_source_fetch.py `
     --theme beauty `
     --exclude-ads `
     --limit 100 `
-    --dedupe-file result\used_slugs.json `
+    --dedupe-file data\used_slugs.json `
     --output moments.csv
 ```
 

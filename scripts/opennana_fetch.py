@@ -9,8 +9,12 @@ API
 
 CSV columns (default)
     content,visibility,room_id,image_urls,
-    location_name,location_address,location_lat,location_lon
+    location_name,location_address,location_lat,location_lon,_slug
     (+ _video_url,_cover_url when --media-type=video)
+
+    ``_slug`` traces each row back to its OpenNana prompt so already-sent
+    images can be recorded into the dedupe file after publishing
+    (see scripts/record_sent_slugs.py).
 
 Options added in v0.2 (2026-07-04)
     --model           filter by generation model (e.g. ChatGPT, "Nano banana pro")
@@ -85,6 +89,9 @@ AD_KEYWORDS = [
     " ad ", " ad.", " ad,", "advertisement", "advert ", "advertising",
     "commercial", "sponsor", "brand-", "brand ", "brand:", "campaign",
     "promo", "promotion", "logo", "packaging", "billboard",
+    # Chinese ad / commercial-creative keywords (title & prompt are often zh)
+    "海报", "广告", "宣传", "促销", "包装", "logo设计", "品牌", "封面",
+    "banner", "poster",
 ]
 
 # Tag values (case-insensitive) that mean "graphic design / marketing collateral"
@@ -253,6 +260,10 @@ def iter_rows(
                     "location_address": "",
                     "location_lat": "",
                     "location_lon": "",
+                    # _slug lets the post step trace each row back to its OpenNana
+                    # prompt, so already-sent images can be recorded into the
+                    # dedupe file after publishing (see record_sent_slugs.py).
+                    "_slug": str(slug),
                 }
             else:  # video
                 videos = detail.get("video_urls") or []
@@ -270,6 +281,7 @@ def iter_rows(
                     "location_lon": "",
                     "_video_url": videos[0],
                     "_cover_url": images[0] if images else "",
+                    "_slug": str(slug),
                 }
 
             fetched_slugs.add(str(slug))
