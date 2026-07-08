@@ -31,8 +31,10 @@ xxai-square-publisher/
 │   ├── 11-anti-ad-filtering.md     # 广告 / 商业素材过滤规则
 │   ├── 12-multi-source.md          # 多源素材采集（opennana / openprompts / lovimg）
 │   ├── 13-multilang-captions.md    # 多语言主体视角文案改写
+│   ├── 14-room-moments.md          # 群组 / 房间发帖（room_id）接口与用法
 │   └── runbooks/                   # 可直接照抄的 runbook
 │       ├── run-image-post.md
+│       ├── run-room-post.md
 │       └── run-video-post.md
 ├── scripts/                        # 可运行 Python 工具
 │   ├── post_moments.py             # 图文 / 文本批量发帖（登录并发，≤10 账号最方便）

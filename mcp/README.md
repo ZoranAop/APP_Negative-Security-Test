@@ -18,7 +18,7 @@
 | `search_docs`                 | 在文档中按关键词检索（返回 file:line:snippet）                                            |
 | `list_scripts`                | 列出可调用的 Python 脚本及 docstring 摘要                                                  |
 | `read_script`                 | 读取脚本源码（让模型理解后再决定如何调用）                                                |
-| `run_post_moments`            | 调用 `scripts/post_moments.py` 批量发图文（登录并发，≤10 账号）                            |
+| `run_post_moments`            | 调用 `scripts/post_moments.py` 批量发图文（登录并发，≤10 账号）；**素材 CSV 的 `room_id` 列非空即发到群组/房间**（见 docs/14）|
 | `run_publish_from_tokens`     | 调用 `scripts/publish_from_tokens.py`（两阶段：顺序登录→并发发布，避 429）                |
 | `run_post_video`              | 调用 `scripts/post_video.py` 发视频                                                        |
 | `fetch_opennana`              | 从 OpenNana 拉素材（含 --theme / --model / --exclude-ads / --dedupe-file）                 |
@@ -139,3 +139,24 @@ OpenCode 在 `opencode.json` 中：
   6. 用户确认 → call run_post_moments(...) 实跑
   7. 读取 result/ 目录的 summary，汇报成功率
 ```
+
+### 群组 / 房间发帖
+
+```
+用户："帮我用 5 个账号，往房间 10086 里各发 1 条美女图文。"
+
+模型：
+  1. call read_doc(docs/14-room-moments.md) 了解 room_id 用法
+  2. call fetch_opennana(media_type=image, theme="beauty", exclude_ads=true,
+                          limit=5, dedupe_file="data/used_slugs.json",
+                          output="result/moments_room_fetched.csv")
+  3. 改写文案写回 moments_room.csv，并给每行填 room_id="10086"
+     （room_id 为空 = 发个人动态；非空 = 发到该房间）
+  4. call run_post_moments(accounts_csv="accounts_5.csv", csv="moments_room.csv",
+                            dry_run=true) → 给用户看命令
+  5. 用户确认 → call run_post_moments(...) 实跑
+  6. 用某账号 token 调 GET /api/v1/feed/room_moments?room_id=10086 核对
+```
+
+> `run_post_moments` 不单独暴露 room_id 参数——它按行读取素材 CSV 的 `room_id` 列，
+> 因此支持"整批同一房间 / 逐行不同房间 / 房间+个人混合"三种玩法。

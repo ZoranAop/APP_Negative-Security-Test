@@ -16,7 +16,7 @@ content,visibility,room_id,image_urls,location_name,location_address,location_la
 | ----------------- | ------------------------------------------------------------------------------------------ |
 | `content`         | **正文（必填）**                                                                           |
 | `visibility`      | `0=公开` / `1=私密` / `2=部分可见`                                                         |
-| `room_id`         | 房间 ID（可空）                                                                            |
+| `room_id`         | 房间 ID（可空）。**非空 = 发到群组/房间**，为空 = 发到个人动态（见 [`14-room-moments.md`](14-room-moments.md)）|
 | `image_urls`      | 多张图用 **英文逗号** 分隔；留空 = 纯文字帖；填外部 URL 时脚本会自动下载并转存到 S3        |
 | `location_*`      | 位置信息（可空）                                                                           |
 
