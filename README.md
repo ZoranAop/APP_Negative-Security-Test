@@ -8,6 +8,8 @@
 - 加入 **多源采集**（opennana / open-prompts / lovimg）+ **广告过滤**
 - 加入 **多语言主体视角文案**（EN / 繁中 / 简中 / 日）
 - 加入 **两阶段发布**（避开并发登录 429），支持 token 复用
+- 加入 **地区/站点内容线**：马来西亚 / 印尼 / 台湾（`run_malaysia.py` / `run_indonesia.py` / `run_taiwan.py`），
+  以及 **刺猬社区 cizucu.com 摄影图片线**（`run_cizucu.py`，见 [`docs/23-cizucu.md`](docs/23-cizucu.md)）
 
 ---
 
@@ -32,6 +34,7 @@ xxai-square-publisher/
 │   ├── 12-multi-source.md          # 多源素材采集（opennana / openprompts / lovimg）
 │   ├── 13-multilang-captions.md    # 多语言主体视角文案改写
 │   ├── 14-room-moments.md          # 群组 / 房间发帖（room_id）接口与用法
+│   ├── 23-cizucu.md                # 刺猬社区 cizucu.com 摄影图片采集与发布（Playwright + 摄影师口吻）
 │   └── runbooks/                   # 可直接照抄的 runbook
 │       ├── run-image-post.md
 │       ├── run-room-post.md
@@ -47,6 +50,8 @@ xxai-square-publisher/
 │   ├── multi_source_fetch.py       # 多源统一入口（默认过滤广告 + 主题过滤 + 跨源去重）
 │   ├── caption_multilang.py        # 三语言/四语言主体视角文案改写
 │   ├── record_sent_slugs.py        # 发完回写已发 slug 到 used_slugs.json（下次拉图自动排除）
+│   ├── fetch_cizucu.py             # 从 cizucu.com（刺猬摄影社区）主题模块采集图片（Playwright，见 docs/23）
+│   ├── run_cizucu.py               # cizucu 一键发布（采集 → 主体视角文案 → 发布，摄影师口吻）
 │   ├── gitlab_pull.py              # 从 GitLab 拉取真实账号 CSV
 │   ├── config.py utils.py retry.py validation.py
 │   └── legacy/README.md            # 历史脚本说明

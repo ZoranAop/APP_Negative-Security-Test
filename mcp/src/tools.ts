@@ -358,6 +358,35 @@ export const tools = [
     },
   },
   {
+    name: "fetch_cizucu",
+    description:
+      "Call scripts/fetch_cizucu.py to pull photos from cizucu.com (刺猬社区, a photography community) " +
+      "into a multi-image moments CSV. Playwright-based (JS-rendered Next.js SPA): opens each theme/module " +
+      "tag page (/zh-cn/explore/tags/<主题>), scrolls to lazy-load more (二级/三级页), collects photoId and " +
+      "maps to the public CDN original https://cdn.cizucu.com/images/photos/<id>.jpg (no Referer needed). " +
+      "Every --imgs-per-post photos become one post per theme; global photoId dedupe via --dedupe-file. " +
+      "cizucu photos are watermark-free (no bottom-crop). See docs/23-cizucu.md.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        themes: {
+          type: "string",
+          default: "portrait,street,scenery,city,nature,architecture,film,daily",
+          description: "comma theme keys (portrait/street/scenery/city/nature/architecture/film/daily/humanity/light/sky/mobile/casual/snap/china/travel/bw)",
+        },
+        posts_per_theme: { type: "integer", default: 3, minimum: 1, maximum: 20 },
+        imgs_per_post: { type: "integer", default: 6, minimum: 1, maximum: 9 },
+        min_imgs: { type: "integer", default: 4, minimum: 1, maximum: 9 },
+        scrolls: { type: "integer", default: 10, minimum: 1, maximum: 40, description: "lazy-load scroll depth" },
+        posts: { type: "integer", default: 0, description: "total posts cap; 0 = unlimited" },
+        dedupe_file: { type: "string", description: "JSON of already-used photoIds (cross-batch dedupe)" },
+        output: { type: "string" },
+      },
+      required: ["output"],
+      additionalProperties: false,
+    },
+  },
+  {
     name: "fetch_xhs",
     description:
       "Call scripts/crawl_xhs.py to crawl Xiaohongshu (小红书) explore-feed notes into a moments CSV. " +
@@ -672,6 +701,21 @@ export async function callTool(name: string, args: Record<string, unknown>): Pro
         if (a.exclude_ads) flags.push("--exclude-ads");
         if (a.dedupe_file) flags.push("--dedupe-file", String(a.dedupe_file));
         return runPython("fetch_tuzi.py", flags);
+      }
+
+      case "fetch_cizucu": {
+        const a = args as Record<string, any>;
+        const flags = [
+          "--themes", String(a.themes ?? "portrait,street,scenery,city,nature,architecture,film,daily"),
+          "--posts-per-theme", String(a.posts_per_theme ?? 3),
+          "--imgs-per-post", String(a.imgs_per_post ?? 6),
+          "--min-imgs", String(a.min_imgs ?? 4),
+          "--scrolls", String(a.scrolls ?? 10),
+          "--output", String(a.output),
+        ];
+        if (a.posts) flags.push("--posts", String(a.posts));
+        if (a.dedupe_file) flags.push("--dedupe-file", String(a.dedupe_file));
+        return runPython("fetch_cizucu.py", flags, 20 * 60 * 1000);
       }
 
       case "fetch_xhs": {

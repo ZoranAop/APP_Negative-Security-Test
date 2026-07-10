@@ -36,6 +36,9 @@ logs/
 !data/
 !data/used_slugs.json
 
+# ---------- per-source dedupe state (local machine state; see docs/20-dedupe.md) ----------
+state/
+
 # ---------- python ----------
 __pycache__/
 *.py[cod]
