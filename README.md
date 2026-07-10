@@ -10,6 +10,8 @@
 - 加入 **两阶段发布**（避开并发登录 429），支持 token 复用
 - 加入 **地区/站点内容线**：马来西亚 / 印尼 / 台湾（`run_malaysia.py` / `run_indonesia.py` / `run_taiwan.py`），
   以及 **刺猬社区 cizucu.com 摄影图片线**（`run_cizucu.py`，见 [`docs/23-cizucu.md`](docs/23-cizucu.md)）
+- 加入 **Web3 资讯多源线**：9 个 Web3 媒体（TechFlow / Web3BBS / ForesightNews / ME News / Web3Caff /
+  PANews / BingX / BlockWeeks / 吴说）统一 `web3` 标签，纯文本发布（`run_web3.py`，见 [`docs/24-web3-sources.md`](docs/24-web3-sources.md)）
 
 ---
 
@@ -35,6 +37,7 @@ xxai-square-publisher/
 │   ├── 13-multilang-captions.md    # 多语言主体视角文案改写
 │   ├── 14-room-moments.md          # 群组 / 房间发帖（room_id）接口与用法
 │   ├── 23-cizucu.md                # 刺猬社区 cizucu.com 摄影图片采集与发布（Playwright + 摄影师口吻）
+│   ├── 24-web3-sources.md          # Web3 资讯多源采集与发布（9 个媒体，web3 标签，纯文本）
 │   └── runbooks/                   # 可直接照抄的 runbook
 │       ├── run-image-post.md
 │       ├── run-room-post.md
@@ -52,6 +55,8 @@ xxai-square-publisher/
 │   ├── record_sent_slugs.py        # 发完回写已发 slug 到 used_slugs.json（下次拉图自动排除）
 │   ├── fetch_cizucu.py             # 从 cizucu.com（刺猬摄影社区）主题模块采集图片（Playwright，见 docs/23）
 │   ├── run_cizucu.py               # cizucu 一键发布（采集 → 主体视角文案 → 发布，摄影师口吻）
+│   ├── fetch_web3.py               # 从 9 个 Web3 媒体统一采集资讯，web3 标签，纯文本（见 docs/24）
+│   ├── run_web3.py                 # Web3 资讯一键发布（多源采集 → 繁体/主体视角文案 → 纯文本发布）
 │   ├── gitlab_pull.py              # 从 GitLab 拉取真实账号 CSV
 │   ├── config.py utils.py retry.py validation.py
 │   └── legacy/README.md            # 历史脚本说明

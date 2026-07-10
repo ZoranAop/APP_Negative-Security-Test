@@ -15,6 +15,7 @@
 | `fetch_tw_media.py`（shoppingdesign/gq/sony） | 文章 **URL** |
 | `fetch_stock_my.py`（pexels/pixabay/unsplash） | 圖片 **CDN URL** |
 | `fetch_cizucu.py`（cizucu.com 摄影社区） | 照片 **photoId** |
+| `fetch_web3.py`（9 个 Web3 媒体） | 消息 **归一化标题**（跨源词重叠判重） |
 執行流程：
 1. 開跑時讀入去重檔 → 得到「已抓集合」。
 2. 抓取時，命中已抓集合的條目**直接跳過**，只收新內容。
@@ -35,6 +36,7 @@ state/seen_tw_ervnsa.json                # 台灣 觀光署相簿
 state/seen_tw_media.json                 # 台灣 媒體(shoppingdesign/gq/sony)
 state/seen_tw_stock.json                 # 台灣 圖庫
 state/seen_cizucu.json                   # cizucu 摄影社区（按 photoId 去重）
+state/seen_web3.json                     # Web3 资讯 9 源（按归一化标题去重）
 ```
 
 - `state/` 已加入 `.gitignore`：**本地持久保留**、不入庫（去重紀錄屬機器本地狀態，避免污染倉庫）。

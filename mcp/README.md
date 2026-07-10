@@ -25,6 +25,7 @@
 | `fetch_openprompts`           | 从 open-prompts.com 拉素材                                                                  |
 | `fetch_lovimg`                | 从 lovimg.com 拉素材（SSR 反解）                                                            |
 | `fetch_cizucu`                | 从 cizucu.com（刺猬摄影社区）主题模块采集图片（Playwright，见 docs/23-cizucu.md）           |
+| `fetch_web3`                  | 从 9 个 Web3 媒体统一采集资讯（web3 标签，纯文本，见 docs/24-web3-sources.md）              |
 | `fetch_multi_source`          | 多源统一采集（默认广告过滤 + 跨源去重）                                                    |
 | `generate_multilang_captions` | 三/四语言主体视角文案改写                                                                  |
 | `rewrite_caption`             | 返回「英文提示词 → 中文用户口吻文案」的改写指令（由调用方 LLM 完成实际改写）              |

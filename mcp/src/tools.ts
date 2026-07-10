@@ -387,6 +387,31 @@ export const tools = [
     },
   },
   {
+    name: "fetch_web3",
+    description:
+      "Call scripts/fetch_web3.py to pull Web3 news from up to 9 media sites into a TEXT-ONLY moments CSV " +
+      "(image_urls empty → media_info type=text), all tagged web3. Sources (--sources keys): techflow, web3bbs, " +
+      "foresight, menews, web3caff, panews, bingx, blockweeks, wublock. Handles per-site quirks (foresight " +
+      "base64+zlib, wublock Aliyun WAF cookie solve, menews Origin/Referer, blockweeks RSS). Cross-batch & " +
+      "cross-source title dedupe via --dedupe-file. All public, no login. See docs/24-web3-sources.md.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        sources: {
+          type: "string",
+          default: "techflow,web3bbs,foresight,menews,web3caff,panews,bingx,blockweeks,wublock",
+          description: "comma source keys (see description)",
+        },
+        per_site: { type: "integer", default: 10, minimum: 1, maximum: 50 },
+        tag: { type: "string", default: "web3", description: "value written to _tag column" },
+        dedupe_file: { type: "string", description: "JSON of already-used normalized titles (cross-batch dedupe)" },
+        output: { type: "string" },
+      },
+      required: ["output"],
+      additionalProperties: false,
+    },
+  },
+  {
     name: "fetch_xhs",
     description:
       "Call scripts/crawl_xhs.py to crawl Xiaohongshu (小红书) explore-feed notes into a moments CSV. " +
@@ -716,6 +741,18 @@ export async function callTool(name: string, args: Record<string, unknown>): Pro
         if (a.posts) flags.push("--posts", String(a.posts));
         if (a.dedupe_file) flags.push("--dedupe-file", String(a.dedupe_file));
         return runPython("fetch_cizucu.py", flags, 20 * 60 * 1000);
+      }
+
+      case "fetch_web3": {
+        const a = args as Record<string, any>;
+        const flags = [
+          "--sources", String(a.sources ?? "techflow,web3bbs,foresight,menews,web3caff,panews,bingx,blockweeks,wublock"),
+          "--per-site", String(a.per_site ?? 10),
+          "--tag", String(a.tag ?? "web3"),
+          "--output", String(a.output),
+        ];
+        if (a.dedupe_file) flags.push("--dedupe-file", String(a.dedupe_file));
+        return runPython("fetch_web3.py", flags, 10 * 60 * 1000);
       }
 
       case "fetch_xhs": {

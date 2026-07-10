@@ -15,5 +15,6 @@
 | `post_video.py`                                   | 视频发布脚本                      |
 | `images/` `media/`                                | 下载的图片 / 视频                 |
 | `cizucu_run/`                                     | cizucu 中间产物（raw / moments CSV）|
+| `web3_run/`                                       | Web3 资讯中间产物（raw / moments CSV）|
 | `state/seen_*.json`                               | 各源持久去重档（本地状态，不入库）|
 | `result/`                                         | 各批次发布结果 CSV + summary      |
