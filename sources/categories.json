@@ -77,7 +77,18 @@
         { "site": "myzaker",    "type": "technews", "name": "ZAKER频道13",      "lang": "zh_hant", "url": "https://www.myzaker.com/channel/13",                  "fmt": "html", "status": "pending", "note": "长亭 WAF JS 验证, 需 Playwright" },
         { "site": "wsjcn",      "type": "technews", "name": "华尔街日报中文科技","lang": "zh_hant", "url": "https://cn.wsj.com/zh-hans/news/technology",           "fmt": "html", "status": "pending", "note": "401 付费墙" },
         { "site": "stdaily",    "type": "technews", "name": "科技日报",         "lang": "zh_hant", "url": "https://www.stdaily.com/",                            "fmt": "html", "status": "pending", "note": "首页标题 JS 渲染, 需 Playwright" },
-        { "site": "nownews",    "type": "technews", "name": "香港now新闻科技",  "lang": "zh_hant", "url": "https://news.now.com/home/technology",                "fmt": "html", "status": "pending", "note": "SPA/JS 渲染, 需 Playwright" }
+        { "site": "nownews",    "type": "technews", "name": "香港now新闻科技",  "lang": "zh_hant", "url": "https://news.now.com/home/technology",                "fmt": "html", "status": "pending", "note": "SPA/JS 渲染, 需 Playwright" },
+        { "site": "straitstimes", "type": "technews", "name": "The Straits Times(Global)", "lang": "en",      "url": "https://www.straitstimes.com/news/world/rss.xml",    "fmt": "rss",  "status": "active", "note": "2026-07-13 验证通过, HTML被WAF拦截但RSS可用" },
+        { "site": "yahoo_intl",   "type": "technews", "name": "Yahoo奇摩国际市场",         "lang": "zh_hant", "url": "https://tw.stock.yahoo.com/intl-markets",            "fmt": "html", "status": "active", "note": "2026-07-13 验证通过, HTML解析h3标题" },
+        { "site": "cnbc_world",   "type": "technews", "name": "CNBC World",                "lang": "en",      "url": "https://www.cnbc.com/world/?region=world",           "fmt": "html", "status": "active", "note": "2026-07-13 验证通过, HTML解析文章链接" },
+        { "site": "hket_home",    "type": "technews", "name": "香港经济日报(首页)",         "lang": "zh_hant", "url": "https://www.hket.com/",                              "fmt": "html", "status": "active", "note": "2026-07-13 验证通过, 首页文章标题解析" },
+        { "site": "moneydj",      "type": "technews", "name": "MoneyDJ理财网",             "lang": "zh_hant", "url": "https://www.moneydj.com/KMDJ/RssCenter.aspx?svc=NR&fType=1&arg=MB010000", "fmt": "rss", "status": "active", "note": "2026-07-13 验证通过, RSS(需verify=False, SSL证书问题)" },
+        { "site": "shicheng",     "type": "technews", "name": "狮城新闻",                  "lang": "zh_hant", "url": "https://www.shicheng.news/c/4391",                   "fmt": "html", "status": "pending", "note": "403 Forbidden (Cloudflare WAF), 需 Playwright" },
+        { "site": "8world",       "type": "technews", "name": "8世界(新加坡)",             "lang": "zh_hant", "url": "https://www.8world.com/singapore",                   "fmt": "html", "status": "pending", "note": "403 Forbidden, 需 Playwright" },
+        { "site": "hk_investing", "type": "technews", "name": "Investing.com(港股)",       "lang": "zh_hant", "url": "https://hk.investing.com/news/stock-market-news",    "fmt": "html", "status": "pending", "note": "403 Forbidden (anti-bot), 需 Playwright" },
+        { "site": "wealth_tw",    "type": "technews", "name": "财讯(台湾)",                "lang": "zh_hant", "url": "https://www.wealth.com.tw/",                         "fmt": "html", "status": "pending", "note": "SPA (JS渲染, 无服务端内容), 需 Playwright" },
+        { "site": "bloomberg_jp", "type": "technews", "name": "Bloomberg日本",             "lang": "ja",      "url": "https://www.bloomberg.com/jp",                       "fmt": "html", "status": "pending", "note": "403 Forbidden (付费墙/anti-bot), 需 Playwright" },
+        { "site": "ifnews",       "type": "technews", "name": "国际金融报",                "lang": "zh_hant", "url": "https://www.ifnews.com/",                            "fmt": "html", "status": "pending", "note": "SPA (React, 无SSR), 需 Playwright" }
       ]
     }
   }

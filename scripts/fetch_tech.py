@@ -386,6 +386,127 @@ SITE_LANG.update({
 })
 
 
+# ---------------------------------------------------------------------------
+# 第四批扩充源（2026-07-13 新增：新加坡/港/台/国际金融资讯）
+# ---------------------------------------------------------------------------
+def fetch_straitstimes(n):
+    """The Straits Times Global (RSS)"""
+    return _rss_items("https://www.straitstimes.com/news/world/rss.xml", "straitstimes", n)
+
+
+def fetch_yahoo_intl(n):
+    """Yahoo奇摩国际市场 (HTML parse)"""
+    r = _get("https://tw.stock.yahoo.com/intl-markets")
+    txt = r.text
+    out, seen = [], set()
+    for m in re.finditer(
+            r'<h[2-4][^>]*>\s*<a[^>]+href="([^"]+)"[^>]*>'
+            r'([\u4e00-\u9fff][^<]{8,80})</a>', txt, re.S):
+        title = _clean(m.group(2))
+        if title and title not in seen:
+            seen.add(title)
+            out.append({"title": title, "brief": "", "site": "yahoo_intl"})
+            if len(out) >= n:
+                break
+    if not out:
+        for m in re.finditer(
+                r'<a[^>]+href="([^"]+)"[^>]*>\s*'
+                r'([\u4e00-\u9fff][^<]{10,80})\s*</a>', txt, re.S):
+            title = _clean(m.group(2))
+            if title and title not in seen and len(title) > 12 and "Yahoo" not in title:
+                seen.add(title)
+                out.append({"title": title, "brief": "", "site": "yahoo_intl"})
+                if len(out) >= n:
+                    break
+    return out
+
+
+def fetch_cnbc_world(n):
+    """CNBC World (HTML parse)"""
+    r = _get("https://www.cnbc.com/world/?region=world")
+    txt = r.text
+    out, seen = [], set()
+    for m in re.finditer(
+            r'<a[^>]+href="(https://www\.cnbc\.com/\d{4}/\d{2}/\d{2}/[^"]+)"[^>]*>'
+            r'(.*?)</a>', txt, re.S):
+        title = _clean(m.group(2))
+        if title and title not in seen and len(title) > 20:
+            seen.add(title)
+            out.append({"title": title, "brief": "", "site": "cnbc_world"})
+            if len(out) >= n:
+                break
+    return out
+
+
+def fetch_hket_home(n):
+    """香港经济日报首页 (HTML parse)"""
+    r = _get("https://www.hket.com/")
+    txt = r.text
+    out, seen = [], set()
+    for m in re.finditer(
+            r'<a[^>]+href="([^"]*hket[^"]*article[^"]*)"[^>]*>\s*'
+            r'([\u4e00-\u9fff][^<]{8,60})\s*</a>', txt, re.S):
+        title = _clean(m.group(2))
+        if title and title not in seen and "訂閱" not in title and "訂閲" not in title:
+            seen.add(title)
+            out.append({"title": title, "brief": "", "site": "hket_home"})
+            if len(out) >= n:
+                break
+    if not out:
+        for m in re.finditer(
+                r'<a[^>]+href="([^"]+)"[^>]*>\s*'
+                r'([\u4e00-\u9fff][^<]{10,60})\s*</a>', txt, re.S):
+            title = _clean(m.group(2))
+            if title and title not in seen and len(title) > 12 \
+                    and "訂閱" not in title and "登入" not in title and "首頁" not in title:
+                seen.add(title)
+                out.append({"title": title, "brief": "", "site": "hket_home"})
+                if len(out) >= n:
+                    break
+    return out
+
+
+def fetch_moneydj(n):
+    """MoneyDJ理财网 (RSS, verify=False due to SSL cert issue)"""
+    import urllib3 as _u3
+    _u3.disable_warnings(_u3.exceptions.InsecureRequestWarning)
+    r = requests.get(
+        "https://www.moneydj.com/KMDJ/RssCenter.aspx?svc=NR&fType=1&arg=MB010000",
+        headers={"User-Agent": UA}, timeout=25, verify=False)
+    r.raise_for_status()
+    txt = r.content.decode("utf-8", errors="ignore")
+    out = []
+    for it in re.findall(r"<item>(.*?)</item>", txt, re.S):
+        tm = re.search(r"<title>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?</title>", it, re.S)
+        title = _clean(tm.group(1)) if tm else ""
+        if not title or "即時新聞" in title:
+            continue
+        dm = re.search(r"<description>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?</description>", it, re.S)
+        out.append({"title": title, "brief": _clean(dm.group(1)) if dm else "", "site": "moneydj"})
+        if len(out) >= n:
+            break
+    return out
+
+
+FETCHERS.update({
+    "straitstimes": fetch_straitstimes, "yahoo_intl": fetch_yahoo_intl,
+    "cnbc_world": fetch_cnbc_world, "hket_home": fetch_hket_home,
+    "moneydj": fetch_moneydj,
+})
+ALL_SOURCES = ALL_SOURCES + ["straitstimes", "yahoo_intl", "cnbc_world",
+                             "hket_home", "moneydj"]
+SITE_CN.update({
+    "straitstimes": "The Straits Times", "yahoo_intl": "Yahoo奇摩",
+    "cnbc_world": "CNBC World", "hket_home": "香港经济日报",
+    "moneydj": "MoneyDJ理财网",
+})
+SITE_LANG.update({
+    "straitstimes": "en", "yahoo_intl": "zh_hant",
+    "cnbc_world": "en", "hket_home": "zh_hant",
+    "moneydj": "zh_hant",
+})
+
+
 def _norm(t: str) -> str:
     return re.sub(r"\s+", "", re.sub(r"[^\w\u4e00-\u9fff]", "", (t or "").lower()))
 
