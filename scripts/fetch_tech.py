@@ -50,6 +50,14 @@ SITE_CN = {
     "bbc": "BBC中文", "nytimes": "纽约时报中文网", "readhub": "Readhub",
 }
 
+# 站点内容语言（文案语言跟随网站语言；中文站统一按繁体中文 zh_hant 发布）
+# 支持：zh_hant / en / ja / ms / hi / bn
+SITE_LANG = {
+    "kr36": "zh_hant", "tmtpost": "zh_hant", "techorange": "zh_hant",
+    "mittrchina": "zh_hant", "netease": "zh_hant", "bbc": "zh_hant",
+    "nytimes": "zh_hant", "readhub": "zh_hant",
+}
+
 
 def _u8():
     import io
@@ -116,19 +124,26 @@ def fetch_techorange(n):
 
 
 def fetch_mittrchina(n):
-    r = _get("https://apii.web.mittrchina.com/information/index?page=1&limit=%d" % max(n * 3, 10),
-             headers={"Referer": "https://www.mittrchina.com/"})
-    j = r.json()
-    data = j.get("data") or {}
-    items = data.get("items") or data.get("list") or []
+    # 麻省理工科技评论：官方 information API，支持大 limit + 分页
     out = []
-    for it in items:
-        title = _clean(it.get("name") or it.get("title") or "")
-        if not title:
-            continue
-        out.append({"title": title, "brief": _clean(it.get("summary") or ""), "site": "mittrchina"})
-        if len(out) >= n:
+    for page in range(1, 6):
+        try:
+            r = _get("https://apii.web.mittrchina.com/information/index?page=%d&limit=%d"
+                     % (page, min(max(n, 60), 200)),
+                     headers={"Referer": "https://www.mittrchina.com/"})
+        except Exception:  # noqa: BLE001
             break
+        data = r.json().get("data") or {}
+        items = data.get("items") or data.get("list") or []
+        if not items:
+            break
+        for it in items:
+            title = _clean(it.get("name") or it.get("title") or "")
+            if not title:
+                continue
+            out.append({"title": title, "brief": _clean(it.get("summary") or ""), "site": "mittrchina"})
+            if len(out) >= n:
+                return out
     return out
 
 
@@ -206,6 +221,169 @@ FETCHERS = {
     "mittrchina": fetch_mittrchina, "netease": fetch_netease,
     "bbc": fetch_bbc, "nytimes": fetch_nytimes, "readhub": fetch_readhub,
 }
+
+
+# ---------------------------------------------------------------------------
+# 扩充源（公开 RSS，无需登录）——中/英/日多语覆盖，扩大新鲜内容池
+# ---------------------------------------------------------------------------
+def fetch_kr36flash(n):
+    return _rss_items("https://36kr.com/feed-newsflash", "kr36flash", n)
+
+
+def fetch_ithome(n):
+    return _rss_items("https://www.ithome.com/rss/", "ithome", n)
+
+
+def fetch_sspai(n):
+    return _rss_items("https://sspai.com/feed", "sspai", n)
+
+
+def fetch_cnbeta(n):
+    return _rss_items("https://www.cnbeta.com.tw/backend.php", "cnbeta", n)
+
+
+def fetch_engadget(n):
+    return _rss_items("https://www.engadget.com/rss.xml", "engadget", n)
+
+
+def fetch_arstechnica(n):
+    return _rss_items("https://feeds.arstechnica.com/arstechnica/index", "arstechnica", n)
+
+
+def fetch_techcrunch(n):
+    return _rss_items("https://techcrunch.com/feed/", "techcrunch", n)
+
+
+def fetch_gizmodojp(n):
+    return _rss_items("https://www.gizmodo.jp/index.xml", "gizmodojp", n)
+
+
+def fetch_itmedia(n):
+    return _rss_items("https://rss.itmedia.co.jp/rss/2.0/news_bursts.xml", "itmedia", n)
+
+
+FETCHERS.update({
+    "kr36flash": fetch_kr36flash, "ithome": fetch_ithome, "sspai": fetch_sspai,
+    "cnbeta": fetch_cnbeta, "engadget": fetch_engadget, "arstechnica": fetch_arstechnica,
+    "techcrunch": fetch_techcrunch, "gizmodojp": fetch_gizmodojp, "itmedia": fetch_itmedia,
+})
+ALL_SOURCES = ALL_SOURCES + ["kr36flash", "ithome", "sspai", "cnbeta",
+                             "engadget", "arstechnica", "techcrunch",
+                             "gizmodojp", "itmedia"]
+SITE_CN.update({
+    "kr36flash": "36氪快讯", "ithome": "IT之家", "sspai": "少数派", "cnbeta": "cnBeta",
+    "engadget": "Engadget", "arstechnica": "Ars Technica", "techcrunch": "TechCrunch",
+    "gizmodojp": "Gizmodo日本", "itmedia": "ITmedia",
+})
+SITE_LANG.update({
+    "kr36flash": "zh_hant", "ithome": "zh_hant", "sspai": "zh_hant", "cnbeta": "zh_hant",
+    "engadget": "en", "arstechnica": "en", "techcrunch": "en",
+    "gizmodojp": "ja", "itmedia": "ja",
+})
+
+
+# ---------------------------------------------------------------------------
+# 第三批扩充源（国际大报 + 港台/日经中文；语言跟随网站，中文站按繁体）
+# ---------------------------------------------------------------------------
+def fetch_guardian(n):
+    return _rss_items("https://www.theguardian.com/technology/rss", "guardian", n)
+
+
+def fetch_guardianintl(n):
+    return _rss_items("https://www.theguardian.com/international/rss", "guardianintl", n)
+
+
+def fetch_wsj(n):
+    return _rss_items("https://feeds.a.dj.com/rss/RSSWSJD.xml", "wsj", n)
+
+
+def fetch_nyt(n):
+    return _rss_items("https://rss.nytimes.com/services/xml/rss/nyt/Technology.xml", "nyt", n)
+
+
+def fetch_cnn(n):
+    out = _rss_items("http://rss.cnn.com/rss/edition_technology.rss", "cnn", n)
+    if len(out) < n:
+        out += _rss_items("http://rss.cnn.com/rss/edition.rss", "cnn", n - len(out))
+    return out
+
+
+def fetch_technews(n):
+    return _rss_items("https://technews.tw/feed/", "technews", n)
+
+
+def fetch_cna(n):
+    return _rss_items("https://feeds.feedburner.com/rsscna/technology", "cna", n)
+
+
+def fetch_epochtimes(n):
+    r = _get("https://www.epochtimes.com/gb/nsc419.htm")
+    txt = r.content.decode("utf-8", errors="ignore")
+    out, seen = [], set()
+    for title in re.findall(
+            r'<a[^>]+href="[^"]*\.html?"[^>]*>\s*([\u4e00-\u9fa5][^<]{6,50})\s*</a>', txt):
+        t = _clean(title)
+        if t and t not in seen:
+            seen.add(t)
+            out.append({"title": t, "brief": "", "site": "epochtimes"})
+        if len(out) >= n:
+            break
+    return out
+
+
+def fetch_hket(n):
+    r = _get("https://news.hket.com/?mtc=20080")
+    txt = r.text
+    out, seen = [], set()
+    for title in re.findall(
+            r'<a[^>]+href="[^"]*/article/\d+[^"]*"[^>]*>\s*([\u4e00-\u9fa5][^<]{8,50})\s*</a>', txt):
+        t = _clean(title)
+        if t and t not in seen and "訂閱" not in t and "訂閲" not in t:
+            seen.add(t)
+            out.append({"title": t, "brief": "", "site": "hket"})
+        if len(out) >= n:
+            break
+    return out
+
+
+_NIKKEI_NAV = ("日经", "日本游", "免费注册", "特朗普的美国", "中日深度观察",
+               "日本企业研究", "会员", "订阅")
+
+
+def fetch_nikkeicn(n):
+    r = _get("https://cn.nikkei.com/top/201604-3.html")
+    txt = r.content.decode("utf-8", errors="ignore")
+    out, seen = [], set()
+    for title in re.findall(r'<a[^>]+href="/[^"]+\.html"[^>]*>([^<]{6,60})</a>', txt):
+        t = _clean(title)
+        if not t or not re.search(r"[\u4e00-\u9fa5]", t):
+            continue
+        if t in seen or any(k in t for k in _NIKKEI_NAV):
+            continue
+        seen.add(t)
+        out.append({"title": t, "brief": "", "site": "nikkeicn"})
+        if len(out) >= n:
+            break
+    return out
+
+
+FETCHERS.update({
+    "guardian": fetch_guardian, "guardianintl": fetch_guardianintl, "wsj": fetch_wsj,
+    "nyt": fetch_nyt, "cnn": fetch_cnn, "technews": fetch_technews, "cna": fetch_cna,
+    "epochtimes": fetch_epochtimes, "hket": fetch_hket, "nikkeicn": fetch_nikkeicn,
+})
+ALL_SOURCES = ALL_SOURCES + ["guardian", "guardianintl", "wsj", "nyt", "cnn",
+                             "technews", "cna", "epochtimes", "hket", "nikkeicn"]
+SITE_CN.update({
+    "guardian": "The Guardian", "guardianintl": "The Guardian", "wsj": "华尔街日报",
+    "nyt": "纽约时报", "cnn": "CNN", "technews": "科技新报", "cna": "中央社",
+    "epochtimes": "大纪元", "hket": "香港经济日报", "nikkeicn": "日经中文网",
+})
+SITE_LANG.update({
+    "guardian": "en", "guardianintl": "en", "wsj": "en", "nyt": "en", "cnn": "en",
+    "technews": "zh_hant", "cna": "zh_hant", "epochtimes": "zh_hant",
+    "hket": "zh_hant", "nikkeicn": "zh_hant",  # 日经中文为简体源，按需求统一繁体输出
+})
 
 
 def _norm(t: str) -> str:
