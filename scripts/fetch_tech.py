@@ -507,6 +507,101 @@ SITE_LANG.update({
 })
 
 
+# ---------------------------------------------------------------------------
+# 第五批扩充源（2026-07-13 替代方案解决：RSS/curl_cffi/Google News）
+# ---------------------------------------------------------------------------
+def fetch_hk_investing_rss(n):
+    """Investing.com港股 (RSS，绕过403)"""
+    return _rss_items("https://hk.investing.com/rss/news.rss", "hk_investing", n)
+
+
+def fetch_wealth_tw(n):
+    """财讯台湾 (RSS，绕过SPA)"""
+    import urllib3 as _u3
+    _u3.disable_warnings(_u3.exceptions.InsecureRequestWarning)
+    r = requests.get("https://www.wealth.com.tw/rss",
+                     headers={"User-Agent": UA}, timeout=25, verify=False)
+    r.raise_for_status()
+    txt = r.content.decode("utf-8", errors="ignore")
+    out = []
+    for it in re.findall(r"<item>(.*?)</item>", txt, re.S):
+        tm = re.search(r"<title>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?</title>", it, re.S)
+        title = _clean(tm.group(1)) if tm else ""
+        if not title or len(title) < 8:
+            continue
+        dm = re.search(r"<description>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?</description>", it, re.S)
+        out.append({"title": title, "brief": _clean(dm.group(1)) if dm else "", "site": "wealth_tw"})
+        if len(out) >= n:
+            break
+    return out
+
+
+def fetch_bloomberg_rss(n):
+    """Bloomberg Markets (RSS feed)"""
+    return _rss_items("https://feeds.bloomberg.com/markets/news.rss", "bloomberg_jp", n)
+
+
+def fetch_8world_cffi(n):
+    """8世界新加坡 (curl_cffi 绕过403，从title属性提取)"""
+    try:
+        from curl_cffi import requests as cffi_requests
+    except ImportError:
+        return []
+    r = cffi_requests.get("https://www.8world.com/singapore", impersonate="chrome", timeout=20)
+    if r.status_code != 200:
+        return []
+    txt = r.text
+    out, seen = [], set()
+    # 8world articles are in title/aria-label attributes
+    for title in re.findall(r'(?:title|aria-label)="([\u4e00-\u9fff][^"]{8,80})"', txt):
+        t = _clean(title)
+        if t and t not in seen and len(t) > 10:
+            seen.add(t)
+            out.append({"title": t, "brief": "", "site": "8world"})
+            if len(out) >= n:
+                break
+    return out
+
+
+def fetch_ifnews_gn(n):
+    """国际金融报 (Google News RSS代理)"""
+    r = _get("https://news.google.com/rss/search?q=site:ifnews.com&hl=zh-CN&gl=CN&ceid=CN:zh-Hans")
+    txt = r.content.decode("utf-8", errors="ignore")
+    out, seen = [], set()
+    for it in re.findall(r"<item>(.*?)</item>", txt, re.S):
+        tm = re.search(r"<title>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?</title>", it, re.S)
+        if not tm:
+            continue
+        title = _clean(tm.group(1))
+        # Google News titles often have " - 国际金融报" suffix
+        title = re.sub(r"\s*-\s*国际金融报\s*$", "", title)
+        if title and title not in seen and len(title) > 10 and "国际金融报" not in title:
+            seen.add(title)
+            out.append({"title": title, "brief": "", "site": "ifnews"})
+            if len(out) >= n:
+                break
+    return out
+
+
+FETCHERS.update({
+    "hk_investing": fetch_hk_investing_rss, "wealth_tw": fetch_wealth_tw,
+    "bloomberg_jp": fetch_bloomberg_rss, "8world": fetch_8world_cffi,
+    "ifnews": fetch_ifnews_gn,
+})
+ALL_SOURCES = ALL_SOURCES + ["hk_investing", "wealth_tw", "bloomberg_jp",
+                             "8world", "ifnews"]
+SITE_CN.update({
+    "hk_investing": "Investing.com", "wealth_tw": "财讯",
+    "bloomberg_jp": "Bloomberg", "8world": "8世界",
+    "ifnews": "国际金融报",
+})
+SITE_LANG.update({
+    "hk_investing": "zh_hant", "wealth_tw": "zh_hant",
+    "bloomberg_jp": "en", "8world": "zh_hant",
+    "ifnews": "zh_hant",
+})
+
+
 def _norm(t: str) -> str:
     return re.sub(r"\s+", "", re.sub(r"[^\w\u4e00-\u9fff]", "", (t or "").lower()))
 

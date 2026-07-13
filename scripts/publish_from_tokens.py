@@ -344,21 +344,39 @@ def send_moment(
     token: str, content: str, image_urls: list[str],
     *,
     api_url: str, timeout: int,
+    max_retries: int = 3, backoff: float = 1.5,
 ) -> tuple[bool, str]:
+    """Publish one moment with per-post retry + exponential backoff.
+
+    Retries on network errors, HTTP 429/5xx, so a transient failure does not
+    permanently drop a post. Business-level failures (code!=0) are not retried."""
     payload: dict[str, Any] = {"content": content, "visibility": 0}
     if image_urls:
         payload["media_info"] = {"type": "image", "images": image_urls}
     else:
         payload["media_info"] = {"type": "text"}
-    r = requests.post(api_url, json=payload,
-                      headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
-                      timeout=timeout)
-    if r.status_code in (200, 201):
-        j = r.json()
-        if j.get("code") == 0:
-            return True, str(j.get("data", {}).get("moment_id", ""))
-        return False, f"biz-fail: {j}"
-    return False, f"HTTP {r.status_code}: {r.text[:200]}"
+    last = ""
+    for attempt in range(max_retries):
+        try:
+            r = requests.post(api_url, json=payload,
+                              headers={"Authorization": f"Bearer {token}",
+                                       "Content-Type": "application/json"},
+                              timeout=timeout)
+        except Exception as e:  # noqa: BLE001
+            last = f"exc: {e}"
+            time.sleep(backoff * (2 ** attempt))
+            continue
+        if r.status_code in (200, 201):
+            j = r.json()
+            if j.get("code") == 0:
+                return True, str(j.get("data", {}).get("moment_id", ""))
+            return False, f"biz-fail: {j}"  # 业务失败不重试
+        if r.status_code == 429 or 500 <= r.status_code < 600:
+            last = f"HTTP {r.status_code}: {r.text[:120]}"
+            time.sleep(backoff * (2 ** attempt))
+            continue
+        return False, f"HTTP {r.status_code}: {r.text[:200]}"  # 4xx（非429）不重试
+    return False, f"retry-exhausted: {last}"
 
 
 # ---------------------------------------------------------------------------
@@ -410,6 +428,20 @@ def main() -> int:
     ap.add_argument("--login-spacing", type=float,
                     default=float(os.getenv("LOGIN_SPACING", "2.5")),
                     help="seconds between sequential login attempts (default: 2.5)")
+    ap.add_argument("--adaptive-login", action="store_true",
+                    help="auto-scale login spacing & disable it below a small "
+                         "account count; grows spacing as account count rises to avoid 429")
+    ap.add_argument("--post-delay-min", type=float, default=0.0,
+                    help="min random delay (s) before each publish, to de-burst (default 0)")
+    ap.add_argument("--post-delay-max", type=float, default=0.0,
+                    help="max random delay (s) before each publish, to de-burst (default 0)")
+    ap.add_argument("--post-retries", type=int, default=3,
+                    help="per-post publish retries on 429/5xx/network (default 3)")
+    ap.add_argument("--record-dedupe", action="store_true",
+                    help="after publish, write successfully-posted keys back to dedupe "
+                         "files so they are never re-posted (uses _dedupe_key column)")
+    ap.add_argument("--web3-dedupe-file", default="state/seen_web3.json")
+    ap.add_argument("--img-dedupe-file", default="data/used_slugs.json")
     ap.add_argument("--tokens-in", default=None,
                     help="pre-existing tokens JSON; skip re-login when full coverage")
     ap.add_argument("--tokens-out", default="result/tokens.json",
@@ -419,6 +451,17 @@ def main() -> int:
                     help="publish-result CSV (default: result/publish_<ts>.csv)")
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
+
+    # ---- adaptive login spacing (optimize against 429) ----
+    if args.adaptive_login:
+        nacc = len(load_accounts(args.accounts_csv))
+        if nacc <= 5:
+            args.login_spacing = min(args.login_spacing, 1.0)
+        elif nacc <= 12:
+            args.login_spacing = max(args.login_spacing, 2.5)
+        else:
+            args.login_spacing = max(args.login_spacing, 3.5)
+        log_info(f"[adaptive-login] {nacc} accounts -> login-spacing={args.login_spacing:.1f}s")
 
     accts = load_accounts(args.accounts_csv)
     rows = load_moments(args.csv)
@@ -499,12 +542,18 @@ def main() -> int:
             "_source": row.get("_source", ""),
             "_lang": row.get("_lang", ""),
             "_scene": row.get("_scene", ""),
+            "_dedupe_key": row.get("_dedupe_key", ""),
         })
     log_info(f"[Phase 3] publishing {len(tasks)} with concurrency={args.concurrency}")
 
     def worker(t):
+        # de-burst: small random pre-post delay so posts don't fire in a rigid burst
+        if args.post_delay_max > 0:
+            import random as _r
+            time.sleep(_r.uniform(args.post_delay_min, args.post_delay_max))
         ok, info = send_moment(tokens[t["email"]], t["content"], t["s3_images"],
-                               api_url=args.api_url, timeout=args.timeout)
+                               api_url=args.api_url, timeout=args.timeout,
+                               max_retries=args.post_retries)
         return {**t, "success": ok, "info": info}
 
     results: list[dict] = []
@@ -532,7 +581,55 @@ def main() -> int:
                         r.get("_lang",""), r.get("_scene",""),
                         r["success"], r["info"], r["content"]])
     log_success(f"[Report] → {out_path}")
+
+    # ---- dedupe write-back: only successfully-posted content is recorded ----
+    if args.record_dedupe:
+        _record_dedupe(
+            [r for r in results if r["success"]],
+            web3_file=args.web3_dedupe_file,
+            img_file=args.img_dedupe_file,
+        )
     return 0
+
+
+def _record_dedupe(success_rows: list[dict], *, web3_file: str, img_file: str) -> None:
+    """Write successfully-posted keys back to the dedupe ledgers so future runs
+    skip them. Reads `_dedupe_key` formatted as ``web3:<norm-title>`` or
+    ``img:<slug-or-url>`` (produced by assemble_mixed.py)."""
+    import re as _re
+    web3_keys, img_keys = set(), set()
+    for r in success_rows:
+        dk = (r.get("_dedupe_key") or "").strip()
+        if dk.startswith("web3:"):
+            # normalize the title the same way fetch_web3._norm does
+            t = dk[len("web3:"):]
+            norm = _re.sub(r"[\s\u3000\-—–_、，。！？；：·]+", "", t).lower()
+            if norm:
+                web3_keys.add(norm)
+        elif dk.startswith("img:"):
+            v = dk[len("img:"):]
+            if v:
+                img_keys.add(v)
+
+    def _merge(path_str: str, new_keys: set, wrapper_key: str | None = None):
+        if not new_keys:
+            return
+        p = Path(path_str)
+        p.parent.mkdir(parents=True, exist_ok=True)
+        existing: list = []
+        if p.exists():
+            try:
+                data = json.loads(p.read_text(encoding="utf-8"))
+                existing = data.get(wrapper_key, []) if (wrapper_key and isinstance(data, dict)) else data
+            except Exception:  # noqa: BLE001
+                existing = []
+        merged = sorted(set(existing) | new_keys)
+        out = {wrapper_key: merged} if wrapper_key else merged
+        p.write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
+        log_success(f"[dedupe] +{len(new_keys)} keys → {p} (total {len(merged)})")
+
+    _merge(web3_file, web3_keys)
+    _merge(img_file, img_keys)
 
 
 if __name__ == "__main__":

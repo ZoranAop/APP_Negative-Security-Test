@@ -541,6 +541,35 @@ export const tools = [
     },
   },
   {
+    name: "run_mixed",
+    description:
+      "Invoke scripts/run_mixed.py: one-command mixed/interleaved publisher. " +
+      "Fetches web3 text + gallery images, assembles a de-regularized batch " +
+      "(randomized per-user post counts, T/I/Q interleaving, per-user single language, " +
+      "no-repeat via dedupe ledgers), then publishes with adaptive login-spacing, " +
+      "per-post jitter, retry, and dedupe write-back. See docs/25-mixed-posting.md.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        accounts_csv: { type: "string" },
+        langs: { type: "string", default: "zh_hant,en,ja,ms",
+                 description: "per-user single-language rotation list" },
+        min_posts: { type: "integer", default: 3, minimum: 1, maximum: 20 },
+        max_posts: { type: "integer", default: 7, minimum: 1, maximum: 20 },
+        per_site: { type: "integer", default: 12, description: "web3 items per source" },
+        img_theme: { type: "string", default: "beauty" },
+        img_limit: { type: "integer", default: 80 },
+        concurrency: { type: "integer", default: 4, minimum: 1, maximum: 32 },
+        seed: { type: "integer", description: "optional RNG seed for reproducibility" },
+        skip_publish: { type: "boolean", default: false,
+                        description: "only produce material, do not publish" },
+        yes: { type: "boolean", default: false, description: "skip interactive confirm" },
+      },
+      required: ["accounts_csv"],
+      additionalProperties: false,
+    },
+  },
+  {
     name: "rewrite_caption",
     description:
       "Rewrite an English prompt / raw description into a first-person Chinese share-style caption, " +
@@ -835,6 +864,24 @@ export async function callTool(name: string, args: Record<string, unknown>): Pro
         if (a.output_csv) flags.push("--output-csv", String(a.output_csv));
         if (a.dry_run) flags.push("--dry-run");
         return runPython("publish_from_tokens.py", flags, 15 * 60 * 1000);
+      }
+
+      case "run_mixed": {
+        const a = args as Record<string, any>;
+        const flags = [
+          "--accounts-csv", String(a.accounts_csv),
+          "--langs", String(a.langs ?? "zh_hant,en,ja,ms"),
+          "--min-posts", String(a.min_posts ?? 3),
+          "--max-posts", String(a.max_posts ?? 7),
+          "--per-site", String(a.per_site ?? 12),
+          "--img-theme", String(a.img_theme ?? "beauty"),
+          "--img-limit", String(a.img_limit ?? 80),
+          "--concurrency", String(a.concurrency ?? 4),
+        ];
+        if (a.seed !== undefined) flags.push("--seed", String(a.seed));
+        if (a.skip_publish) flags.push("--skip-publish");
+        if (a.yes) flags.push("--yes");
+        return runPython("run_mixed.py", flags, 20 * 60 * 1000);
       }
 
       case "rewrite_caption": {

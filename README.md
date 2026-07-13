@@ -3,8 +3,11 @@
 > 通过 HTTP 接口方式向 XXAI 广场（朋友圈/动态）批量发布图文 / 视频内容。
 > 本仓库基于 `tester/auto-poster` 的工作流沉淀而成，并附带 **MCP Server**，可被大模型 / Agent 直接调用。
 
-最近更新：2026-07-04
+最近更新：2026-07-13
 
+- 加入 **混合交错发帖**（拟真 / 去规则化）：每用户随机帖数 + 文本/图文/问题（T/I/Q）交错 +
+  单语分配 + 两级去重，一键脚本 `run_mixed.py`，发布层新增登录自适应/节奏打散/失败重试/
+  回写去重档（见 [`docs/25-mixed-posting.md`](docs/25-mixed-posting.md)）
 - 加入 **多源采集**（opennana / open-prompts / lovimg）+ **广告过滤**
 - 加入 **多语言主体视角文案**（EN / 繁中 / 简中 / 日）
 - 加入 **两阶段发布**（避开并发登录 429），支持 token 复用
@@ -38,6 +41,7 @@ xxai-square-publisher/
 │   ├── 14-room-moments.md          # 群组 / 房间发帖（room_id）接口与用法
 │   ├── 23-cizucu.md                # 刺猬社区 cizucu.com 摄影图片采集与发布（Playwright + 摄影师口吻）
 │   ├── 24-web3-sources.md          # Web3 资讯多源采集与发布（9 个媒体，web3 标签，纯文本）
+│   ├── 25-mixed-posting.md         # 混合交错发帖（随机帖数 + 文本/图文/问题交错 + 发布层优化）
 │   └── runbooks/                   # 可直接照抄的 runbook
 │       ├── run-image-post.md
 │       ├── run-room-post.md
@@ -57,6 +61,9 @@ xxai-square-publisher/
 │   ├── run_cizucu.py               # cizucu 一键发布（采集 → 主体视角文案 → 发布，摄影师口吻）
 │   ├── fetch_web3.py               # 从 9 个 Web3 媒体统一采集资讯，web3 标签，纯文本（见 docs/24）
 │   ├── run_web3.py                 # Web3 资讯一键发布（多源采集 → 繁体/主体视角文案 → 纯文本发布）
+│   ├── assemble_mixed.py           # 混合交错组装：每人随机帖数 + T/I/Q 交错 + 单语分配 + 配文去重（见 docs/25）
+│   ├── web3_caption_by_role.py     # web3 资讯专用文案：按新闻意图 + 发帖者角色语言改写第一人称点评
+│   ├── run_mixed.py                # 混合交错一键发布（采集 → 组装 → 发布层优化 + 回写去重，见 docs/25）
 │   ├── gitlab_pull.py              # 从 GitLab 拉取真实账号 CSV
 │   ├── config.py utils.py retry.py validation.py
 │   └── legacy/README.md            # 历史脚本说明
@@ -134,6 +141,7 @@ py -3 scripts/post_moments.py --accounts-csv accounts_10.csv --csv moments.csv \
 | `read_script`                 | 读取脚本源码（让模型理解后再决定如何调用）           |
 | `run_post_moments`            | 调用 `post_moments.py` 批量发图文                    |
 | `run_publish_from_tokens`     | 调用 `publish_from_tokens.py`（两阶段发布，避 429）  |
+| `run_mixed`                   | 调用 `run_mixed.py`（混合交错一键发布：随机帖数+T/I/Q交错+去重+发布层优化）|
 | `run_post_video`              | 调用 `post_video.py` 发视频                          |
 | `fetch_opennana`              | 从 OpenNana 拉素材（图片 / 视频 + 提示词）           |
 | `fetch_openprompts`           | 从 open-prompts.com 拉素材                            |
