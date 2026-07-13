@@ -185,7 +185,7 @@ def _turismo_list_slugs(base: str, column: str, want: int, has_id) -> list[str]:
         slugs.extend(new)
         page += 1
         time.sleep(0.25)
-    return slugs
+    return list(dict.fromkeys(slugs))
 
 
 def _turismo_content_photos(base: str, slug: str) -> list[str]:
@@ -221,8 +221,6 @@ def iter_turismo(source: dict, need: int, has_id, has_url):
                 slug = slugs[ptr[c]]
                 ptr[c] += 1
                 progressed = True
-                if has_id(f"turismo:{slug}"):
-                    continue
                 try:
                     pics = _turismo_content_photos(base, slug)
                 except Exception as e:  # noqa: BLE001
@@ -239,7 +237,9 @@ def iter_turismo(source: dict, need: int, has_id, has_url):
                         continue
                     out.append({"url": u, "id": uid, "site": "turismo"})
                     taken += 1
-                break  # 取完这篇, 轮到下个栏目
+                if taken > 0:
+                    break  # 取到了新图, 轮到下个栏目
+                # 这篇全部图片都已用过，继续尝试下一篇
         if not progressed:
             break
     return out
