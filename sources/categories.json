@@ -40,6 +40,25 @@
           "referer": "https://ww.aituitu.com/"
         }
       ]
+    },
+    "科技": {
+      "label": "科技",
+      "kind": "text",
+      "tag": "科技",
+      "description": "科技资讯多源, 纯文本发布(media_info type=text)。发帖选『科技』类时, 从各科技媒体各取 N 条最新资讯, 打上 #科技 标签, 按发帖人角色第一人称改写。采集/发布走 scripts/fetch_tech.py + scripts/run_tech.py(纯文本, 无图)。",
+      "sources": [
+        { "site": "kr36",       "type": "technews", "name": "36氪",             "url": "https://36kr.com/feed",                              "fmt": "rss",  "status": "active" },
+        { "site": "tmtpost",    "type": "technews", "name": "钛媒体",           "url": "https://www.tmtpost.com/rss.xml",                     "fmt": "rss",  "status": "active" },
+        { "site": "techorange", "type": "technews", "name": "科技报橘",         "url": "https://buzzorange.com/techorange/feed",              "fmt": "rss",  "status": "active" },
+        { "site": "mittrchina", "type": "technews", "name": "麻省理工科技评论", "url": "https://apii.web.mittrchina.com/information/index",    "fmt": "json", "status": "active" },
+        { "site": "netease",    "type": "technews", "name": "网易科技",         "url": "https://tech.163.com/special/00097UHL/tech_datalist.js","fmt": "jsonp","status": "active" },
+        { "site": "bbc",        "type": "technews", "name": "BBC中文科技",      "url": "https://www.bbc.com/zhongwen/topics/cd6qem06yq0t/trad","fmt": "html", "status": "active" },
+        { "site": "nytimes",    "type": "technews", "name": "纽约时报中文网科技","url": "https://m.cn.nytimes.com/technology/zh-hant/",         "fmt": "html", "status": "active" },
+        { "site": "readhub",    "type": "technews", "name": "Readhub",          "url": "https://api.readhub.cn/topic/list",                   "fmt": "json", "status": "active" },
+        { "site": "myzaker",    "type": "technews", "name": "ZAKER频道13",      "url": "https://www.myzaker.com/channel/13",                  "fmt": "html", "status": "pending", "note": "长亭 WAF JS 验证, 需 Playwright" },
+        { "site": "wsj",        "type": "technews", "name": "华尔街日报中文科技","url": "https://cn.wsj.com/zh-hans/news/technology",           "fmt": "html", "status": "pending", "note": "401 付费墙" },
+        { "site": "stdaily",    "type": "technews", "name": "科技日报",         "url": "https://www.stdaily.com/",                            "fmt": "html", "status": "pending", "note": "首页标题 JS 渲染, 需 Playwright" }
+      ]
     }
   }
 }

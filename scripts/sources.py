@@ -361,6 +361,11 @@ def collect_category(category: str, need: int, has_id, has_url,
     cats = categories or load_categories()
     if category not in cats:
         raise KeyError(f"未知类别 '{category}', 可选: {list(cats)}")
+    # 文本类(如「科技」资讯)不走图片采集契约；请改用 fetch_tech.py / run_tech.py
+    if cats[category].get("kind") == "text":
+        raise ValueError(
+            f"类别 '{category}' 是文本资讯类(kind=text)，不产出图片记录。"
+            f"请使用 scripts/run_tech.py（fetch_tech.py）进行纯文本采集与发布。")
     sources = cats[category].get("sources", [])
     if not sources:
         return []

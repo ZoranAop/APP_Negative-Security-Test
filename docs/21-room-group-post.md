@@ -169,6 +169,34 @@ py -3 scripts/post_room_moments.py --category 美女 --group-plan 4,4,4,4,4 `
 在 `categories.json` 的 `categories` 下加一个键(如 `"风景"`), 填 `label` 与 `sources` 即可,
 发帖用 `--category 风景`。
 
+### 文本资讯类别「科技」（纯文本，非图片）
+
+`categories.json` 里另有一个文本类 **「科技」**（`kind: "text"`, `tag: "科技"`），登记了
+11 个科技媒体源。它**不走图片采集契约**（`collect_category` 对 `kind=text` 会主动报错），
+采集与发布改用专用脚本 `scripts/fetch_tech.py` + `scripts/run_tech.py`：纯文本发布
+（`media_info type=text`）、每条带 `#科技` 标签、按发帖人角色第一人称改写、全局不重复。
+
+| 状态 | 站点 | 取数 |
+| ---- | ---- | ---- |
+| active | 36氪 / 钛媒体 / 科技报橘 | RSS |
+| active | 麻省理工科技评论 / Readhub | JSON API |
+| active | 网易科技 | JSONP(`tech_datalist.js`) |
+| active | BBC中文科技 / 纽约时报中文网科技 | SSR HTML(h2 正则) |
+| pending | ZAKER频道13 | 长亭 WAF JS 验证, 需 Playwright |
+| pending | 华尔街日报中文科技 | 401 付费墙 |
+| pending | 科技日报 | 首页标题 JS 渲染, 需 Playwright |
+
+```powershell
+# 50 用户, 每站 3 条(8 个 active 站=24 条), 轮询分发, 纯文本发布
+py -3 scripts/run_tech.py --accounts-csv accounts_test_50.csv --num-accounts 50 --per-site 3 --yes
+# 只采集+文案预演
+py -3 scripts/run_tech.py --skip-publish
+```
+
+新增科技源: 在 `scripts/fetch_tech.py` 的 `FETCHERS` 里加 `fetch_<site>(n)`（返回
+`[{"title","brief","site"}, ...]`）并登记进 `ALL_SOURCES` / `SITE_CN`，同时在 categories.json
+「科技」`sources` 补一行登记。
+
 ## 21.9 快速命令
 
 
