@@ -34,14 +34,17 @@ from fetch_tech import ALL_SOURCES, SITE_CN, SITE_LANG  # noqa: E402
 TAG = "科技"
 
 # 各语言里 #科技 标签的对应写法
+# ★ 核心规则：标签语言必须与正文文案语言保持一致 ★
+# 繁体中文正文 → #科技；英文正文 → #Tech；马来语正文 → #Teknologi …
+# 避免出现"英文正文 + #科技"或"繁体正文 + #Tech"的混搭
 LANG_TAG = {
     "zh_hant": "#科技", "en": "#Tech", "ja": "#テクノロジー",
-    "ms": "#Teknologi", "hi": "#टेक्नोलॉजी", "bn": "#প্রযুক্তি",
+    "ms": "#Teknologi", "id": "#Teknologi", "hi": "#टेक्नोलॉजी", "bn": "#প্রযুক্তি",
 }
 # 各语言「来源/via」用词
 LANG_VIA = {
     "zh_hant": "來源", "en": "via", "ja": "出典",
-    "ms": "sumber", "hi": "स्रोत", "bn": "সূত্র",
+    "ms": "sumber", "id": "sumber", "hi": "स्रोत", "bn": "সূত্র",
 }
 
 # 语言 → 发帖人角色 → 第一人称句式骨架。用 {title}{site}{tag}{via} 组合，全局去重。
@@ -181,7 +184,31 @@ LANG_TEMPLATES = {
     },
 }
 
-DEFAULT_LANGS = ["zh_hant", "en", "ja", "ms", "hi", "bn"]
+# 印尼语模板（与马来语类似但有本地化差异）
+LANG_TEMPLATES["id"] = {
+    "Pakar Teknologi": [
+        "[{site}] {title} — dari sudut pandang industri, ini layak diperhatikan. {tag}",
+        "Baru baca laporan {site}: {title}. Sebagai orang di bidang ini, saya melihat sinyal penting. {tag}",
+        "{title} ({via} {site}). Perkembangan yang berguna bagi kami yang membangun teknologi. {tag}",
+    ],
+    "Penggemar Teknologi": [
+        "Ringkasan teknologi | {title} ({via}: {site}). Sebagai penggemar gadget, saya simpan ini. {tag}",
+        "Menemukan di {site}: {title} — semakin dibaca semakin menarik. {tag}",
+        "{title} — dilaporkan oleh {site}. Gelombang teknologi ini sangat menarik, berbagi di sini. {tag}",
+    ],
+    "Pengamat Pasar": [
+        "[Sinyal] {title} ({site}). Dari sudut investasi, ada peluang tersembunyi di sini. {tag}",
+        "{site} melaporkan: {title}. Patut diperhatikan jika Anda mengikuti bidang ini. {tag}",
+        "Catat ini | {title} ({via} {site}) — pasar mungkin akan bereaksi. {tag}",
+    ],
+    "Pengamat Media": [
+        "Teknologi hari ini | {title}. Liputan {site} ini padat informasi — saya bagikan. {tag}",
+        "Intisari: {title} ({via}: {site}) {tag}",
+        "{title} — dari {site}. Judul teknologi hari ini dalam satu baris. {tag}",
+    ],
+}
+
+DEFAULT_LANGS = ["zh_hant", "en", "ja", "ms", "id", "hi", "bn"]
 
 
 def _run(cmd, *, env_extra=None):
@@ -230,7 +257,14 @@ def _to_hant(s: str) -> str:
 
 
 def build_caption(item: dict, lang: str, persona: str, *, seen: set) -> str:
-    """按语言 + 发帖人角色生成第一人称纯文本文案；与 seen 去重。"""
+    """按语言 + 发帖人角色生成第一人称纯文本文案；与 seen 去重。
+
+    ★ 文案语言与 #标签语言保持一致规则 ★
+    lang 参数决定：
+      1. 正文文案使用的语言（从 LANG_TEMPLATES[lang] 选模板）
+      2. #话题标签使用的语言（从 LANG_TAG[lang] 取对应标签）
+    二者始终匹配：繁体正文 → #科技；英文正文 → #Tech；马来/印尼正文 → #Teknologi
+    """
     title = (item.get("_title") or item.get("content") or "").strip()
     site = SITE_CN.get(item.get("_site", ""), item.get("_site", ""))
     tag = LANG_TAG.get(lang, "#Tech")
