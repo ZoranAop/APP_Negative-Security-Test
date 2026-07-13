@@ -6,6 +6,9 @@ Pillow>=10.0.0  # 发布前裁切图片去除小红书右下角水印（publish_
 # Playwright - 浏览器自动化（用于获取小红书完整详情）
 playwright>=1.40.0
 
+# curl_cffi - TLS指纹模拟，绕过Cloudflare等anti-bot（8world等源需要）
+curl_cffi>=0.7.0
+
 # 注：本项目现已重构为模块化架构
 # 新增模块：
 # - config.py: 统一配置管理
