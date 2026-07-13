@@ -245,7 +245,109 @@ def iter_turismo(source: dict, need: int, has_id, has_url):
     return out
 
 
-_ITER = {"tuzi": iter_tuzi, "yituyu": iter_yituyu, "turismo": iter_turismo}
+# ---------------------------------------------------------------------------
+# ww.aituitu.com (爱推图) — 列表页(栏目/搜库目录/标签)列文章, 详情页正文
+#   <div class="single-content"> 内 data-src 为原图 img.aituitu.com/uploadfile/*
+#   支持三类列表页:
+#     栏目页  /jpsy/                → 直接含 grid-title 文章卡片
+#     标签页  /tag-秀人-1.html       → 同上
+#     搜库目录 /souku-60-p1.html      → 只含模特卡片(sou-*.html), 需下钻一层(二级页)
+#   站内唯一标记 id = "aituitu:<article-slug>"
+# ---------------------------------------------------------------------------
+_AITUITU_ART = re.compile(
+    r'class="grid-title"><a\s+href="(https://ww\.aituitu\.com/[^"]+?\.html)"')
+_AITUITU_SUB = re.compile(
+    r'href="(https://ww\.aituitu\.com/(?:sou|tag)-[^"]+?-1\.html)"')
+_AITUITU_IMG = re.compile(
+    r'data-src="(https://img\.aituitu\.com/uploadfile/[^"]+?\.(?:webp|jpe?g|png))"',
+    re.I)
+
+
+def _aituitu_articles(base: str, listing: str, drill: bool = True) -> list[str]:
+    txt = _get(listing, base + "/")
+    arts, seen = [], set()
+    for u in _AITUITU_ART.findall(txt):
+        if u not in seen:
+            seen.add(u)
+            arts.append(u)
+    if arts or not drill:
+        return arts
+    # 目录页 → 下钻二级子列表页(模特/标签聚合)再取文章
+    subs, seen_sub = [], set()
+    for s in _AITUITU_SUB.findall(txt):
+        if s not in seen_sub and s != listing:
+            seen_sub.add(s)
+            subs.append(s)
+    for sub in subs:
+        try:
+            sub_txt = _get(sub, listing)
+        except Exception as e:  # noqa: BLE001
+            print(f"[warn] aituitu sublist {sub}: {e}")
+            continue
+        for u in _AITUITU_ART.findall(sub_txt):
+            if u not in seen:
+                seen.add(u)
+                arts.append(u)
+        time.sleep(0.25)
+        if len(arts) >= 60:
+            break
+    return arts
+
+
+def _aituitu_first_photo(base: str, article_url: str) -> str | None:
+    txt = _get(article_url, base + "/")
+    body = txt
+    i = txt.find('<div class="single-content">')
+    if i >= 0:
+        end = txt.find('<div class="read-point-content"', i)
+        body = txt[i: end if end > 0 else len(txt)]
+    m = _AITUITU_IMG.search(body)
+    return m.group(1) if m else None
+
+
+def iter_aituitu(source: dict, need: int, has_id, has_url):
+    """从爱推图的多个列表页轮流进详情页, 取每篇首张原图(单图/帖)。"""
+    base = source.get("base", "https://ww.aituitu.com")
+    listings = source.get("listings") or ["https://ww.aituitu.com/jpsy/"]
+    # 每个列表页先枚举文章, 再全局轮流取图
+    art_lists = []
+    for listing in listings:
+        try:
+            art_lists.append(_aituitu_articles(base, listing))
+        except Exception as e:  # noqa: BLE001
+            print(f"[warn] aituitu list {listing}: {e}")
+            art_lists.append([])
+    ptr = [0] * len(art_lists)
+    out = []
+    while len(out) < need and any(ptr[i] < len(art_lists[i]) for i in range(len(art_lists))):
+        progressed = False
+        for i in range(len(art_lists)):
+            if len(out) >= need:
+                break
+            arts = art_lists[i]
+            while ptr[i] < len(arts):
+                art = arts[ptr[i]]
+                ptr[i] += 1
+                progressed = True
+                slug = art.rsplit("/", 1)[-1].replace(".html", "")
+                if has_id(f"aituitu:{slug}"):
+                    continue
+                try:
+                    u = _aituitu_first_photo(base, art)
+                except Exception as e:  # noqa: BLE001
+                    print(f"[warn] aituitu {art}: {e}")
+                    continue
+                if not u or has_url(u):
+                    continue
+                out.append({"url": u, "id": f"aituitu:{slug}", "site": "aituitu"})
+                break  # 取完这篇, 轮到下个列表页
+        if not progressed:
+            break
+    return out
+
+
+_ITER = {"tuzi": iter_tuzi, "yituyu": iter_yituyu, "turismo": iter_turismo,
+         "aituitu": iter_aituitu}
 
 
 def collect_category(category: str, need: int, has_id, has_url,

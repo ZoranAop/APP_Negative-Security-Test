@@ -132,18 +132,23 @@ py -3 scripts/post_room_moments.py --tuzi-column xiongqi --num-posts 3 --no-dedu
 把不同图片网站按**标签(类别)**归组, 发帖时用 `--category <标签>` 从该类下**各网站
 混合选图**(自动去重、轮流取)。配置文件: `sources/categories.json`。
 
-已内置类别 **「美女」**, 含三个站:
+已内置类别 **「美女」**, 含四个站:
 
 | 站点            | 类型   | 取图方式                                             |
 | --------------- | ------ | ---------------------------------------------------- |
 | tuziyouwang.com | tuzi   | EmpireCMS 栏目(meitui/fengtun/xiaoneinei/xiongqi/gengduo), 每篇详情页 1 张 `/d/file/*` 原图 |
 | yituyu.com      | yituyu | 画廊, 每个画廊多张 `img.yituyu.com/pic/<gid>/NN_*` 原图 |
 | turismo.cc(爱尤物) | turismo | 一级栏目(xiuren/cosplay/rosi/youmi/mygirl/tuigirl)->二级详情页, 正文 `#post_content` 区取 `img.youwushow.top` 高清原图 |
+| ww.aituitu.com(爱推图) | aituitu | 列表页(栏目 `/jpsy/` / 标签 `/tag-秀人-1.html` / 搜库目录 `/souku-60-p1.html`, 目录页会自动下钻到二级模特页)->详情页 `single-content` 区取首张 `img.aituitu.com/uploadfile/*` 原图(单图/帖) |
 
 抓取由 `scripts/sources.py` 统一实现: `collect_category(标签, 需要张数, ...)`
 从该类各站**轮流**取「未用过」的新图, 返回统一记录 `{url, id, site}`。
-`id` 是跨站唯一标记(如 `tuzi:xiongqi:11379` / `yituyu:14617:01_x.jpg` / `turismo:KkJYLH:xxx.jpg`), 记入去重账本
+`id` 是跨站唯一标记(如 `tuzi:xiongqi:11379` / `yituyu:14617:01_x.jpg` / `turismo:KkJYLH:xxx.jpg` / `aituitu:82057`), 记入去重账本
 的 `used_ids`, 保证同一张图/同一篇画廊/同一篇文章不重复。
+
+> **水印裁切**：爱推图(aituitu.com)与小红书一样，`post_room_moments.py` 上传前会对命中
+> `POST_CROP_BOTTOM_HOSTS`(默认 `xhscdn.com,xiaohongshu.com,aituitu.com`) 的图裁掉底部
+> `POST_CROP_BOTTOM_PCT`(默认 0.08) 一条以去除水印。置空 `POST_CROP_BOTTOM_HOSTS` 可关闭。
 
 ```powershell
 # 从「美女」类(tuzi + yituyu 混合)发 5 帖, 每帖 4 图:

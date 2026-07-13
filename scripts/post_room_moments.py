@@ -251,6 +251,56 @@ def _referer_for(url: str) -> str:
     return f"{p.scheme}://{p.netloc}/" if p.scheme and p.netloc else ""
 
 
+# 小红书式底部水印裁切：对命中 POST_CROP_BOTTOM_HOSTS 的图裁掉底部一条。
+# 默认含 小红书 与 爱推图(aituitu.com)；置空 POST_CROP_BOTTOM_HOSTS 可关闭。
+_DEFAULT_CROP_HOSTS = "xhscdn.com,xiaohongshu.com,aituitu.com"
+
+
+def _should_crop(image_url: str) -> bool:
+    from urllib.parse import urlsplit
+    raw = os.getenv("POST_CROP_BOTTOM_HOSTS", _DEFAULT_CROP_HOSTS)
+    hosts = [h.strip().lower() for h in raw.split(",") if h.strip()]
+    if not hosts:
+        return False
+    host = (urlsplit(image_url).hostname or "").lower()
+    return any(h in host for h in hosts)
+
+
+def _maybe_crop_bottom(local, image_url: str) -> None:
+    """命中裁切域名则裁掉底部水印条并覆盖 local；Pillow 不可用时静默跳过。"""
+    if not _should_crop(image_url):
+        return
+    try:
+        pct = float(os.getenv("POST_CROP_BOTTOM_PCT", "0.08"))
+    except ValueError:
+        pct = 0.08
+    pct = min(max(pct, 0.0), 0.5)
+    if pct <= 0:
+        return
+    try:
+        from PIL import Image
+    except ImportError:
+        return
+    try:
+        with Image.open(local) as im:
+            im.load()
+            w, h = im.size
+            new_h = int(round(h * (1.0 - pct)))
+            if new_h <= 0 or new_h >= h:
+                return
+            cropped = im.crop((0, 0, w, new_h))
+            fmt = (im.format or "").upper()
+            kw = {}
+            if fmt in ("JPEG", "JPG"):
+                cropped = cropped.convert("RGB")
+                kw = {"quality": 92}
+            elif fmt == "WEBP":
+                kw = {"quality": 92}
+            cropped.save(local, format=im.format, **kw)
+    except Exception as e:  # noqa: BLE001
+        log(f"[warn] 水印裁切跳过({e}); 用原图")
+
+
 def upload_to_s3(image_url: str, creds: dict, cache: dict[str, str]) -> str:
     """下载外部图片并转存 S3, 返回站内 URL。已缓存则直接返回。"""
     if image_url in cache:
@@ -271,6 +321,7 @@ def upload_to_s3(image_url: str, creds: dict, cache: dict[str, str]) -> str:
         if rr.status_code != 200 or not rr.content:
             raise RuntimeError(f"download HTTP {rr.status_code} for {image_url}")
         local.write_bytes(rr.content)
+        _maybe_crop_bottom(local, image_url)  # 小红书式底部水印裁切
     s3 = boto3.client(
         "s3",
         aws_access_key_id=creds["access_key_id"],

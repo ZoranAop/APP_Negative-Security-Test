@@ -26,6 +26,18 @@
           "columns": ["xiuren", "cosplay", "rosi", "youmi", "mygirl", "tuigirl"],
           "imgs_per_post": 4,
           "referer": "https://www.turismo.cc/"
+        },
+        {
+          "site": "aituitu",
+          "type": "aituitu",
+          "base": "https://ww.aituitu.com",
+          "listings": [
+            "https://ww.aituitu.com/jpsy/",
+            "https://ww.aituitu.com/souku-60-p1.html",
+            "https://ww.aituitu.com/tag-秀人-1.html"
+          ],
+          "img_host": "img.aituitu.com",
+          "referer": "https://ww.aituitu.com/"
         }
       ]
     }
