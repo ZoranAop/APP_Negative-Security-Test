@@ -303,6 +303,13 @@ def main() -> int:
     print(f"[GULF] 合并+打散: {len(all_rows)} 帖 → {combined.name}")
     print(f"{'='*60}")
 
+    # Step 2.5: 文案差异化（确保每帖内容不重复）
+    print(f"\n--- Step 2.5: 文案差异化 (caption_diversify) ---")
+    cmd = PY + [str(HERE / "caption_diversify.py"),
+                "--input", str(combined), "--output", str(combined),
+                "--lang", "en", "--scene", "travel"]
+    _run(cmd)
+
     if args.skip_publish:
         print(f"\n--skip-publish. 素材: {combined}"); return 0
 

@@ -128,6 +128,13 @@ def main() -> int:
     rows = list(_csv.DictReader(moments.open(encoding="utf-8-sig")))
     print(f"[run_malaysia] moments ready: {len(rows)} 帖")
 
+    # Step 2.5: 文案差异化（确保每帖内容不重复）
+    print("\n--- Step 2.5: 文案差异化 (caption_diversify) ---")
+    cmd = PY + [str(HERE / "caption_diversify.py"),
+                "--input", str(moments), "--output", str(moments),
+                "--lang", args.langs, "--scene", args.default_scene]
+    _run(cmd)
+
     if args.skip_publish:
         print("\n[run_malaysia] --skip-publish 已设置，仅产出素材，未发布。")
         print(f"  素材 CSV: {moments}")

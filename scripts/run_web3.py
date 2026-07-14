@@ -132,6 +132,14 @@ def main() -> int:
     rows = list(_csv.DictReader(moments.open(encoding="utf-8-sig")))
     print(f"[run_web3] moments ready: {len(rows)} 条（纯文本）")
 
+    # Step 2.5: 文案差异化（确保每帖内容不重复）
+    # 注：web3 使用 web3_caption_by_role 已有一定多样性，此步为兜底保障
+    print("\n--- Step 2.5: 文案差异化 (caption_diversify) ---")
+    cmd = PY + [str(HERE / "caption_diversify.py"),
+                "--input", str(moments), "--output", str(moments),
+                "--lang", "auto", "--scene", "travel"]
+    _run(cmd)
+
     if args.skip_publish:
         print("\n[run_web3] --skip-publish，仅产出素材：", moments)
         return 0
