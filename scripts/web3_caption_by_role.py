@@ -1,18 +1,41 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-web3_caption_by_role.py — 针对 web3/科技资讯的第一人称文案改写器。
+web3_caption_by_role.py — 针对 web3/科技资讯的第一人称文案改写器（语言统一化）。
 
 区别于仓库自带 caption_multilang.py（其点评库/标签是为台湾摄影生活媒体设计的），
 本脚本：
   - 基于真实新闻标题 + 摘要（_brief）生成第一人称口语点评（不照抄标题、非提示词）；
   - 按新闻意图（涨跌/ETF/监管/交易所/AI/稳定币/安全/研报…）挑选贴题的点评；
   - 配 web3 相关 hashtag（#web3 + 主题标签 + 来源标签）；
-  - 按“发帖者角色”决定语气：轮询映射 i%20 -> accounts_20.csv 的昵称语言，
-    英文昵称 -> 英文口吻，日文昵称 -> 日文口吻，其余 -> 繁体中文口吻；
-  - 单条 <= 280 字符。
+  - **语言统一化**：整条帖子（正文+标签）保证同一语言，不会出现中英混杂。
+    英文/马来语帖不嵌入中文原标题，而是纯用对应语言的评论内容；
+  - 支持 5 种语言：zh_hant（繁体中文）/ en（英文）/ ja（日文）/ ms（马来语）；
+  - 支持 --lang 多种策略：
+    * content   — 按原始标题语言自动判断（中文→繁中，英文→英文）
+    * zh_hant / en / ja / ms — 强制统一某种语言
+    * mixed_en_ms — 50%英文 + 50%马来语交替分配
+    * auto-nick — 按账号昵称文字系统判断（旧逻辑）
+  - 支持 --min-len / --max-len 控制输出字符数（默认 0~280）。
 
 输出与 publish_from_tokens.py 兼容的 moments CSV（content 就地改写）。
+
+用法示例：
+    # 50% 英文 + 50% 马来语，150-300 字符，语言统一
+    py -3 scripts/web3_caption_by_role.py \\
+        --input web3_raw.csv --output moments.csv \\
+        --accounts-csv accounts.csv \\
+        --lang mixed_en_ms --min-len 150 --max-len 300
+
+    # 全部繁体中文
+    py -3 scripts/web3_caption_by_role.py \\
+        --input web3_raw.csv --output moments.csv \\
+        --accounts-csv accounts.csv --lang zh_hant
+
+    # 按内容语言自动判断
+    py -3 scripts/web3_caption_by_role.py \\
+        --input web3_raw.csv --output moments.csv \\
+        --accounts-csv accounts.csv --lang content
 """
 from __future__ import annotations
 import argparse, csv, re, sys, unicodedata
@@ -69,9 +92,33 @@ BANKS = {
   "ethereum":   ["イーサはやはり生態系が最も豊か。L2は正解だった。", "ネイティブRollupこそ本当に効くアップグレード。", "インフラから生態系の中心へ、まだ道は長い。", "L2の競争が次のサイクルを決める。"],
   "market":     ["荒い相場。何よりリスク管理が大事。", "両方向でサーキットブレーカー、センチメントは極端。", "含み損は損切り規律を思い出させてくれる。", "相場が荒れるほど冷静に。"],
   "research":   ["情報量の多いレポート。じっくり読みたい。", "ハヤリを追うより深掘りが実になる。良記事。", "トレンドをここまで整理した報告は貴重。", "読後、セクター全体の流れがクリアになった。"],
- },
+  },
+ "ms": {
+  "regulation": ["Regulasi makin jelas — ini bagus untuk jangka panjang. Pasaran perlukan kepastian, dan langkah ini menunjukkan industri crypto sedang matang.", "Pematuhan melangkah ke hadapan, keyakinan pasaran akan kembali. Peraturan yang jelas bukan musuh, malah ia asas kepada pertumbuhan yang sihat.", "Isyarat polisi macam ni bukan sehari dua kesan dia. Kita patut pantau perkembangan ni dengan teliti dan lihat bagaimana ia akan bentuk masa depan industri.", "Regulasi yang jatuh adalah permulaan kematangan industri — fundamentals tetap penting dan fokus kita patut kekal di situ."],
+  "etf":        ["Aliran dana ETF lebih menggambarkan sikap institusi berbanding harga harian. Pergerakan masuk dan keluar ini memberi gambaran sebenar sentimen pasaran.", "Arah aliran di sini lebih bermakna daripada angka tajuk utama. Kita kena lihat trend besar, bukan turun naik satu hari.", "Wang institusi melalui ETF dah jadi trend yang tak boleh diabaikan. Ini petanda bahawa pemain besar semakin yakin dengan crypto.", "Saya pantau aliran ETF lebih dari carta candlestick. Data aliran ini beri gambaran yang lebih tepat tentang ke mana pasaran sebenarnya menuju."],
+  "exchange":   ["Banyak pergerakan pertukaran minggu ini — berhati-hati dengan risiko penyenaraian dan acara. Jangan terburu-buru masuk tanpa buat kajian terlebih dahulu.", "Leveraj tinggi pada perpetual: pastikan saiz posisi anda sebelum sentuh. Disiplin pengurusan risiko adalah kunci untuk bertahan dalam pasaran ini.", "Pengumuman pertukaran menggerakkan pasaran secara langsung — kelebihan maklumat adalah segalanya. Siapa yang dapat berita dulu, dia yang untung.", "Buat kerja rumah sebelum kejar penyenaraian baru. Token baru bukan jaminan untung, dan FOMO boleh jadi musuh paling besar anda."],
+  "ai":         ["Pertindihan AI dan Web3 semakin nyata — saya optimis tentang arah ini. Gabungan dua teknologi ni boleh ubah cara kita berinteraksi dengan dunia digital.", "Penilaian AI perlu semakan realiti walaupun teknologi berlumba ke hadapan. Valuasi yang melambung tanpa fundamentals kukuh akan jadi masalah nanti.", "Cip dan pengiraan adalah medan perang sebenar kitaran AI ini. Siapa yang kawal infrastruktur, dia yang menang dalam jangka panjang.", "Apabila pelaku bertukar dari manusia ke ejen, peraturan perlu ditulis semula. Kita sedang menyaksikan perubahan paradigma yang besar dalam teknologi."],
+  "stablecoin": ["Model hasil stablecoin semakin banyak — pematuhan adalah kunci. Projek yang boleh seimbangkan inovasi dengan regulasi akan menang dalam jangka masa panjang.", "Pinjaman stablecoin memang berbaloi untuk diikuti — kegunaannya jelas. Ini salah satu sektor yang memberi nilai sebenar dalam ekosistem DeFi.", "Soalan menarik ialah siapa yang akan pecahkan monopoli stablecoin semasa. Persaingan dalam ruang ini akan bawa inovasi yang lebih baik untuk pengguna.", "Stablecoin adalah lapisan asas kewangan on-chain dan ia akan terus berkembang. Piawaian dan interoperabiliti akan jadi fokus utama ke depan."],
+  "security":   ["Keselamatan on-chain sentiasa diutamakan — jangan kejar hasil secara membuta. Satu kesilapan kecil boleh mengakibatkan kerugian yang tidak boleh dipulihkan.", "Apabila ejen menandatangani transaksi, perimeter keselamatan perlu difikirkan semula. Automasi membawa risiko baru yang perlu diurus dengan berhati-hati.", "Insiden macam ni ingatkan kita untuk jaga kunci dan kelulusan dengan teliti. Keselamatan digital bukan pilihan, ia keperluan mutlak dalam dunia Web3.", "Keselamatan defensif semakin penting hari demi hari. Pelaburan dalam audit dan perlindungan smart contract bukan kos, ia adalah pelaburan masa depan."],
+  "bitcoin":    ["Bitcoin adalah permainan jangka panjang — kesabaran biasanya menang. Sejarah telah buktikan bahawa mereka yang hold dengan yakin akan untung pada akhirnya.", "Pergerakan whale patut diperhatikan, tapi jangan salin dagangan secara membabi buta. Buat analisis sendiri dan fahami konteks sebelum ambil keputusan.", "Naratif BTC berubah mengikut zaman, tapi logik asasnya tidak pernah berubah. Kelangkaan, desentralisasi dan ketahanan terhadap sensor kekal relevan.", "Pegang Bitcoin lebih tentang minda daripada kelajuan. Volatiliti jangka pendek tidak bermakna jika anda faham tesis pelaburan jangka panjang anda."],
+  "ethereum":   ["Ethereum masih mempunyai ekosistem paling kaya — L2 adalah keputusan yang betul. Skala dan kelajuan transaksi bertambah baik tanpa korbankan keselamatan.", "Rollup natif adalah jenis peningkatan yang benar-benar berkesan untuk ekosistem. Ini bukan sekadar penambahbaikan kecil, ia perubahan fundamental.", "Dari infrastruktur ke hab ekosistem — Ethereum masih ada perjalanan panjang. Tapi arah tujunya jelas dan komuniti pembangunannya tetap yang paling aktif.", "Perlumbaan L2 akan menentukan kitaran seterusnya. Siapa yang boleh tawarkan pengalaman terbaik dengan kos terendah, dia yang akan dominasi."],
+  "market":     ["Sesi yang liar — kawalan risiko lebih penting daripada apa-apa. Dalam keadaan pasaran macam ni, lindungi modal anda dulu sebelum fikir tentang untung.", "Circuit breaker dua arah menunjukkan sentimen sudah di tahap ekstrem. Apabila pasaran jadi begini, ia biasanya petanda bahawa perubahan besar akan datang.", "Kerugian belum direalisasi mengingatkan kita supaya disiplin dalam ambil untung dan potong rugi. Jangan biar emosi kawal keputusan pelaburan anda.", "Makin gila pasaran, makin tenang kita kena jadi. Panik selling dan FOMO buying adalah dua musuh utama pelabur dalam keadaan volatil macam sekarang."],
+  "research":   ["Laporan yang padat dengan maklumat — saya akan simpan ni untuk baca perlahan-lahan. Analisis mendalam macam ni sukar dijumpai dan memang berbaloi masa untuk hadam.", "Kandungan mendalam lebih bernilai dari kejar hype semata-mata. Artikel ni bagi perspektif yang lebih luas tentang ke mana industri sedang menuju.", "Tidak banyak laporan yang memetakan trend dengan begitu jelas dan terperinci. Kerja penyelidikan yang solid membantu kita buat keputusan yang lebih baik.", "Lebih jelas tentang keseluruhan sektor selepas baca laporan ini. Konteks dan data yang disajikan membantu memahami gambaran besar pasaran."],
+  },
 }
 
+TAGS_MS = {
+  "regulation": ["#web3", "#RegulasiKripto", "#Pematuhan"],
+  "etf": ["#web3", "#ETFKripto", "#Institusi"],
+  "exchange": ["#web3", "#Pertukaran", "#Derivatif"],
+  "ai": ["#web3", "#AI", "#Teknologi"],
+  "stablecoin": ["#web3", "#Stablecoin", "#DeFi"],
+  "security": ["#web3", "#KeselamatanOnchain", "#Keselamatan"],
+  "bitcoin": ["#web3", "#Bitcoin", "#BTC"],
+  "ethereum": ["#web3", "#Ethereum", "#Layer2"],
+  "market": ["#web3", "#PasaranKripto", "#Pasaran"],
+  "research": ["#web3", "#Penyelidikan", "#Trend"],
+}
 TAGS = {
   "regulation": ["#web3", "#加密監管", "#合規"],
   "etf": ["#web3", "#加密ETF", "#機構資金"],
@@ -113,7 +160,7 @@ def clean_title(title: str) -> str:
     return t.strip("｜|-–— 、，,").strip()
 
 def role_lang(nick: str) -> str:
-    """按昵称的文字系统判断发帖者角色语言口吻。"""
+    """按昵称的文字系统判断发帖者角色语言口吻（仅在 --lang auto-nick 时使用）。"""
     if not nick:
         return "zh_hant"
     has_jp = any('\u3040' <= c <= '\u30ff' for c in nick)  # 平/片假名
@@ -127,33 +174,96 @@ def role_lang(nick: str) -> str:
         return "en"
     return "zh_hant"  # 泰文/阿拉伯文等 → 繁中兜底
 
-def make_caption(title: str, brief: str, site: str, lang: str, idx: int) -> str:
+
+def detect_content_lang(title: str) -> str:
+    """根据原始标题内容的语言决定输出语言。
+    中文内容 → zh_hant（繁体中文呈现），英文内容 → en。
+    判断逻辑：统计 CJK 字符占比，有一定比例中文字符就认为是中文内容。
+    """
+    if not title:
+        return "zh_hant"
+    cjk_count = sum(1 for c in title if '\u4e00' <= c <= '\u9fff')
+    # 日文假名
+    jp_count = sum(1 for c in title if '\u3040' <= c <= '\u30ff' or '\u31f0' <= c <= '\u31ff')
+    latin_count = sum(1 for c in title if 'a' <= c.lower() <= 'z')
+    if jp_count > 3:
+        return "ja"
+    if cjk_count >= 2:
+        return "zh_hant"
+    if latin_count > 0:
+        return "en"
+    return "zh_hant"
+
+def make_caption(title: str, brief: str, site: str, lang: str, idx: int,
+                 min_len: int = 0, max_len: int = 280) -> str:
+    """生成文案。支持 min_len/max_len 控制字符数。
+    
+    关键原则：整条帖子语言统一。
+    - 如果 lang=en，整条帖子全英文（不夹杂中文标题）；
+    - 如果 lang=ms，整条帖子全马来语（不夹杂中文标题）；
+    - 如果 lang=zh_hant，标题+点评都是繁中。
+    """
     ct = clean_title(title)
     text_for_intent = ct + " " + (brief or "")
     intent = detect_intent(text_for_intent)
     bank = BANKS[lang][intent]
     seed = sum(ord(c) for c in ct) + idx
     comment = bank[seed % len(bank)]
-    tags = (TAGS_EN if lang == "en" else TAGS)[intent][:]
+    # 取第二条点评（用于补足长度）
+    comment2 = bank[(seed + 1) % len(bank)]
+    if comment2 == comment:
+        comment2 = bank[(seed + 2) % len(bank)]
+    # 选择标签集
+    if lang == "ms":
+        tags = TAGS_MS[intent][:]
+    elif lang == "en":
+        tags = TAGS_EN[intent][:]
+    else:
+        tags = TAGS[intent][:]
     st = SITE_TAG.get(site)
     if st and st not in tags:
         tags.append(st)
-    # 组织正文：真实标题（可验证）+ 第一人称点评 + 标签
-    if lang == "en":
-        # 英文用户：标题保留原文（多为中文新闻），加英文点评
-        body = f"{comment}\n\n{ct}"
+    tagline = " ".join(tags)
+
+    # ---- 组装正文（确保语言统一）----
+    if lang in ("en", "ms"):
+        # 英文/马来语帖：不嵌入中文标题，纯用对应语言的评论
+        # 用两条评论拼接以达到足够长度
+        body = f"{comment}\n\n{comment2}"
     elif lang == "ja":
         body = f"{comment}\n\n{ct}"
     else:
+        # zh_hant：中文标题 + 繁中点评
         body = f"{ct}\n{comment}"
-    tagline = " ".join(tags)
+
     out = f"{body}\n{tagline}"
-    # 限长 280 字符
-    if len(out) > 280:
-        keep = 280 - len(tagline) - len(comment) - 4
-        ct2 = ct[:max(keep, 20)]
-        body = (f"{comment}\n\n{ct2}" if lang in ("en", "ja") else f"{ct2}\n{comment}")
+
+    # 如果低于 min_len 且有 brief，尝试补足（仅限同语言内容）
+    if min_len > 0 and len(out) < min_len:
+        # 对于 en/ms，再加第三条点评
+        if lang in ("en", "ms"):
+            comment3 = bank[(seed + 3) % len(bank)]
+            if comment3 not in (comment, comment2):
+                body = f"{comment}\n\n{comment2}\n\n{comment3}"
+                out = f"{body}\n{tagline}"
+        else:
+            # zh_hant/ja 可以追加 brief
+            if brief:
+                brief_clean = re.sub(r"\s+", " ", brief).strip()
+                avail = max_len - len(out) - 2
+                if avail > 20:
+                    body = f"{ct}\n{comment}\n\n{brief_clean[:avail]}"
+                    out = f"{body}\n{tagline}"
+
+    # 限制 max_len
+    if len(out) > max_len:
+        # 截断 body 保留 comment + tagline
+        keep = max_len - len(tagline) - 2
+        body = body[:keep].rstrip()
         out = f"{body}\n{tagline}"
+    # 最终硬截断
+    if len(out) > max_len:
+        out = out[:max_len - 3] + "..."
     return out
 
 def main() -> int:
@@ -161,9 +271,21 @@ def main() -> int:
     ap.add_argument("--input", required=True)
     ap.add_argument("--output", required=True)
     ap.add_argument("--accounts-csv", required=True)
+    ap.add_argument("--lang", default="content",
+                    choices=["content", "zh_hant", "en", "ja", "ms", "auto-nick", "mixed_en_ms"],
+                    help="语言策略：content=按内容语言自动判断，zh_hant/en/ja/ms=强制统一，"
+                         "mixed_en_ms=50%%英文+50%%马来语交替，auto-nick=按昵称。默认 content。")
+    ap.add_argument("--min-len", type=int, default=0,
+                    help="文案最小字符数（默认 0 不限制）")
+    ap.add_argument("--max-len", type=int, default=280,
+                    help="文案最大字符数（默认 280）")
     args = ap.parse_args()
 
-    # 载入 20 账号昵称（轮询顺序）
+    lang_mode = args.lang
+    min_len = args.min_len
+    max_len = args.max_len
+
+    # 载入账号昵称（轮询顺序）
     with open(args.accounts_csv, encoding="utf-8-sig") as fh:
         accts = list(csv.DictReader(fh))
     nicks = [(a.get("昵称") or a.get("nickname") or "").strip() for a in accts]
@@ -182,13 +304,29 @@ def main() -> int:
         w.writeheader()
         for i, row in enumerate(rows):
             nick = nicks[i % n_acc] if n_acc else ""
-            lang = role_lang(nick)
+            # 根据策略决定语言
+            if lang_mode == "content":
+                lang = detect_content_lang(row.get("content", ""))
+            elif lang_mode == "auto-nick":
+                lang = role_lang(nick)
+            elif lang_mode == "mixed_en_ms":
+                # 50% 英文 + 50% 马来语，交替分配
+                lang = "en" if (i % 2 == 0) else "ms"
+            else:
+                lang = lang_mode  # 强制统一 (zh_hant/en/ja/ms)
             row["content"] = make_caption(row.get("content", ""), row.get("_brief", ""),
-                                          row.get("_site", ""), lang, i)
+                                          row.get("_site", ""), lang, i,
+                                          min_len=min_len, max_len=max_len)
             row["_lang"] = lang
             row["_role_nick"] = nick
             w.writerow(row)
-    print(f"[OK] wrote {len(rows)} role-based web3 captions -> {args.output}")
+    # 统计语言分布
+    from collections import Counter
+    lang_stats = Counter()
+    with open(args.output, encoding="utf-8-sig") as fh:
+        for r in csv.DictReader(fh):
+            lang_stats[r.get("_lang", "")] += 1
+    print(f"[OK] wrote {len(rows)} web3 captions (lang_mode={lang_mode}, dist={dict(lang_stats)}) -> {args.output}")
     return 0
 
 if __name__ == "__main__":

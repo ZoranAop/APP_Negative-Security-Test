@@ -1,21 +1,28 @@
 #!/usr/bin/env python3
 """
-run_web3.py — Web3 资讯一键发布（多源采集 → 繁体中文/主体视角文案 → 纯文本发布）
+run_web3.py — Web3 资讯一键发布（多源采集 → 语言统一化文案 → 纯文本发布）
 
 把 Web3 资讯的三步串成一条命令：
     1) 采集   fetch_web3.py   （9 个 Web3 媒体，统一 web3 标签，纯文本）
-    2) 文案   caption_multilang.py 或内置轻量改写（发帖人第一人称，可繁体）
+    2) 文案   web3_caption_by_role.py（语言统一化：整条帖子保证同一语言）
     3) 发布   publish_from_tokens.py （纯文本帖，无图，media_info type=text）
 
-支持来源（--sources）：
-    techflow / web3bbs / foresight / menews / web3caff / panews / bingx / blockweeks / wublock
+语言统一化说明（--lang 参数）：
+    content      按采集内容语言自动判断（中文标题→繁中帖，英文标题→英文帖）
+    zh_hant      全部繁体中文
+    en           全部英文
+    ms           全部马来语
+    ja           全部日文
+    mixed_en_ms  50%英文 + 50%马来语交替（推荐：整条帖子语言统一，不夹杂中文）
+    auto-nick    按账号昵称语言判断（旧逻辑）
 
 用法：
-    # 默认：9 源各 10 条，10 账号轮询
-    py -3 scripts/run_web3.py --accounts-csv accounts_10.csv --per-site 10
+    # 50% 英文 + 50% 马来语，150-300 字符
+    py -3 scripts/run_web3.py --accounts-csv accounts_20.csv --lang mixed_en_ms \\
+        --min-len 150 --max-len 300 --yes
 
-    # 指定来源与语言（繁体中文）
-    py -3 scripts/run_web3.py --sources techflow,foresight,panews --langs zh_hant
+    # 全部繁体中文（默认）
+    py -3 scripts/run_web3.py --accounts-csv accounts_10.csv --per-site 10
 
     # 只采集+文案、不发布
     py -3 scripts/run_web3.py --skip-publish
@@ -61,10 +68,15 @@ def main() -> int:
                     help="去重档（默认 state/seen_web3.json，跨批次防重复）")
     ap.add_argument("--reset-dedupe", action="store_true")
     # caption
-    ap.add_argument("--langs", default="zh_hant", help="文案语言（默认繁体中文 zh_hant）")
-    ap.add_argument("--default-scene", default="portrait")
+    ap.add_argument("--lang", default="content",
+                    choices=["content", "zh_hant", "en", "ja", "ms", "auto-nick", "mixed_en_ms"],
+                    help="文案语言策略：content=按采集内容语言自动判断，"
+                         "zh_hant/en/ja/ms=强制统一，mixed_en_ms=50%%英文+50%%马来语，"
+                         "auto-nick=按昵称判断。默认 content。")
+    ap.add_argument("--min-len", type=int, default=0, help="文案最小字符数")
+    ap.add_argument("--max-len", type=int, default=280, help="文案最大字符数")
     ap.add_argument("--no-caption", action="store_true",
-                    help="不改写文案，直接用原标题发（默认会走 caption_multilang 改写）")
+                    help="不改写文案，直接用原标题发（默认会走 web3_caption_by_role 改写）")
     # publish
     ap.add_argument("--concurrency", type=int, default=3)
     ap.add_argument("--tokens", default="result/tokens.json")
@@ -80,7 +92,7 @@ def main() -> int:
     raw = wd / f"web3_raw_{ts}.csv"
     moments = wd / f"moments_web3_{ts}.csv"
 
-    print(f"[run_web3] sources={args.sources} per-site={args.per_site} langs={args.langs}")
+    print(f"[run_web3] sources={args.sources} per-site={args.per_site} lang={args.lang}")
 
     # ---- Step 1: fetch ----
     print("\n=== Step 1/3: 多源采集（9 个 Web3 媒体，web3 标签，纯文本）===")
@@ -105,10 +117,14 @@ def main() -> int:
         moments = raw
         print("\n[run_web3] --no-caption：直接用原标题发。")
     else:
-        print("\n=== Step 2/3: 主体视角文案 ===")
-        cmd = PY + [str(HERE / "caption_multilang.py"),
-                    "--input", str(raw), "--output", str(moments), "--langs", args.langs]
-        if _run(cmd, env_extra={"DEFAULT_SCENE": args.default_scene}) != 0 or not moments.exists():
+        print("\n=== Step 2/3: 主体视角文案（web3_caption_by_role）===")
+        cmd = PY + [str(HERE / "web3_caption_by_role.py"),
+                    "--input", str(raw), "--output", str(moments),
+                    "--accounts-csv", str(ROOT / args.accounts_csv),
+                    "--lang", args.lang,
+                    "--min-len", str(args.min_len),
+                    "--max-len", str(args.max_len)]
+        if _run(cmd) != 0 or not moments.exists():
             print("[run_web3] 文案改写失败，终止。", file=sys.stderr)
             return 1
 

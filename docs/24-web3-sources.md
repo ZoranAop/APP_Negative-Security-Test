@@ -52,34 +52,70 @@ py -3 scripts/fetch_web3.py `
 
 ---
 
-## 24.3 文案：主体视角 / 繁体中文延展
+## 24.3 文案：语言统一化文案改写（web3_caption_by_role.py）
 
-采集产出的 `content` 是原始标题。用 `caption_multilang.py` 改写为
-**发帖人第一人称口吻**（可繁体中文），或按需自定义延展：
+采集产出的 `content` 是原始标题（多为中文）。用 `web3_caption_by_role.py` 改写为
+**发帖人第一人称口吻**，并确保**整条帖子语言统一**（不出现中英混杂）。
+
+### 语言统一化原则
+
+| 输出语言 | 正文组成 | 说明 |
+|---------|---------|------|
+| `zh_hant` | 中文标题 + 繁中点评 | 标题+评论都是繁中，保持一致 |
+| `en` | 英文点评 × 2 | **不嵌入中文标题**，纯英文评论内容 |
+| `ms` | 马来语点评 × 2 | **不嵌入中文标题**，纯马来语评论内容 |
+| `ja` | 日文点评 + 中文标题 | 日文用户可读中文，保留标题 |
+
+### --lang 策略参数
+
+| 值 | 说明 |
+|----|------|
+| `content` | 按原始标题语言自动判断（中文→繁中，英文→英文） |
+| `zh_hant` / `en` / `ja` / `ms` | 强制统一某种语言 |
+| `mixed_en_ms` | **50%英文 + 50%马来语**交替分配（推荐多语言场景） |
+| `auto-nick` | 按账号昵称的文字系统判断（旧逻辑） |
+
+### 用法示例
 
 ```powershell
-py -3 scripts/caption_multilang.py --input web3_raw.csv --output moments_web3.csv --langs zh_hant
+# 50% 英文 + 50% 马来语，150-300 字符（语言严格统一）
+py -3 scripts/web3_caption_by_role.py `
+    --input web3_raw.csv --output moments.csv `
+    --accounts-csv accounts_20.csv `
+    --lang mixed_en_ms --min-len 150 --max-len 300
+
+# 全部繁体中文
+py -3 scripts/web3_caption_by_role.py `
+    --input web3_raw.csv --output moments.csv `
+    --accounts-csv accounts.csv --lang zh_hant
+
+# 按内容语言自动判断
+py -3 scripts/web3_caption_by_role.py `
+    --input web3_raw.csv --output moments.csv `
+    --accounts-csv accounts.csv --lang content
 ```
 
 **主体视角写作建议（实战沉淀）：**
-- 用发帖人第一人称转述+点评，而非直接贴标题；结合 `_brief` 摘要补一句上下文细节。
-- 语气自然口语化，按主题（涨/跌/ETF/监管/巨鲸/DeFi/NFT/交易所/AI）给不同的反应，
-  避免固定「开场白…大家怎么看」模板导致同质化。
-- 繁体中文用 `opencc`（`s2twp`，台湾用语：網路/槓桿/專案 等）。
-- 单条控制在 **≤300 字符**，统一带 `#web3` 及来源标签（如 `#TechFlow`/`#PANews`）。
-
-> 若配置 `LLM_TEXT_*` 环境变量，可在 `caption_multilang.py` 加 `--use-llm` 用大模型按人设生成。
+- 用发帖人第一人称口吻点评，语气自然口语化。
+- 按新闻意图（涨/跌/ETF/监管/巨鲸/DeFi/交易所/AI/安全/研报）选择不同语气的评论。
+- 马来语/英文帖不嵌入中文原标题，避免语言混杂。
+- 单条控制在 `--min-len` 到 `--max-len` 之间，统一带 `#web3` 及来源标签。
+- 每个意图有 4 条评论轮换，通过 seed 避免连续帖子用相同评论。
 
 ---
 
 ## 24.4 端到端 runbook（一键脚本）
 
 ```powershell
-# 默认：9 源各 10 条，10 账号轮询，繁体中文文案
+# 默认：9 源各 10 条，按内容语言自动判断
 py -3 scripts/run_web3.py --accounts-csv accounts_10.csv --per-site 10
 
-# 指定来源与语言
-py -3 scripts/run_web3.py --sources techflow,foresight,panews,bingx --langs zh_hant
+# 50% 英文 + 50% 马来语，150-300 字符（语言统一化）
+py -3 scripts/run_web3.py --accounts-csv accounts_20.csv --per-site 5 `
+    --lang mixed_en_ms --min-len 150 --max-len 300 --yes
+
+# 指定来源
+py -3 scripts/run_web3.py --sources techflow,foresight,panews,bingx --lang zh_hant
 
 # 只采集+文案、不发布（预演）
 py -3 scripts/run_web3.py --skip-publish
