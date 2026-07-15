@@ -45,6 +45,7 @@ ROOT = HERE.parent
 sys.path.insert(0, str(HERE))
 
 from sources import collect_category, load_categories  # noqa: E402
+from dedupe import DedupeManager  # noqa: E402
 
 OPENNANA_API_BASE = os.getenv("OPENNANA_API_BASE", "https://api.opennana.com")
 OPENNANA_HEADERS = {
@@ -121,16 +122,10 @@ def main() -> int:
     ap.add_argument("--output", required=True, help="输出 CSV 路径")
     args = ap.parse_args()
 
-    # 加载去重档
+    # 加载去重管理器（两阶段：pending → used）
     dedupe_path = ROOT / args.dedupe_file
-    dedupe_path.parent.mkdir(parents=True, exist_ok=True)
-    seen_ids: set = set()
-    seen_urls: set = set()
-    if dedupe_path.exists():
-        data = json.loads(dedupe_path.read_text(encoding="utf-8"))
-        seen_ids = set(data.get("ids", []))
-        seen_urls = set(data.get("urls", []))
-    print(f"[beauty] 去重档: {dedupe_path.name} (ids={len(seen_ids)}, urls={len(seen_urls)})")
+    dm = DedupeManager(dedupe_path)
+    print(f"[beauty] 去重档: {dedupe_path.name} ({dm.stats})")
 
     use_opennana = not args.no_opennana
     total = args.limit
@@ -151,15 +146,16 @@ def main() -> int:
         try:
             cat_items = collect_category(
                 "美女", category_want,
-                has_id=lambda x: x in seen_ids,
-                has_url=lambda x: x in seen_urls,
+                has_id=dm.has_id,
+                has_url=dm.has_url,
             )
             for item in cat_items:
                 url = item["url"]
                 uid = item["id"]
                 site = item.get("site", "unknown")
-                seen_ids.add(uid)
-                seen_urls.add(url)
+                # 标记为 pending（等待发布确认后转 used）
+                dm.mark_pending(uid)
+                dm.mark_pending(url)
                 all_rows.append({
                     "content": f"{site} beauty photo",
                     "image_urls": url,
@@ -173,9 +169,11 @@ def main() -> int:
     # Step 2: 从 opennana 采集
     if use_opennana and opennana_want > 0:
         print(f"[beauty] 从 opennana beauty 采集 {opennana_want} 张...")
-        opennana_items = _fetch_opennana_beauty(opennana_want, seen_urls)
+        # 用 dm 的已用集合过滤
+        opennana_seen_urls = {k for k in (dm.used | set(dm.pending.keys())) if k.startswith("http")}
+        opennana_items = _fetch_opennana_beauty(opennana_want, opennana_seen_urls)
         for item in opennana_items:
-            seen_ids.add(item["_slug"])
+            dm.mark_pending(item["_slug"])
         all_rows.extend(opennana_items)
         print(f"[beauty] opennana 获取: {len(opennana_items)} 张")
 
@@ -207,16 +205,15 @@ def main() -> int:
                 "_slug": r.get("_slug", ""),
             })
 
-    # 保存去重档
-    dedupe_data = {"ids": list(seen_ids), "urls": list(seen_urls)}
-    dedupe_path.write_text(json.dumps(dedupe_data, ensure_ascii=False), encoding="utf-8")
+    # 保存去重档（pending 状态，等发布成功后确认）
+    dm.save()
 
     # 统计
     from collections import Counter
     dist = Counter(r.get("_source", "?") for r in all_rows)
     print(f"[OK] wrote {len(all_rows)} photos → {out_path}")
     print(f"[OK] source distribution: {dict(dist)}")
-    print(f"[OK] dedupe file → {dedupe_path.name} (ids={len(seen_ids)}, urls={len(seen_urls)})")
+    print(f"[OK] dedupe → {dedupe_path.name} ({dm.stats})")
     return 0
 
 
