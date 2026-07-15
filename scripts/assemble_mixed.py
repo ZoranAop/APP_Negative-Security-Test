@@ -31,6 +31,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from caption_multilang import detect_scene, pick_template  # 复用图文场景文案模板池
+from caption_beauty import generate_beauty_caption  # 美女图文长配文改写器
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -96,9 +97,15 @@ def _orig_hashtag(orig: str) -> str:
     tags = _HASHTAG_RE.findall(orig or "")
     return tags[0] if tags else ""
 
-def image_caption(orig, lang, used, seen_contents: set):
-    """图文配文：优先用场景模板；若与已用配文重复，追加图库原图的一个话题标签做差异化，
-    仍重复则再加序号，确保整批内配文文本不重复。"""
+def image_caption(orig, lang, used, seen_contents: set, rng=None):
+    """图文配文：使用美女长配文改写器（150-300字符），基于原始提示词延展，
+    全局不重复。如果 caption_beauty 不支持该语言，回退到模板池短句。"""
+    # 优先使用美女长配文改写器（150-300字符，不重复不雷同）
+    if lang in ("zh_hant", "en"):
+        cap = generate_beauty_caption(orig or "", lang, seen_contents, rng=rng)
+        return cap
+
+    # 其他语言回退到原有模板池逻辑
     scene = detect_scene(orig or "")
     base = pick_template(scene, lang, used)
     cap = base
@@ -201,7 +208,7 @@ def main():
                              "_lang": lang, "_site": s.get("_site",""), "_dkey": ("web3", clean_title(s["content"]))})
             else:  # I
                 s = imgs[ii]; ii += 1
-                content = image_caption(s.get("content",""), lang, tmpl_used, seen_img_caps)
+                content = image_caption(s.get("content",""), lang, tmpl_used, seen_img_caps, rng=rng)
                 rows.append({"content": content, "image_urls": s.get("image_urls",""),
                              "_ptype": "image", "_lang": lang, "_site": s.get("_source",""),
                              "_dkey": ("img", s.get("_slug","") or (s.get("image_urls","").split(",")[0]))})
