@@ -52,9 +52,13 @@ UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
 ALL_SOURCES = ["yahoo_life", "ltn_life", "udn_life"]
 
 SITE_INFO = {
-    "yahoo_life": {"name": "Yahoo奇摩生活", "url": "https://tw.news.yahoo.com/rss/life", "fmt": "rss"},
-    "ltn_life":   {"name": "自由時報生活",  "url": "https://news.ltn.com.tw/rss/life.xml", "fmt": "rss"},
-    "udn_life":   {"name": "聯合報生活",    "url": "https://udn.com/rssfeed/news/2/6638", "fmt": "rss"},
+    "yahoo_life":   {"name": "Yahoo奇摩生活", "url": "https://tw.news.yahoo.com/rss/life", "fmt": "rss"},
+    "ltn_life":     {"name": "自由時報生活",  "url": "https://news.ltn.com.tw/rss/life.xml", "fmt": "rss"},
+    "udn_life":     {"name": "聯合報生活",    "url": "https://udn.com/rssfeed/news/2/6638", "fmt": "rss"},
+    "decomyplace":  {"name": "DECOmyplace",  "url": "https://decomyplace.com/", "fmt": "html_pw",
+                     "note": "需Playwright，直連403"},
+    "mobile01":     {"name": "Mobile01居家",  "url": "https://www.mobile01.com/category.php?id=9", "fmt": "html_pw",
+                     "note": "需Playwright，詳情頁JS渲染"},
 }
 
 
@@ -62,7 +66,13 @@ def fetch_site(site: str, want: int, seen: set) -> list[dict]:
     info = SITE_INFO.get(site)
     if not info:
         return []
-    return fetch_rss_with_detail_images(info["url"], want, seen, delay=0.5)
+    if info["fmt"] == "rss":
+        return fetch_rss_with_detail_images(info["url"], want, seen, delay=0.5)
+    elif info["fmt"] == "html_pw":
+        # 需要 Playwright 浏览器采集（当前标记为 pending，跳过并提示）
+        print(f"[warn] {site} 需要 Playwright 瀏覽器採集（{info.get('note', '')}），暫時跳過")
+        return []
+    return []
 
 
 def main() -> int:

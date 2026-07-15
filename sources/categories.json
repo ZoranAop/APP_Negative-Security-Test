@@ -119,9 +119,11 @@
         { "site": "yahoo_life", "type": "rss", "name": "Yahoo奇摩生活",  "lang": "zh_hant", "url": "https://tw.news.yahoo.com/rss/life",       "status": "active" },
         { "site": "ltn_life",   "type": "rss", "name": "自由時報生活",    "lang": "zh_hant", "url": "https://news.ltn.com.tw/rss/life.xml",     "status": "active" },
         { "site": "udn_life",   "type": "rss", "name": "聯合報生活",      "lang": "zh_hant", "url": "https://udn.com/rssfeed/news/2/6638",      "status": "active" },
-        { "site": "ettoday",    "type": "html","name": "ETtoday生活",     "lang": "zh_hant", "url": "https://www.ettoday.net/news/focus/生活/",  "status": "pending", "note": "需代理/VPN，大陸直連超時" },
-        { "site": "nownews",    "type": "html","name": "NOWnews生活",     "lang": "zh_hant", "url": "https://www.nownews.com/cat/life/",         "status": "pending", "note": "RSS已下線，需HTML解析" },
-        { "site": "tvbs_woman", "type": "html","name": "TVBS女人我最大",   "lang": "zh_hant", "url": "https://woman.tvbs.com.tw/queenspick",     "status": "pending", "note": "需HTML解析" }
+        { "site": "ettoday",      "type": "html","name": "ETtoday生活",     "lang": "zh_hant", "url": "https://www.ettoday.net/news/focus/生活/",  "status": "pending", "note": "需代理/VPN，大陸直連超時" },
+        { "site": "nownews",      "type": "html","name": "NOWnews生活",     "lang": "zh_hant", "url": "https://www.nownews.com/cat/life/",         "status": "pending", "note": "RSS已下線，需HTML解析" },
+        { "site": "tvbs_woman",   "type": "html","name": "TVBS女人我最大",   "lang": "zh_hant", "url": "https://woman.tvbs.com.tw/queenspick",     "status": "pending", "note": "需HTML解析" },
+        { "site": "decomyplace",  "type": "html_pw","name": "DECOmyplace", "lang": "zh_hant", "url": "https://decomyplace.com/",                  "status": "pending", "note": "需Playwright，直連403，室內設計/居家佈置" },
+        { "site": "mobile01",     "type": "html_pw","name": "Mobile01居家", "lang": "zh_hant", "url": "https://www.mobile01.com/category.php?id=9","status": "pending", "note": "需Playwright，詳情頁JS渲染，居家生活/裝潢" }
       ]
     },
     "科技": {
