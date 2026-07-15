@@ -41,6 +41,21 @@
         }
       ]
     },
+    "科学&美国": {
+      "label": "科学&美国",
+      "kind": "image_text",
+      "tag": "Science",
+      "lang": "en",
+      "description": "美国官方科学机构图文新闻（NASA/NSF/NIST/NOAA/NIH/DOE），英文图文发布。采集/发布走 scripts/fetch_us_science.py + scripts/run_us_science.py。每条帖带1张官方图片+英文第一人称科学评论配文（150-300字符）。",
+      "sources": [
+        { "site": "nasa",   "type": "rss", "name": "NASA",            "lang": "en", "url": "https://www.nasa.gov/feed/",                       "status": "active" },
+        { "site": "nsf",    "type": "rss", "name": "NSF",             "lang": "en", "url": "https://www.nsf.gov/rss/rss_www_news.xml",          "status": "active" },
+        { "site": "nist",   "type": "rss", "name": "NIST",            "lang": "en", "url": "https://www.nist.gov/news-events/news/rss.xml",     "status": "active" },
+        { "site": "energy", "type": "rss", "name": "Dept. of Energy", "lang": "en", "url": "https://www.energy.gov/rss.xml",                    "status": "active" },
+        { "site": "noaa",   "type": "html","name": "NOAA",            "lang": "en", "url": "https://www.noaa.gov/news",                         "status": "active" },
+        { "site": "nih",    "type": "html","name": "NIH",             "lang": "en", "url": "https://www.nih.gov/news-events/news-releases",     "status": "active" }
+      ]
+    },
     "科技": {
       "label": "科技",
       "kind": "text",
