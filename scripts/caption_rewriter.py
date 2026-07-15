@@ -225,6 +225,23 @@ REWRITE_TEMPLATES = {
             "Luz dourada, ruas desconhecidas, {detail} flutuando no ar. Perfeito. {ending} {hashtags}",
         ],
     },
+    "ar": {
+        "travel": [
+            "{emotion_prefix}كل مكان جديد يذكّرني لماذا أحب {detail}. {ending} {hashtags}",
+            "وصلت مكاناً جديداً — {detail} يبدو مختلفاً هنا. {ending} {hashtags}",
+            "هناك شيء في {detail} يجعل كل شيء ينبض بالحياة. {ending} {hashtags}",
+            "نفس جواز السفر، أفق مختلف. {detail} لا يُملّ أبداً. {ending} {hashtags}",
+            "البيت يبدو بعيداً، لكن {detail} يجعل كل كيلومتر يستحق. {ending} {hashtags}",
+            "لست ضائعاً، فقط أستكشف. {detail} دائماً يفاجئني. {ending} {hashtags}",
+            "لم أتوقع أن {detail} سيسرق قلبي بهذه السرعة. {ending} {hashtags}",
+            "هذا المنظر وحده يستحق الرحلة. {detail} {ending} {hashtags}",
+            "لحظات كهذه — {detail} — هي سبب استمراري في السفر. {ending} {hashtags}",
+            "إرهاق السفر لكن مع ابتسامة. {detail} له هذا التأثير. {ending} {hashtags}",
+            "شوارع جديدة، روح قديمة. {detail} يشبه حواراً مع المدينة. {ending} {hashtags}",
+            "أمشي بلا خطة — ثم ظهر {detail} بشكل مثالي. {ending} {hashtags}",
+            "ضوء ذهبي، شوارع مجهولة، {detail} يطفو في الهواء. مثالي. {ending} {hashtags}",
+        ],
+    },
 }
 
 # 填充槽位的素材池
@@ -239,6 +256,7 @@ EMOTION_PREFIXES = {
     "zh": ["", "说实话，", "到现在还不敢相信 — ", "最大的惊喜：", "给自己的备忘：", ""],
     "es": ["", "Honestamente, ", "Aún no puedo creer — ", "Mejor sorpresa: ", "Nota mental: ", ""],
     "pt": ["", "Honestamente, ", "Ainda não acredito — ", "Melhor surpresa: ", "Nota mental: ", ""],
+    "ar": ["", "بصراحة، ", "لا أصدق حتى الآن — ", "أفضل مفاجأة: ", "ملاحظة لنفسي: ", ""],
 }
 
 DETAILS_POOL = {
@@ -278,6 +296,10 @@ DETAILS_POOL = {
            "as cores em cada esquina", "ver os locais vivendo", "o silêncio inesperado",
            "como me sinto pequeno aqui", "o sabor de algo novo", "um céu que nunca vi",
            "o ritmo deste lugar", "a arquitetura que conta histórias", "o calor dos desconhecidos"],
+    "ar": ["هذا الضوء الذهبي", "صوت المدينة", "هذه الأزقة المتعرجة", "تلك النسمة المثالية",
+           "الألوان في كل زاوية", "مشاهدة السكان يعيشون حياتهم", "الهدوء غير المتوقع",
+           "كم أشعر بصغري هنا", "طعم شيء جديد", "سماء لم أرها من قبل",
+           "إيقاع هذا المكان", "العمارة التي تحكي قصصاً", "دفء الغرباء"],
 }
 
 ENDINGS_POOL = {
@@ -301,6 +323,8 @@ ENDINGS_POOL = {
            "El mundo premia a los curiosos.", "Por esto viajamos.", "Sin filtro.", "Pura magia."],
     "pt": ["✈️", "🌍", "📸", "🧳", "Seguimos.", "Mais disso, por favor.", "Guardado nas memórias essenciais.",
            "O mundo recompensa os curiosos.", "Por isso viajamos.", "Sem filtro.", "Pura magia."],
+    "ar": ["✈️", "🌍", "📸", "🧳", "نستمر.", "المزيد من هذا.", "محفوظ في الذكريات الأساسية.",
+           "العالم يكافئ الفضوليين.", "لهذا نسافر.", "بدون فلتر.", "سحر خالص."],
 }
 
 HASHTAG_POOLS = {
@@ -358,6 +382,12 @@ HASHTAG_POOLS = {
         "#travelgram #vivendoavida #naestrada", "#explorar #descobrir #viagem",
         "#vagando #vibras #grato", "#viagempelomundo #viajarmais #fotododia",
         "#semroteiro #viagensolo #memórias", "#caminhada #ruas #diáriodeviagem",
+    ],
+    "ar": [
+        "#سفر #ترحال #استكشاف", "#مدينة_جديدة #مغامرة #يوميات",
+        "#سفريات #حياة #على_الطريق", "#استكشاف #اكتشاف #سفر",
+        "#تجوال #أجواء #امتنان", "#سفر_حول_العالم #سافر_أكثر #صورة_اليوم",
+        "#بلا_خطة #سفر_فردي #ذكريات", "#مشي #شوارع #يوميات_السفر",
     ],
 }
 
