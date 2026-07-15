@@ -191,6 +191,40 @@ REWRITE_TEMPLATES = {
             "金色的光，陌生的巷子，{detail}飘在空气里。完美。 {ending} {hashtags}",
         ],
     },
+    "es": {
+        "travel": [
+            "{emotion_prefix}Cada lugar nuevo me recuerda por qué amo {detail}. {ending} {hashtags}",
+            "Llegué a un lugar nuevo — {detail} se siente diferente. {ending} {hashtags}",
+            "Hay algo en {detail} que hace que todo cobre vida. {ending} {hashtags}",
+            "Mismo pasaporte, diferente horizonte. {detail} nunca aburre. {ending} {hashtags}",
+            "Casa se siente lejos, pero {detail} hace que cada kilómetro valga. {ending} {hashtags}",
+            "No estoy perdido, solo explorando. {detail} siempre sorprende. {ending} {hashtags}",
+            "No esperaba que {detail} me robara el corazón tan rápido. {ending} {hashtags}",
+            "Solo esta vista ya valió el viaje. {detail} {ending} {hashtags}",
+            "Momentos como estos — {detail} — son la razón por la que sigo viajando. {ending} {hashtags}",
+            "Con jet lag pero sonriendo. {detail} tiene ese efecto. {ending} {hashtags}",
+            "Calles nuevas, alma vieja. {detail} se siente como una conversación con la ciudad. {ending} {hashtags}",
+            "Caminando sin plan — y {detail} apareció perfectamente. {ending} {hashtags}",
+            "Luz dorada, calles desconocidas, {detail} flotando en el aire. Perfecto. {ending} {hashtags}",
+        ],
+    },
+    "pt": {
+        "travel": [
+            "{emotion_prefix}Cada lugar novo me lembra por que amo {detail}. {ending} {hashtags}",
+            "Cheguei a um lugar novo — {detail} se sente diferente. {ending} {hashtags}",
+            "Tem algo em {detail} que faz tudo ganhar vida. {ending} {hashtags}",
+            "Mesmo passaporte, horizonte diferente. {detail} nunca cansa. {ending} {hashtags}",
+            "Casa parece longe, mas {detail} faz cada quilômetro valer. {ending} {hashtags}",
+            "Não estou perdido, só explorando. {detail} sempre surpreende. {ending} {hashtags}",
+            "Não esperava que {detail} roubasse meu coração tão rápido. {ending} {hashtags}",
+            "Só essa vista já valeu a viagem. {detail} {ending} {hashtags}",
+            "Momentos assim — {detail} — são o motivo de eu continuar viajando. {ending} {hashtags}",
+            "Com jet lag mas sorrindo. {detail} tem esse efeito. {ending} {hashtags}",
+            "Ruas novas, alma antiga. {detail} parece uma conversa com a cidade. {ending} {hashtags}",
+            "Andando sem plano — e {detail} apareceu perfeitamente. {ending} {hashtags}",
+            "Luz dourada, ruas desconhecidas, {detail} flutuando no ar. Perfeito. {ending} {hashtags}",
+        ],
+    },
 }
 
 # 填充槽位的素材池
@@ -203,6 +237,8 @@ EMOTION_PREFIXES = {
     "ja": ["", "正直、", "まだ信じられない — ", "最高のサプライズ：", "自分メモ：", ""],
     "ko": ["", "솔직히, ", "아직도 믿기지 않는다 — ", "최고의 서프라이즈: ", "메모: ", ""],
     "zh": ["", "说实话，", "到现在还不敢相信 — ", "最大的惊喜：", "给自己的备忘：", ""],
+    "es": ["", "Honestamente, ", "Aún no puedo creer — ", "Mejor sorpresa: ", "Nota mental: ", ""],
+    "pt": ["", "Honestamente, ", "Ainda não acredito — ", "Melhor surpresa: ", "Nota mental: ", ""],
 }
 
 DETAILS_POOL = {
@@ -234,6 +270,14 @@ DETAILS_POOL = {
            "转角处的色彩", "看当地人过自己的日子", "意料之外的安静",
            "在这里感觉自己好渺小", "新鲜事物的味道", "从没见过的天空",
            "这个地方的节奏", "会讲故事的建筑", "陌生人的温暖"],
+    "es": ["esta luz dorada", "el sonido de la ciudad", "estas calles sinuosas", "esa brisa perfecta",
+           "los colores en cada esquina", "ver a los locales vivir su vida", "el silencio inesperado",
+           "lo pequeño que me siento aquí", "el sabor de algo nuevo", "un cielo que nunca vi",
+           "el ritmo de este lugar", "la arquitectura que cuenta historias", "la calidez de los desconocidos"],
+    "pt": ["esta luz dourada", "o som da cidade", "estas ruas sinuosas", "essa brisa perfeita",
+           "as cores em cada esquina", "ver os locais vivendo", "o silêncio inesperado",
+           "como me sinto pequeno aqui", "o sabor de algo novo", "um céu que nunca vi",
+           "o ritmo deste lugar", "a arquitetura que conta histórias", "o calor dos desconhecidos"],
 }
 
 ENDINGS_POOL = {
@@ -253,6 +297,10 @@ ENDINGS_POOL = {
            "세상은 호기심 있는 사람에게 보답한다.", "그래서 여행을 멈출 수 없다.", "필터 필요 없음."],
     "zh": ["✈️", "🌍", "📸", "🧳", "继续走。", "多来点这样的。", "存入核心记忆。",
            "世界奖励有好奇心的人。", "这就是旅行的意义。", "不需要滤镜。", "太美好了。"],
+    "es": ["✈️", "🌍", "📸", "🧳", "Seguimos.", "Más de esto, por favor.", "Guardado en recuerdos esenciales.",
+           "El mundo premia a los curiosos.", "Por esto viajamos.", "Sin filtro.", "Pura magia."],
+    "pt": ["✈️", "🌍", "📸", "🧳", "Seguimos.", "Mais disso, por favor.", "Guardado nas memórias essenciais.",
+           "O mundo recompensa os curiosos.", "Por isso viajamos.", "Sem filtro.", "Pura magia."],
 }
 
 HASHTAG_POOLS = {
@@ -298,6 +346,18 @@ HASHTAG_POOLS = {
         "#旅行记录 #生活方式 #走走停停", "#探索 #发现 #旅行",
         "#漫步 #氛围感 #感恩", "#环游世界 #说走就走 #今日份",
         "#一个人旅行 #回忆 #旅途日记", "#城市漫步 #街头 #旅行记录",
+    ],
+    "es": [
+        "#viaje #trotamundos #explorar", "#ciudadnueva #aventura #vidadiaria",
+        "#travelgram #viviendolavida #enelcamino", "#explorar #descubrir #viaje",
+        "#vagando #vibras #agradecido", "#viajeporelundo #viajarmás #fotodeldia",
+        "#sinrumbo #viajesolo #recuerdos", "#caminata #calles #diariodeviaje",
+    ],
+    "pt": [
+        "#viagem #wanderlust #explorar", "#cidadenova #aventura #diaadia",
+        "#travelgram #vivendoavida #naestrada", "#explorar #descobrir #viagem",
+        "#vagando #vibras #grato", "#viagempelomundo #viajarmais #fotododia",
+        "#semroteiro #viagensolo #memórias", "#caminhada #ruas #diáriodeviagem",
     ],
 }
 
