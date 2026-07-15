@@ -58,15 +58,34 @@ def clean_title(t: str) -> str:
     t = re.split(r"\s*[\|｜]\s*(?:PA日報|PA日报|會員週報|会员周报).*$", t)[0].strip()
     return t.strip("｜|-–— 、，,").strip()
 
+def _contains_cjk(text: str) -> bool:
+    """Check if text contains CJK (Chinese/Japanese/Korean) characters."""
+    for ch in text:
+        if '\u4e00' <= ch <= '\u9fff' or '\u3400' <= ch <= '\u4dbf' or '\uf900' <= ch <= '\ufaff':
+            return True
+    return False
+
+
 def text_caption(title, brief, site, lang, salt):
     ct = clean_title(title)
     cm = COMMENT[lang][salt % len(COMMENT[lang])]
     tagline = f"{TTAGS[lang]} {SITE_TAG.get(site,'')}".strip()
-    body = f"{cm}\n\n{ct}" if lang in ("en", "ja", "ms") else f"{ct}\n{cm}"
+    # 语言一致性：如果目标语言是非中文但标题含中文，则不附加中文标题
+    if lang in ("en", "ja", "ms") and lang != "ja":
+        if _contains_cjk(ct) and lang == "en":
+            # 纯英文模式：只用英文评论 + 标签，不混入中文标题
+            body = cm
+        else:
+            body = f"{cm}\n\n{ct}"
+    else:
+        body = f"{ct}\n{cm}"
     return f"{body}\n{tagline}"[:280]
 
 def question_caption(title, lang, salt):
     ct = clean_title(title)
+    # 语言一致性：如果目标语言是英文但标题含中文，使用通用话题替代
+    if lang == "en" and _contains_cjk(ct):
+        ct = "this latest crypto development"
     q = QUESTION[lang][salt % len(QUESTION[lang])].format(topic=ct[:34])
     return f"{q}\n{QTAGS[lang]}"[:280]
 
