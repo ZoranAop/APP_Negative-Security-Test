@@ -78,6 +78,23 @@
         { "site": "ornl",          "type": "html","name": "ORNL",             "lang": "en", "url": "https://www.ornl.gov/",                                     "status": "pending", "note": "no RSS, needs HTML parsing" }
       ]
     },
+    "美国生活": {
+      "label": "美国生活",
+      "kind": "image_text",
+      "tag": "Lifestyle",
+      "lang": "en",
+      "description": "美国生活类媒体图文（Refinery29/The Everygirl/GQ/Esquire/BuzzFeed/USA Today/Martha Stewart/Thrillist），英文图文发布。采集/发布走 scripts/fetch_us_life.py + scripts/run_us_life.py。内容涵盖时尚、美食、家居、文化、趣味等美国日常生活话题。",
+      "sources": [
+        { "site": "refinery29",    "type": "rss", "name": "Refinery29",     "lang": "en", "url": "https://www.refinery29.com/en-us/rss.xml",              "status": "active" },
+        { "site": "theeverygirl",  "type": "rss", "name": "The Everygirl",  "lang": "en", "url": "https://theeverygirl.com/feed/",                        "status": "active" },
+        { "site": "gq",            "type": "rss", "name": "GQ",             "lang": "en", "url": "https://www.gq.com/feed/rss",                           "status": "active" },
+        { "site": "esquire",       "type": "rss", "name": "Esquire",        "lang": "en", "url": "https://www.esquire.com/rss/all.xml/",                  "status": "active" },
+        { "site": "buzzfeed",      "type": "atom","name": "BuzzFeed",       "lang": "en", "url": "https://www.buzzfeed.com/us.xml",                       "status": "active" },
+        { "site": "usatoday",      "type": "html","name": "USA Today",      "lang": "en", "url": "https://www.usatoday.com/",                             "status": "active" },
+        { "site": "marthastewart", "type": "html","name": "Martha Stewart", "lang": "en", "url": "https://www.marthastewart.com/",                        "status": "active" },
+        { "site": "thrillist",     "type": "html","name": "Thrillist",      "lang": "en", "url": "https://www.thrillist.com/",                            "status": "active" }
+      ]
+    },
     "科技": {
       "label": "科技",
       "kind": "text",
