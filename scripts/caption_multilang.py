@@ -190,6 +190,34 @@ TEMPLATES: dict[str, dict[str, list[str]]] = {
                        "逆光にふと切り取られて、思わずお気に入りになった。 #ポートレート #自然光 #日常",
                         "ただ残しておきたかった、静かな一瞬。 #日常 #ポートレート #気分"],
     },
+    "ko": {
+        "kimono":    ["기모노 입은 주말, 차 한 잔 들고 — 시간이 천천히 흐르는 느낌. 🍵 #기모노 #일상 #힐링"],
+        "hanfu":     ["한복의 소매가 바람에 흩날리니 마음까지 가벼워지는 기분. 🌸 #한복 #전통의상 #데일리"],
+        "bride":     ["드레스 입어본 순간, 생각보다 감정이 복잡해졌다. 🤍 #웨딩준비 #설렘 #사랑"],
+        "beach":     ["선크림 바르고, 폰 끄고, 머리 비우기. 바다 모드 온. ☀️ #바다 #여름 #힐링",
+                       "파도 소리에 고민이 다 씻겨 나가는 기분. 🌊 #해변 #바캉스 #쉼"],
+        "goldenhour":["골든아워의 그 순간, 평범한 풍경도 추억이 된다. 🌅 #골든아워 #일상기록 #감성"],
+        "winter":    ["드디어 인정했다. 겨울에도 겨울만의 낭만이 있다는 걸. 🧣 #겨울 #따뜻하게 #무드"],
+        "rain":      ["우산 쓰고, 이어폰 끼고, 목적지 없이 걷기. 비 오는 날의 사치. ☔ #비오는날 #산책 #감성"],
+        "cafe":      ["디저트를 너무 많이 시켰다. 후회는 전혀 없음. 🥐 #카페 #일상 #소확행"],
+        "night":     ["네온사인과 조용한 거리 — 내가 좋아하는 종류의 밤. 🌃 #야경 #도시 #무드"],
+        "street":    ["지도 없이 걷는 도시가 주는 자유로움이 좋다. #스트릿 #도시산책 #일상"],
+        "gym":       ["오늘 든 무게가 어제의 변명보다 무거웠다. 💪 #운동 #자기관리 #꾸준히"],
+        "running":   ["저녁 바람 맞으며 달리니 기분이 확 밝아졌다. 🏃 #러닝 #운동일기 #일상"],
+        "swim":      ["수영장에서 몇 바퀴 돌고 나면 몸도 마음도 풀린다. 💦 #수영 #여름 #리프레시"],
+        "dance":     ["춤출 때만큼은 세상이 조용해지는 순간이 있다. 💃 #댄스 #열정 #자유"],
+        "selfie":    ["오늘 거울이랑 화해한 날. 작은 승리지만 뿌듯. 🪞 #셀카 #일상 #나만의시간"],
+        "ootd":      ["화려하지 않아도 기분 좋은 옷차림. 오늘의 정답. 👗 #오오티디 #데일리룩 #심플"],
+        "bedroom":   ["파자마, 이불, 아무 계획 없는 일요일. 이게 바로 행복. 🛌 #집순이 #휴식 #힐링"],
+        "flower":    ["나를 위해 꽃을 사는 날은 우주가 살짝 고개 끄덕이는 느낌. 🌷 #꽃 #일상기록 #힐링"],
+        "travel":    ["다른 도시, 같은 설레는 나. 작은 것에도 눈이 반짝. ✈️ #여행 #일상 #감성",
+                       "여행은 늘 세상이 크면서도 작다는 걸 가르쳐준다. 🧳 #여행스타그램 #떠나자 #추억",
+                       "새로운 곳에서 또 한 번 설렘을 발견했다. 📸 #여행기록 #일상 #감성여행"],
+        "cinema":    ["아직 개봉 안 한 영화의 한 장면 같은 순간. 🎬 #시네마틱 #무드 #감성"],
+        "portrait":  ["어떤 사진은 이야기 없이 분위기만으로 충분하다. 📷 #인물사진 #감성 #일상",
+                       "역광에 불현듯 찍힌 한 컷이 마음에 든다. #포트레이트 #자연광 #감성",
+                       "조용히 남겨두고 싶었던 한 순간. #일상 #인물사진 #무드"],
+    },
     "ms": {
         "kimono":    ["Hujung minggu pakai kimono, secawan teh di tangan — rasa macam masa berjalan perlahan. 🍵 #kimono #gayaharian #tenang"],
         "hanfu":     ["Hari beraya budaya, lengan baju berkibar, hati pun rasa ringan. 🌸 #busanatradisi #gayaharian #budaya"],
@@ -473,6 +501,9 @@ def llm_caption(raw: str, scene: str, lang: str) -> str | None:
               "orang Indonesia yang membagikan fotonya sendiri di media sosial. Sertakan 2-4 hashtag "
               "dan 1-2 emoji. Jangan menyebut ini buatan AI atau prompt. Pakai nada santai dan "
               f"akrab khas Indonesia. Petunjuk suasana: {scene}. Deskripsi asli: {raw}",
+        "ko": "젊은 사용자가 직접 올리는 것처럼 한국어 1인칭 짧은 글(3줄 이내)을 작성하세요. "
+              "2-4개의 해시태그와 1-2개의 이모지를 포함하세요. AI나 프롬프트에 대해서는 언급하지 마세요. "
+              f"장면 힌트: {scene}. 원본 설명: {raw}",
     }
     user_msg = prompts.get(lang, prompts["en"])
     try:

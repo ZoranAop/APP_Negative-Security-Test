@@ -140,6 +140,57 @@ REWRITE_TEMPLATES = {
             "Cahaya emas, jalan asing, {detail} di udara. Sempurna. {ending} {hashtags}",
         ],
     },
+    "ja": {
+        "travel": [
+            "{emotion_prefix}新しい場所に来るたびに、{detail}が好きな理由を思い出す。 {ending} {hashtags}",
+            "どこか新しい場所に着いた — {detail}がいつもと違う。 {ending} {hashtags}",
+            "{detail}には、すべてを生き生きとさせる何かがある。 {ending} {hashtags}",
+            "同じパスポート、違うスカイライン。{detail}は飽きない。 {ending} {hashtags}",
+            "家は遠く感じるけど、{detail}がすべての距離を価値あるものにする。 {ending} {hashtags}",
+            "迷子じゃない、探検中。{detail}がいつも驚かせてくれる。 {ending} {hashtags}",
+            "{detail}がこんなに早く心を奪うとは思わなかった。 {ending} {hashtags}",
+            "この景色だけで来た甲斐があった。{detail} {ending} {hashtags}",
+            "こういう瞬間 — {detail} — があるから旅を続ける。 {ending} {hashtags}",
+            "時差ボケだけど笑顔。{detail}にはそういう効果がある。 {ending} {hashtags}",
+            "新しい道、古い魂。{detail}が街との会話みたい。 {ending} {hashtags}",
+            "計画なしでさまよう — そしたら{detail}が完璧に現れた。 {ending} {hashtags}",
+            "金色の光、知らない路地、{detail}が空気に漂う。最高。 {ending} {hashtags}",
+        ],
+    },
+    "ko": {
+        "travel": [
+            "{emotion_prefix}새로운 곳에 올 때마다 {detail}이 좋은 이유를 다시 깨닫는다. {ending} {hashtags}",
+            "낯선 곳에 도착했다 — {detail}이 다르게 느껴진다. {ending} {hashtags}",
+            "{detail}에는 모든 걸 살아있게 만드는 무언가가 있다. {ending} {hashtags}",
+            "같은 여권, 다른 스카이라인. {detail}은 질리지 않는다. {ending} {hashtags}",
+            "집은 멀게 느껴지지만 {detail}이 모든 거리를 가치 있게 만든다. {ending} {hashtags}",
+            "길을 잃은 게 아니라 탐험 중. {detail}이 항상 놀라움을 준다. {ending} {hashtags}",
+            "{detail}이 이렇게 빨리 마음을 훔칠 줄 몰랐다. {ending} {hashtags}",
+            "이 풍경만으로도 온 보람이 있다. {detail} {ending} {hashtags}",
+            "이런 순간들 — {detail} — 때문에 계속 떠나는 거다. {ending} {hashtags}",
+            "시차 적응 중이지만 웃고 있다. {detail}에는 그런 힘이 있다. {ending} {hashtags}",
+            "새로운 길, 오래된 영혼. {detail}이 도시와의 대화 같다. {ending} {hashtags}",
+            "계획 없이 걷다가 — {detail}이 완벽하게 나타났다. {ending} {hashtags}",
+            "금빛 햇살, 낯선 골목, {detail}이 공기에 떠다닌다. 완벽. {ending} {hashtags}",
+        ],
+    },
+    "zh": {
+        "travel": [
+            "{emotion_prefix}每到一个新地方，就更明白自己为什么喜欢{detail}。 {ending} {hashtags}",
+            "到了一个陌生的地方 — {detail}的感觉完全不一样。 {ending} {hashtags}",
+            "{detail}有一种让一切都鲜活起来的魔力。 {ending} {hashtags}",
+            "同一本护照，不同的天际线。{detail}永远看不腻。 {ending} {hashtags}",
+            "家很远，但{detail}让每一公里都值得。 {ending} {hashtags}",
+            "没迷路，只是在探索。{detail}总能带来惊喜。 {ending} {hashtags}",
+            "没想到{detail}能这么快偷走我的心。 {ending} {hashtags}",
+            "光是这个风景就值回票价了。{detail} {ending} {hashtags}",
+            "就是这样的瞬间 — {detail} — 让我一直在路上。 {ending} {hashtags}",
+            "时差还没倒过来但一直在笑。{detail}就是有这种效果。 {ending} {hashtags}",
+            "新的路，旧的灵魂。{detail}像是和城市的一场对话。 {ending} {hashtags}",
+            "没有计划地走着 — 然后{detail}就这样完美地出现了。 {ending} {hashtags}",
+            "金色的光，陌生的巷子，{detail}飘在空气里。完美。 {ending} {hashtags}",
+        ],
+    },
 }
 
 # 填充槽位的素材池
@@ -149,6 +200,9 @@ EMOTION_PREFIXES = {
     "fr": ["", "Honnêtement, ", "Toujours pas cru — ", "Meilleure surprise : ", "Note à moi : ", ""],
     "de": ["", "Ehrlich gesagt, ", "Immer noch ungläubig — ", "Beste Überraschung: ", "Notiz an mich: ", ""],
     "id": ["", "Jujur, ", "Masih nggak percaya — ", "Kejutan terbaik: ", "Catatan: ", ""],
+    "ja": ["", "正直、", "まだ信じられない — ", "最高のサプライズ：", "自分メモ：", ""],
+    "ko": ["", "솔직히, ", "아직도 믿기지 않는다 — ", "최고의 서프라이즈: ", "메모: ", ""],
+    "zh": ["", "说实话，", "到现在还不敢相信 — ", "最大的惊喜：", "给自己的备忘：", ""],
 }
 
 DETAILS_POOL = {
@@ -168,6 +222,18 @@ DETAILS_POOL = {
     "id": ["cahaya emas ini", "suara kota ini", "jalan-jalan berliku ini", "angin sempurna itu",
            "warna di setiap sudut", "lihat orang lokal hidup", "ketenangan yang tak terduga",
            "betapa kecilnya rasa di sini", "rasa sesuatu yang baru"],
+    "ja": ["この金色の光", "街の音", "この曲がりくねった路地", "あの完璧なそよ風",
+           "角を曲がるたびに現れる色", "地元の人の暮らしを眺めること", "予想外の静けさ",
+           "ここで自分がどれだけ小さいか", "何か新しいものの味", "見たことのない空",
+           "この場所のリズム", "物語を語る建築", "見知らぬ人の温かさ"],
+    "ko": ["이 금빛 햇살", "도시의 소리", "이 구불구불한 골목", "그 완벽한 바람",
+           "모퉁이마다 펼쳐지는 색감", "현지인들의 일상을 바라보는 것", "예상치 못한 고요함",
+           "여기서 내가 얼마나 작은지", "새로운 무언가의 맛", "처음 보는 하늘",
+           "이 장소의 리듬", "이야기를 품은 건축물", "낯선 이의 따뜻함"],
+    "zh": ["这金色的光", "城市的声音", "这蜿蜒的小巷", "那阵刚好的风",
+           "转角处的色彩", "看当地人过自己的日子", "意料之外的安静",
+           "在这里感觉自己好渺小", "新鲜事物的味道", "从没见过的天空",
+           "这个地方的节奏", "会讲故事的建筑", "陌生人的温暖"],
 }
 
 ENDINGS_POOL = {
@@ -181,6 +247,12 @@ ENDINGS_POOL = {
            "Deshalb reisen wir.", "Kein Filter nötig."],
     "id": ["✈️", "🌍", "📸", "Lanjutkan.", "Lebih banyak kayak gini.", "Sihir murni.",
            "Ini alasannya kita traveling.", "Tanpa filter."],
+    "ja": ["✈️", "🌍", "📸", "🧳", "続けよう。", "もっとこういうの。", "コア記憶に保存。",
+           "世界は好奇心に応えてくれる。", "だから旅をやめられない。", "フィルターいらず。"],
+    "ko": ["✈️", "🌍", "📸", "🧳", "계속 가자.", "이런 순간이 더 필요해.", "핵심 추억으로 저장.",
+           "세상은 호기심 있는 사람에게 보답한다.", "그래서 여행을 멈출 수 없다.", "필터 필요 없음."],
+    "zh": ["✈️", "🌍", "📸", "🧳", "继续走。", "多来点这样的。", "存入核心记忆。",
+           "世界奖励有好奇心的人。", "这就是旅行的意义。", "不需要滤镜。", "太美好了。"],
 }
 
 HASHTAG_POOLS = {
@@ -208,6 +280,24 @@ HASHTAG_POOLS = {
     "id": [
         "#jelajah #keliling #travel", "#kotabaru #petualangan #harianku",
         "#travelgram #hidupterbaik #dijalanan", "#meneroka #temuan #travel",
+    ],
+    "ja": [
+        "#旅の記録 #旅行好き #探検", "#新しい街 #冒険 #日常",
+        "#トラベルグラム #旅暮らし #道の途中", "#探検 #発見 #旅",
+        "#さまよい #バイブス #感謝", "#世界旅行 #もっと旅を #今日の一枚",
+        "#一人旅 #思い出 #旅日記", "#街歩き #ストリート #旅の記録",
+    ],
+    "ko": [
+        "#여행기록 #여행스타그램 #탐험", "#새로운도시 #모험 #일상",
+        "#트래블그램 #나의여행 #길위에서", "#탐험 #발견 #여행",
+        "#방랑 #감성 #감사", "#세계여행 #여행더하기 #오늘의사진",
+        "#혼자여행 #추억 #여행일기", "#도시산책 #스트릿 #여행기록",
+    ],
+    "zh": [
+        "#旅行日记 #在路上 #探索", "#新城市 #冒险 #日常",
+        "#旅行记录 #生活方式 #走走停停", "#探索 #发现 #旅行",
+        "#漫步 #氛围感 #感恩", "#环游世界 #说走就走 #今日份",
+        "#一个人旅行 #回忆 #旅途日记", "#城市漫步 #街头 #旅行记录",
     ],
 }
 
