@@ -95,6 +95,20 @@
         { "site": "thrillist",     "type": "html","name": "Thrillist",      "lang": "en", "url": "https://www.thrillist.com/",                            "status": "active" }
       ]
     },
+    "日本生活": {
+      "label": "日本生活",
+      "kind": "image_text",
+      "tag": "暮らし",
+      "lang": "ja",
+      "description": "日本のライフスタイルメディアから図文採集（grape/hint-pot/Pouch/macaroni/TRILL）。日本語図文発布。採集/発布は scripts/fetch_jp_life.py + scripts/run_jp_life.py。グルメ・暮らし・トレンド・ペット・季節の話題をカバー。",
+      "sources": [
+        { "site": "grapee",     "type": "rss", "name": "grape(グレイプ)",    "lang": "ja", "url": "https://grapee.jp/feed",         "status": "active" },
+        { "site": "hintpot",    "type": "rss", "name": "hint-pot",          "lang": "ja", "url": "https://hint-pot.jp/feed",        "status": "active" },
+        { "site": "youpouch",   "type": "rss", "name": "Pouch(ポーチ)",     "lang": "ja", "url": "https://youpouch.com/feed",       "status": "active" },
+        { "site": "macaroni",   "type": "html","name": "macaroni(マカロニ)", "lang": "ja", "url": "https://macaro-ni.jp/",           "status": "active" },
+        { "site": "trilltrill", "type": "html","name": "TRILL(トリル)",      "lang": "ja", "url": "https://trilltrill.jp/",          "status": "active" }
+      ]
+    },
     "科技": {
       "label": "科技",
       "kind": "text",
