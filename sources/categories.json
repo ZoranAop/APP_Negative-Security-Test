@@ -56,6 +56,28 @@
         { "site": "nih",    "type": "html","name": "NIH",             "lang": "en", "url": "https://www.nih.gov/news-events/news-releases",     "status": "active" }
       ]
     },
+    "科技&AI&美国": {
+      "label": "科技&AI&美国",
+      "kind": "image_text",
+      "tag": "Tech",
+      "lang": "en",
+      "description": "美国顶级科技/AI媒体+国家实验室图文新闻，英文图文发布。采集/发布走 scripts/fetch_us_tech_ai.py + scripts/run_us_tech_ai.py。来源：TechCrunch/The Verge/WIRED/Ars Technica/MIT Tech Review/IEEE Spectrum/VentureBeat/Argonne/JPL。",
+      "sources": [
+        { "site": "techcrunch",    "type": "rss", "name": "TechCrunch",       "lang": "en", "url": "https://techcrunch.com/feed/",                            "status": "active" },
+        { "site": "theverge",      "type": "rss", "name": "The Verge",        "lang": "en", "url": "https://www.theverge.com/rss/index.xml",                   "status": "active" },
+        { "site": "wired",         "type": "rss", "name": "WIRED",            "lang": "en", "url": "https://www.wired.com/feed/rss",                           "status": "active" },
+        { "site": "arstechnica",   "type": "rss", "name": "Ars Technica",     "lang": "en", "url": "https://feeds.arstechnica.com/arstechnica/index",          "status": "active" },
+        { "site": "mittr",         "type": "rss", "name": "MIT Tech Review",  "lang": "en", "url": "https://www.technologyreview.com/feed/",                   "status": "active" },
+        { "site": "ieee_spectrum", "type": "rss", "name": "IEEE Spectrum",    "lang": "en", "url": "https://spectrum.ieee.org/feeds/feed.rss",                  "status": "active" },
+        { "site": "venturebeat",   "type": "rss", "name": "VentureBeat",     "lang": "en", "url": "https://venturebeat.com/feed/",                             "status": "active" },
+        { "site": "anl",           "type": "rss", "name": "Argonne Nat'l Lab","lang": "en", "url": "https://www.anl.gov/rss.xml",                              "status": "active" },
+        { "site": "jpl",           "type": "rss", "name": "NASA JPL",         "lang": "en", "url": "https://www.jpl.nasa.gov/feeds/news",                      "status": "active" },
+        { "site": "ai_news",       "type": "html","name": "AI News",          "lang": "en", "url": "https://www.artificialintelligence-news.com/",              "status": "pending", "note": "403 blocked, needs Playwright" },
+        { "site": "llnl",          "type": "html","name": "LLNL",             "lang": "en", "url": "https://www.llnl.gov/news/lab-report",                      "status": "pending", "note": "no RSS, needs HTML parsing" },
+        { "site": "lanl",          "type": "html","name": "LANL",             "lang": "en", "url": "https://www.lanl.gov/media/news",                           "status": "pending", "note": "no RSS, needs HTML parsing" },
+        { "site": "ornl",          "type": "html","name": "ORNL",             "lang": "en", "url": "https://www.ornl.gov/",                                     "status": "pending", "note": "no RSS, needs HTML parsing" }
+      ]
+    },
     "科技": {
       "label": "科技",
       "kind": "text",
