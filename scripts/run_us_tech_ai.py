@@ -142,11 +142,17 @@ def main() -> int:
 
     rng = random.Random(int(ts.replace("_", "")))
     seen_caps: set = set()
-    from fetch_us_tech_ai import SITE_INFO
+    # 读取 SITE_INFO 从本地定义避免 import 副作用
+    _SITE_NAMES = {
+        "techcrunch": "TechCrunch", "theverge": "The Verge", "wired": "WIRED",
+        "arstechnica": "Ars Technica", "mittr": "MIT Tech Review",
+        "ieee_spectrum": "IEEE Spectrum", "venturebeat": "VentureBeat",
+        "anl": "Argonne Nat'l Lab", "jpl": "NASA JPL",
+    }
     moments = []
     for r in rows:
         site_key = r.get("_site", "")
-        site_name = SITE_INFO.get(site_key, {}).get("name", site_key)
+        site_name = _SITE_NAMES.get(site_key, site_key)
         cap = _caption(r["content"], site_name, rng, seen_caps)
         moments.append({**r, "content": cap, "_lang": "en"})
 
