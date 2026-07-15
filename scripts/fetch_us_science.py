@@ -42,6 +42,14 @@ except Exception:
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
+sys.path.insert(0, str(HERE))
+
+from image_quality import (  # noqa: E402
+    fetch_rss_with_detail_images,
+    upgrade_image_url,
+    is_high_quality,
+    fetch_detail_page_image,
+)
 
 UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
       "(KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36")
@@ -179,16 +187,12 @@ def _fetch_nih_html(want: int, seen: set) -> list[dict]:
 
 
 def fetch_site(site: str, want: int, seen: set) -> list[dict]:
-    """从指定站点采集图文。"""
+    """从指定站点采集图文（RSS源进入详情页获取高清图）。"""
     info = SITE_INFO[site]
     if info["fmt"] == "rss":
-        try:
-            xml = _get(info["url"])
-            items = _parse_rss(xml, want, seen)
-            return items
-        except Exception as e:
-            print(f"[warn] {site} RSS failed: {e}")
-            return []
+        # 进入文章详情页获取高清图（二级页面 og:image）
+        items = fetch_rss_with_detail_images(info["url"], want, seen, delay=0.5)
+        return items
     elif site == "noaa":
         return _fetch_noaa_html(want, seen)
     elif site == "nih":

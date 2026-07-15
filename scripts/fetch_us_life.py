@@ -35,6 +35,14 @@ except Exception:
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
+sys.path.insert(0, str(HERE))
+
+from image_quality import (  # noqa: E402
+    fetch_rss_with_detail_images,
+    upgrade_image_url,
+    is_high_quality,
+    fetch_detail_page_image,
+)
 
 UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
       "(KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36")
@@ -57,6 +65,73 @@ def _get(url: str, timeout: int = 20) -> str:
     r = requests.get(url, headers={"User-Agent": UA}, timeout=timeout, allow_redirects=True)
     r.raise_for_status()
     return r.text
+
+
+# ============================================================
+# 图片质量优化：升级URL到高清版本 + 过滤低质量图
+# ============================================================
+
+# 需要过滤的低质量图片模式
+_LOW_QUALITY_PATTERNS = [
+    r"logo", r"icon", r"favicon", r"avatar", r"pixel", r"1x1",
+    r"spacer", r"blank", r"placeholder", r"tracking", r"beacon",
+    r"/ads/", r"/ad-", r"doubleclick", r"googlesyndication",
+    r"badge", r"button", r"widget", r"emoji", r"smiley",
+]
+_LOW_QUALITY_RE = re.compile("|".join(_LOW_QUALITY_PATTERNS), re.I)
+
+
+def _upgrade_image_quality(url: str) -> str:
+    """将图片URL升级到最高质量版本。
+
+    策略：
+    1. WordPress: 去掉 -WxH 尺寸后缀 (如 -300x200.jpg → .jpg)
+    2. Conde Nast (GQ/Esquire/WIRED): ?w=XXX 提升到 w=1200
+    3. Refinery29: 已是原图路径，保持不变
+    4. 通用CDN: 移除 resize/crop 参数
+    """
+    if not url:
+        return url
+
+    # WordPress 尺寸后缀：-300x200.jpg → .jpg
+    url = re.sub(r"-\d{2,4}x\d{2,4}\.(jpg|jpeg|png|webp)", r".\1", url)
+
+    # Conde Nast / Vox Media: w=XXX 参数升级
+    if re.search(r"[?&]w=\d+", url):
+        url = re.sub(r"([?&])w=\d+", r"\1w=1200", url)
+
+    # 通用 CDN resize 参数清理
+    # /resize/WxH/ 或 /crop/WxH/ → 移除
+    url = re.sub(r"/resize/\d+x\d+/", "/", url)
+    url = re.sub(r"/crop/\d+x\d+/", "/", url)
+
+    # Cloudinary: /c_fill,w_XXX,h_XXX/ → /c_fill,w_1200/
+    url = re.sub(r"/c_fill,w_\d+,h_\d+", "/c_fill,w_1200", url)
+    url = re.sub(r"/c_fill,w_\d+", "/c_fill,w_1200", url)
+
+    # imgix: ?w=XXX&h=YYY → ?w=1200
+    if "imgix" in url:
+        url = re.sub(r"([?&])w=\d+", r"\1w=1200", url)
+        url = re.sub(r"&h=\d+", "", url)
+
+    return url
+
+
+def _is_high_quality_image(url: str) -> bool:
+    """判断图片URL是否为高质量（排除logo/icon/追踪像素等）。"""
+    if not url:
+        return False
+    # 排除低质量模式
+    if _LOW_QUALITY_RE.search(url):
+        return False
+    # 排除过短的文件名（通常是追踪像素）
+    filename = url.split("/")[-1].split("?")[0]
+    if len(filename) < 5:
+        return False
+    # 排除 SVG（通常是图标）
+    if url.lower().endswith(".svg"):
+        return False
+    return True
 
 
 def _fetch_buzzfeed(want: int, seen: set) -> list[dict]:
@@ -219,12 +294,9 @@ def fetch_site(site: str, want: int, seen: set) -> list[dict]:
         return []
     fmt = info.get("fmt", "html")
     if fmt in ("rss", "atom"):
-        try:
-            xml = _get(info["url"])
-            return _parse_rss_feed(xml, want, seen)
-        except Exception as e:
-            print(f"[warn] {site} RSS failed: {e}")
-            return []
+        # 进入文章详情页获取高清图片（二级/三级页面）
+        items = fetch_rss_with_detail_images(info["url"], want, seen, delay=0.5)
+        return items
     elif site == "buzzfeed":
         return _fetch_buzzfeed(want, seen)
     elif site == "usatoday":

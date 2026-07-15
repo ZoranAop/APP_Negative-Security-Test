@@ -47,6 +47,13 @@ except Exception:
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
+sys.path.insert(0, str(HERE))
+
+from image_quality import (  # noqa: E402
+    fetch_rss_with_detail_images,
+    upgrade_image_url,
+    is_high_quality,
+)
 
 UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
       "(KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36")
@@ -138,13 +145,14 @@ def _parse_rss(xml: str, want: int, seen: set) -> list[dict]:
 
 
 def fetch_site(site: str, want: int, seen: set) -> list[dict]:
-    """从指定站点采集图文。"""
+    """从指定站点采集图文（进入详情页获取高清图片）。"""
     info = SITE_INFO.get(site)
     if not info:
         return []
     try:
-        xml = _get(info["url"])
-        return _parse_rss(xml, want, seen)
+        # 进入文章详情页获取高清图（二级/三级页面 og:image）
+        items = fetch_rss_with_detail_images(info["url"], want, seen, delay=0.5)
+        return items
     except Exception as e:
         print(f"[warn] {site} failed: {e}")
         return []
