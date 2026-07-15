@@ -109,6 +109,21 @@
         { "site": "trilltrill", "type": "html","name": "TRILL(トリル)",      "lang": "ja", "url": "https://trilltrill.jp/",          "status": "active" }
       ]
     },
+    "台灣生活": {
+      "label": "台灣生活",
+      "kind": "image_text",
+      "tag": "生活",
+      "lang": "zh_hant",
+      "description": "台灣生活類媒體圖文（Yahoo奇摩/自由時報/聯合報/ETtoday/NOWnews），繁體中文圖文發布。採集/發布走 scripts/fetch_tw_life.py + scripts/run_tw_life.py。涵蓋美食、旅遊、生活資訊、寵物、消費等台灣日常話題。",
+      "sources": [
+        { "site": "yahoo_life", "type": "rss", "name": "Yahoo奇摩生活",  "lang": "zh_hant", "url": "https://tw.news.yahoo.com/rss/life",       "status": "active" },
+        { "site": "ltn_life",   "type": "rss", "name": "自由時報生活",    "lang": "zh_hant", "url": "https://news.ltn.com.tw/rss/life.xml",     "status": "active" },
+        { "site": "udn_life",   "type": "rss", "name": "聯合報生活",      "lang": "zh_hant", "url": "https://udn.com/rssfeed/news/2/6638",      "status": "active" },
+        { "site": "ettoday",    "type": "html","name": "ETtoday生活",     "lang": "zh_hant", "url": "https://www.ettoday.net/news/focus/生活/",  "status": "pending", "note": "需代理/VPN，大陸直連超時" },
+        { "site": "nownews",    "type": "html","name": "NOWnews生活",     "lang": "zh_hant", "url": "https://www.nownews.com/cat/life/",         "status": "pending", "note": "RSS已下線，需HTML解析" },
+        { "site": "tvbs_woman", "type": "html","name": "TVBS女人我最大",   "lang": "zh_hant", "url": "https://woman.tvbs.com.tw/queenspick",     "status": "pending", "note": "需HTML解析" }
+      ]
+    },
     "科技": {
       "label": "科技",
       "kind": "text",
