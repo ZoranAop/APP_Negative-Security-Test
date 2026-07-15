@@ -133,13 +133,14 @@ def main() -> int:
     if args.posts > 0:
         rows = rows[:args.posts]
 
-    from fetch_jp_life import SITE_INFO
+    _SITE_NAMES = {"grapee": "grape", "hintpot": "hint-pot", "youpouch": "Pouch",
+                   "macaroni": "macaroni", "trilltrill": "TRILL"}
     rng = random.Random(int(ts.replace("_", "")))
     seen_caps: set = set()
     moments = []
     for r in rows:
         site_key = r.get("_site", "")
-        site_name = SITE_INFO.get(site_key, {}).get("name", site_key)
+        site_name = _SITE_NAMES.get(site_key, site_key)
         cap = _caption(r["content"], site_name, rng, seen_caps)
         moments.append({**r, "content": cap, "_lang": "ja"})
 
