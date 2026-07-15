@@ -174,19 +174,23 @@ def fetch_rss_with_detail_images(
     want: int,
     seen: set,
     delay: float = 0.5,
+    allow_text_fallback: bool = True,
 ) -> list[dict]:
     """从RSS获取文章列表，然后逐篇进入详情页获取高清图片。
 
     完整流程：RSS → 文章链接 → 进入详情页 → og:image/正文大图
+    如果取不到高质量图片，当 allow_text_fallback=True 时，
+    将该条记录为纯文本帖（_media_type="text"），不丢弃内容。
 
     Args:
         rss_url: RSS feed URL
         want: 需要的条数
         seen: 已用标题集合（去重）
         delay: 每次请求间隔秒数
+        allow_text_fallback: 无图时是否保留为纯文本记录
 
     Returns:
-        [{"title": ..., "image": ..., "link": ...}, ...]
+        [{"title": ..., "image": ..., "link": ..., "_media_type": "image"|"text"}, ...]
     """
     try:
         r = requests.get(rss_url, headers={"User-Agent": UA}, timeout=20)
@@ -233,15 +237,19 @@ def fetch_rss_with_detail_images(
 
         # 选择最佳图片：详情页 > RSS内联
         img = detail_img or rss_img
-        if not img:
-            continue
-
-        img = upgrade_image_url(img)
-        if not is_high_quality(img):
-            continue
+        if img:
+            img = upgrade_image_url(img)
+            if not is_high_quality(img):
+                img = None
 
         seen.add(norm)
-        out.append({"title": title, "image": img, "link": article_url})
+
+        if img:
+            # 有高质量图片 → 图文帖
+            out.append({"title": title, "image": img, "link": article_url, "_media_type": "image"})
+        elif allow_text_fallback:
+            # 无图片 → 纯文本帖（保留内容，不丢弃）
+            out.append({"title": title, "image": "", "link": article_url, "_media_type": "text"})
 
     return out
 

@@ -374,24 +374,28 @@ def main() -> int:
     out_path.parent.mkdir(parents=True, exist_ok=True)
     fields = ["content", "visibility", "room_id", "image_urls",
               "location_name", "location_address", "location_lat", "location_lon",
-              "_source", "_site"]
+              "_source", "_site", "_media_type"]
     with open(out_path, "w", encoding="utf-8-sig", newline="") as f:
         w = csv.DictWriter(f, fieldnames=fields)
         w.writeheader()
         for it in all_items:
             w.writerow({
                 "content": it["title"], "visibility": "0", "room_id": "",
-                "image_urls": it["image"],
+                "image_urls": it.get("image", ""),
                 "location_name": "", "location_address": "",
                 "location_lat": "", "location_lon": "",
                 "_source": "us_life", "_site": it["_site"],
+                "_media_type": it.get("_media_type", "image" if it.get("image") else "text"),
             })
 
     dedupe_path.write_text(json.dumps(sorted(seen), ensure_ascii=False), encoding="utf-8")
 
     from collections import Counter
     dist = Counter(it["_site"] for it in all_items)
+    media_dist = Counter(it.get("_media_type", "image" if it.get("image") else "text") for it in all_items)
     print(f"[OK] wrote {len(all_items)} items -> {out_path}")
+    print(f"[OK] distribution: {dict(dist)}")
+    print(f"[OK] media types: {dict(media_dist)}")
     print(f"[OK] distribution: {dict(dist)}")
     return 0
 

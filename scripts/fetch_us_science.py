@@ -252,7 +252,7 @@ def main() -> int:
     out_path.parent.mkdir(parents=True, exist_ok=True)
     fields = ["content", "visibility", "room_id", "image_urls",
               "location_name", "location_address", "location_lat", "location_lon",
-              "_source", "_site"]
+              "_source", "_site", "_media_type"]
     with open(out_path, "w", encoding="utf-8-sig", newline="") as f:
         w = csv.DictWriter(f, fieldnames=fields)
         w.writeheader()
@@ -260,11 +260,12 @@ def main() -> int:
             w.writerow({
                 "content": it["title"],
                 "visibility": "0", "room_id": "",
-                "image_urls": it["image"],
+                "image_urls": it.get("image", ""),
                 "location_name": "", "location_address": "",
                 "location_lat": "", "location_lon": "",
                 "_source": "us_science",
                 "_site": it["_site"],
+                "_media_type": it.get("_media_type", "image" if it.get("image") else "text"),
             })
 
     # 保存去重档
