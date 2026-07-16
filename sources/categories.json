@@ -161,7 +161,8 @@
         { "site": "pcgamer",         "type": "html_pw","name": "PC Gamer",          "lang": "en", "url": "https://www.pcgamer.com",                               "status": "active" },
         { "site": "polygon",         "type": "html_pw","name": "Polygon",           "lang": "en", "url": "https://www.polygon.com",                               "status": "active" },
         { "site": "wwd",             "type": "html_pw","name": "WWD",               "lang": "en", "url": "https://wwd.com/",                                      "status": "active", "note": "Women's Wear Daily, fashion industry" },
-        { "site": "thesartorialist", "type": "html_pw","name": "The Sartorialist",  "lang": "en", "url": "https://www.thesartorialist.com/",                       "status": "active", "note": "Street fashion photography" }
+        { "site": "thesartorialist", "type": "html_pw","name": "The Sartorialist",  "lang": "en", "url": "https://www.thesartorialist.com/",                       "status": "active", "note": "Street fashion photography" },
+        { "site": "brandonstanton","type": "html_pw","name": "Brandon Stanton",   "lang": "en", "url": "https://brandonstanton.com/",                           "status": "active", "note": "Humans of New York street portraits" }
       ]
     },
     "日本生活": {
@@ -192,7 +193,12 @@
         { "site": "ar_mag",      "type": "html_pw","name": "ar(アール)",           "lang": "ja", "url": "https://ar-mag.jp/",                      "status": "active", "note": "女性ファッション誌" },
         { "site": "bisweb",      "type": "html_pw","name": "bis(ビス)",            "lang": "ja", "url": "https://bisweb.jp/",                      "status": "active", "note": "20代女性ファッション" },
         { "site": "oricon",      "type": "html_pw","name": "ORICON NEWS",          "lang": "ja", "url": "https://www.oricon.co.jp/",               "status": "active", "note": "エンタメ/音楽/ランキング" },
-        { "site": "fashionsnap","type": "html_pw","name": "FASHIONSNAP",         "lang": "ja", "url": "https://www.fashionsnap.com/",              "status": "active", "note": "日本ファッションニュース" }
+        { "site": "fashionsnap","type": "html_pw","name": "FASHIONSNAP",         "lang": "ja", "url": "https://www.fashionsnap.com/",              "status": "active", "note": "日本ファッションニュース" },
+        { "site": "droptokyo", "type": "html_pw","name": "DROP TOKYO",          "lang": "ja", "url": "https://droptokyo.com/",                     "status": "active", "note": "東京ストリートスナップ" },
+        { "site": "chuu_kr",   "type": "html_pw","name": "chuu",               "lang": "ko", "url": "https://www.chuu.co.kr/",                    "status": "active", "note": "韓国ファッションブランド" },
+        { "site": "eyesmag",   "type": "html_pw","name": "EYESMAG",            "lang": "ko", "url": "https://www.eyesmag.com/",                   "status": "active", "note": "韓国トレンド/カルチャー" },
+        { "site": "allurekorea","type": "html_pw","name": "Allure Korea",       "lang": "ko", "url": "https://www.allurekorea.com/",               "status": "active", "note": "韓国ビューティー/ファッション" },
+        { "site": "wkorea",    "type": "html_pw","name": "W Korea",            "lang": "ko", "url": "https://www.wkorea.com/",                    "status": "active", "note": "韓国W Magazine/ファッション" }
       ]
     },
     "台灣生活": {
@@ -212,7 +218,8 @@
         { "site": "mobile01",     "type": "html_pw","name": "Mobile01居家", "lang": "zh_hant", "url": "https://www.mobile01.com/category.php?id=9","status": "pending", "note": "需Playwright，詳情頁JS渲染，居家生活/裝潢" },
         { "site": "vogue_tw",    "type": "html_pw","name": "Vogue Taiwan",    "lang": "zh_hant", "url": "https://www.vogue.com.tw/",                 "status": "active", "note": "台灣時尚/生活" },
         { "site": "marieclaire_tw","type": "html_pw","name": "Marie Claire台灣","lang": "zh_hant", "url": "https://www.marieclaire.com.tw/",           "status": "active", "note": "台灣時尚/美妝/生活" },
-        { "site": "bella_tw",    "type": "html_pw","name": "Bella儂儂",       "lang": "zh_hant", "url": "https://www.bella.tw/lifestyle/all",         "status": "active", "note": "台灣女性生活風格" }
+        { "site": "bella_tw",    "type": "html_pw","name": "Bella儂儂",       "lang": "zh_hant", "url": "https://www.bella.tw/lifestyle/all",         "status": "active", "note": "台灣女性生活風格" },
+        { "site": "popdaily_tw","type": "html_pw","name": "PopDaily波波黛莉",  "lang": "zh_hant", "url": "https://www.popdaily.com.tw/",                "status": "active", "note": "台灣女性流行文化/生活" }
       ]
     },
     "马来西亚生活": {
