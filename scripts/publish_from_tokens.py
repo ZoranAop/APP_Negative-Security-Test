@@ -317,6 +317,26 @@ def upload_url_to_s3(
                 time.sleep(1)
         if not (local.exists() and local.stat().st_size > 0):
             raise RuntimeError(f"download failed (referer={referer}): {last_err}")
+    # --- Image quality gate: skip thumbnails / too-small images ---
+    # If the downloaded image is below minimum dimensions, treat it as unusable
+    # (the post will fallback to text-only if all images fail this check).
+    _min_w = int(os.getenv("POST_MIN_IMAGE_WIDTH", "400"))
+    _min_h = int(os.getenv("POST_MIN_IMAGE_HEIGHT", "300"))
+    if _min_w > 0 and _min_h > 0:
+        try:
+            from PIL import Image as _Img
+            with _Img.open(local) as _im:
+                _iw, _ih = _im.size
+            if _iw < _min_w or _ih < _min_h:
+                log_warn(f"  thumbnail skipped: {_iw}x{_ih} < {_min_w}x{_min_h} ({image_url[:60]})")
+                local.unlink(missing_ok=True)
+                raise RuntimeError(f"image too small: {_iw}x{_ih}")
+        except ImportError:
+            pass  # Pillow not installed; skip size check
+        except RuntimeError:
+            raise
+        except Exception:
+            pass  # Can't open image; proceed anyway
     s3 = boto3.client(
         "s3",
         aws_access_key_id=creds["access_key_id"],

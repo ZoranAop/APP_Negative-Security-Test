@@ -88,13 +88,19 @@ def _is_junk(url: str) -> bool:
 
 
 def _is_small_image(url: str) -> bool:
-    """Detect small images from URL patterns (thumbnails, tiny dims)."""
-    # width/height < 200 in URL
+    """Detect small/thumbnail images from URL patterns."""
+    # width/height < 200 in URL path segments
     m = re.search(r"[/\-_](\d{1,3})x(\d{1,3})[/\-_.]", url)
     if m and int(m.group(1)) < 200 and int(m.group(2)) < 200:
         return True
-    # WordPress thumbnail suffixes like -150x150.jpg
+    # WordPress thumbnail suffixes like -150x150.jpg or -300x200.jpg
     if re.search(r"-\d{2,3}x\d{2,3}\.(jpg|jpeg|png|webp)", url, re.I):
+        return True
+    # URL query params indicating small size: w=300, width=200, size=thumb etc.
+    if re.search(r"[?&](w|width|size)=(1\d{2}|2\d{2}|3[0-4]\d|thumb)", url, re.I):
+        return True
+    # Common thumbnail path segments
+    if re.search(r"/(thumb|thumbnail|small|mini|icon|avatar|s\d{2,3})/", url, re.I):
         return True
     return False
 
