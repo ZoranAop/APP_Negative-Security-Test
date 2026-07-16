@@ -510,16 +510,34 @@ def main() -> int:
     log_info(f"[Phase 2] S3 creds via {anchor_email} bucket={creds.get('bucket')}")
 
     all_urls = unique_image_urls(rows)
-    log_info(f"[Phase 2] uploading {len(all_urls)} unique urls")
+    # Filter out known watermarked image sources — these will be skipped and
+    # their posts will fallback to text-only (content description without image).
+    _wm_hosts_raw = os.getenv("POST_WATERMARK_SKIP_HOSTS",
+                              "500px.com,dpreview.com,petapixel.com,gettyimages.com,"
+                              "shutterstock.com,istockphoto.com,alamy.com,dreamstime.com,"
+                              "depositphotos.com,123rf.com,stockphoto.com")
+    _wm_hosts = [h.strip().lower() for h in _wm_hosts_raw.split(",") if h.strip()]
+    watermark_skipped = set()
+    if _wm_hosts:
+        for u in all_urls:
+            host = (urlsplit(u).hostname or "").lower()
+            if any(wh in host for wh in _wm_hosts):
+                watermark_skipped.add(u)
+        if watermark_skipped:
+            log_info(f"[Phase 2] skipping {len(watermark_skipped)} watermarked image(s) "
+                     f"(hosts: {','.join(sorted(set((urlsplit(u).hostname or '') for u in watermark_skipped)))})")
+
+    upload_urls = [u for u in all_urls if u not in watermark_skipped]
+    log_info(f"[Phase 2] uploading {len(upload_urls)} unique urls")
     cache: dict[str, str] = {}
-    for i, u in enumerate(all_urls, 1):
+    for i, u in enumerate(upload_urls, 1):
         try:
             upload_url_to_s3(u, creds, cache, images_dir=Path("images"))
             if i % 20 == 0:
-                log_info(f"  uploaded {i}/{len(all_urls)}")
+                log_info(f"  uploaded {i}/{len(upload_urls)}")
         except Exception as e:  # noqa: BLE001
             log_error(f"  ✗ upload {u[:70]}: {e}")
-    log_success(f"[Phase 2] cached {len(cache)}/{len(all_urls)}")
+    log_success(f"[Phase 2] cached {len(cache)}/{len(upload_urls)}")
 
     # ---- Phase 3: publish ----
     emails = [e for (e, _p, _n) in accts if e in tokens]
@@ -529,10 +547,14 @@ def main() -> int:
     nickname_by = {e: n for (e, _p, n) in accts}
 
     tasks = []
+    text_fallback_count = 0
     for i, row in enumerate(rows):
         email = emails[i % len(emails)]
         original = [u.strip() for u in (row.get("image_urls") or "").split(",") if u.strip()]
         s3imgs = [cache[u] for u in original if u in cache]
+        # If all images were watermarked/failed, post as text-only (description only)
+        if original and not s3imgs:
+            text_fallback_count += 1
         tasks.append({
             "csv_line": i + 1,
             "email": email,
@@ -544,6 +566,9 @@ def main() -> int:
             "_scene": row.get("_scene", ""),
             "_dedupe_key": row.get("_dedupe_key", ""),
         })
+    if text_fallback_count:
+        log_info(f"[Phase 3] {text_fallback_count} post(s) will be text-only "
+                 f"(watermarked/failed images skipped, using content description)")
     log_info(f"[Phase 3] publishing {len(tasks)} with concurrency={args.concurrency}")
 
     def worker(t):
@@ -562,9 +587,11 @@ def main() -> int:
         for i, f in enumerate(concurrent.futures.as_completed(futs), 1):
             r = f.result()
             results.append(r)
-            tag = "✓" if r["success"] else "✗"
+            tag = "\u2713" if r["success"] else "\u2717"
+            mode = "[text]" if not r.get("s3_images") else ""
             log_info(f"  {tag} [{i}/{len(tasks)}] {r['nickname'] or r['email']} "
-                     f"lang={r.get('_lang','')} src={r.get('_source','')} {r['info'][:70]}")
+                     f"lang={r.get('_lang','')} src={r.get('_source','')} "
+                     f"{mode} {r['info'][:70]}")
 
     ok = sum(1 for r in results if r["success"])
     log_success(f"[Done] {ok}/{len(results)}")

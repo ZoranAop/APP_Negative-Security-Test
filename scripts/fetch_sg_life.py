@@ -48,6 +48,11 @@ JUNK = ["logo", "banner", "avatar", "icon", "sprite", "placeholder", "share",
         "doubleclick", "/ad/", "_ad_", "advert", "favicon", "author", "profile",
         "gravatar", "wp-emoji", "1x1", "pixel"]
 
+# Known watermarked image hosts — skip these entirely (post will be text-only)
+WATERMARK_HOSTS = ["500px.com", "dpreview.com", "gettyimages.com",
+                   "shutterstock.com", "istockphoto.com", "alamy.com",
+                   "dreamstime.com", "depositphotos.com", "123rf.com"]
+
 
 def _ensure_utf8_stdout():
     import io
@@ -65,7 +70,12 @@ def looks_like_ad(title: str) -> bool:
 
 def _is_junk(url: str) -> bool:
     low = url.lower()
-    return any(j in low for j in JUNK)
+    if any(j in low for j in JUNK):
+        return True
+    # Skip known watermarked image hosts
+    if any(wh in low for wh in WATERMARK_HOSTS):
+        return True
+    return False
 
 
 def _is_small_image(url: str) -> bool:
