@@ -143,7 +143,9 @@
         { "site": "ign",             "type": "html_pw","name": "IGN",               "lang": "en", "url": "https://www.ign.com",                                   "status": "active" },
         { "site": "gamespot",        "type": "html_pw","name": "GameSpot",          "lang": "en", "url": "https://www.gamespot.com",                              "status": "active" },
         { "site": "pcgamer",         "type": "html_pw","name": "PC Gamer",          "lang": "en", "url": "https://www.pcgamer.com",                               "status": "active" },
-        { "site": "polygon",         "type": "html_pw","name": "Polygon",           "lang": "en", "url": "https://www.polygon.com",                               "status": "active" }
+        { "site": "polygon",         "type": "html_pw","name": "Polygon",           "lang": "en", "url": "https://www.polygon.com",                               "status": "active" },
+        { "site": "wwd",             "type": "html_pw","name": "WWD",               "lang": "en", "url": "https://wwd.com/",                                      "status": "active", "note": "Women's Wear Daily, fashion industry" },
+        { "site": "thesartorialist", "type": "html_pw","name": "The Sartorialist",  "lang": "en", "url": "https://www.thesartorialist.com/",                       "status": "active", "note": "Street fashion photography" }
       ]
     },
     "日本生活": {
@@ -173,7 +175,8 @@
         { "site": "girlswalker", "type": "html_pw","name": "GirlsWalker",         "lang": "ja", "url": "https://girlswalker.com/",                "status": "active", "note": "女性ファッション/トレンド" },
         { "site": "ar_mag",      "type": "html_pw","name": "ar(アール)",           "lang": "ja", "url": "https://ar-mag.jp/",                      "status": "active", "note": "女性ファッション誌" },
         { "site": "bisweb",      "type": "html_pw","name": "bis(ビス)",            "lang": "ja", "url": "https://bisweb.jp/",                      "status": "active", "note": "20代女性ファッション" },
-        { "site": "oricon",      "type": "html_pw","name": "ORICON NEWS",          "lang": "ja", "url": "https://www.oricon.co.jp/",               "status": "active", "note": "エンタメ/音楽/ランキング" }
+        { "site": "oricon",      "type": "html_pw","name": "ORICON NEWS",          "lang": "ja", "url": "https://www.oricon.co.jp/",               "status": "active", "note": "エンタメ/音楽/ランキング" },
+        { "site": "fashionsnap","type": "html_pw","name": "FASHIONSNAP",         "lang": "ja", "url": "https://www.fashionsnap.com/",              "status": "active", "note": "日本ファッションニュース" }
       ]
     },
     "台灣生活": {
@@ -290,7 +293,8 @@
         { "site": "nationaltrust",     "type": "html_pw", "name": "National Trust",        "lang": "en", "url": "https://www.nationaltrust.org.uk",             "status": "active", "note": "UK heritage & nature" },
         { "site": "wwf_eu",            "type": "html_pw", "name": "WWF EU",                "lang": "en", "url": "https://www.wwf.eu",                           "status": "active", "note": "European conservation" },
         { "site": "monocle",           "type": "html_pw", "name": "Monocle",               "lang": "en", "url": "https://monocle.com",                          "status": "active", "note": "Global affairs & quality living" },
-        { "site": "wallpaper",         "type": "html_pw", "name": "Wallpaper*",            "lang": "en", "url": "https://www.wallpaper.com",                    "status": "active", "note": "Design, architecture, luxury" }
+        { "site": "wallpaper",         "type": "html_pw", "name": "Wallpaper*",            "lang": "en", "url": "https://www.wallpaper.com",                    "status": "active", "note": "Design, architecture, luxury" },
+        { "site": "highsnobiety",     "type": "html_pw", "name": "Highsnobiety",          "lang": "en", "url": "https://www.highsnobiety.com/",                "status": "active", "note": "Berlin-based streetwear/fashion" }
       ]
     },
     "科技": {
