@@ -151,13 +151,25 @@
       "kind": "image_text",
       "tag": "暮らし",
       "lang": "ja",
-      "description": "日本のライフスタイルメディアから図文採集（grape/hint-pot/Pouch/macaroni/TRILL）。日本語図文発布。採集/発布は scripts/fetch_jp_life.py + scripts/run_jp_life.py。グルメ・暮らし・トレンド・ペット・季節の話題をカバー。",
+      "description": "日本のライフスタイル・ACG・ゲームメディアから図文採集。日本語図文発布。採集/発布は scripts/fetch_jp_life.py + scripts/run_jp_life.py。グルメ・暮らし・トレンド・アニメ・ゲーム・コスプレ・フィギュア・イベントをカバー。",
       "sources": [
-        { "site": "grapee",     "type": "rss", "name": "grape(グレイプ)",    "lang": "ja", "url": "https://grapee.jp/feed",         "status": "active" },
-        { "site": "hintpot",    "type": "rss", "name": "hint-pot",          "lang": "ja", "url": "https://hint-pot.jp/feed",        "status": "active" },
-        { "site": "youpouch",   "type": "rss", "name": "Pouch(ポーチ)",     "lang": "ja", "url": "https://youpouch.com/feed",       "status": "active" },
-        { "site": "macaroni",   "type": "html","name": "macaroni(マカロニ)", "lang": "ja", "url": "https://macaro-ni.jp/",           "status": "active" },
-        { "site": "trilltrill", "type": "html","name": "TRILL(トリル)",      "lang": "ja", "url": "https://trilltrill.jp/",          "status": "active" }
+        { "site": "grapee",      "type": "rss",    "name": "grape(グレイプ)",      "lang": "ja", "url": "https://grapee.jp/feed",                "status": "active" },
+        { "site": "hintpot",     "type": "rss",    "name": "hint-pot",            "lang": "ja", "url": "https://hint-pot.jp/feed",              "status": "active" },
+        { "site": "youpouch",    "type": "rss",    "name": "Pouch(ポーチ)",       "lang": "ja", "url": "https://youpouch.com/feed",             "status": "active" },
+        { "site": "macaroni",    "type": "html",   "name": "macaroni(マカロニ)",   "lang": "ja", "url": "https://macaro-ni.jp/",                 "status": "active" },
+        { "site": "trilltrill",  "type": "html",   "name": "TRILL(トリル)",        "lang": "ja", "url": "https://trilltrill.jp/",                "status": "active" },
+        { "site": "animeanime",  "type": "html_pw","name": "アニメ!アニメ!",       "lang": "ja", "url": "https://animeanime.jp/",                "status": "active", "note": "anime news/reviews" },
+        { "site": "natalie_comic","type": "html_pw","name": "コミックナタリー",     "lang": "ja", "url": "https://natalie.mu/comic",              "status": "active", "note": "manga/comic news" },
+        { "site": "famitsu",     "type": "html_pw","name": "ファミ通",             "lang": "ja", "url": "https://www.famitsu.com/",               "status": "active", "note": "game news/reviews" },
+        { "site": "4gamer",      "type": "html_pw","name": "4Gamer.net",          "lang": "ja", "url": "https://www.4gamer.net/",                "status": "active", "note": "PC/console game news" },
+        { "site": "gamer_ne_jp", "type": "html_pw","name": "Gamer",               "lang": "ja", "url": "https://www.gamer.ne.jp/",               "status": "active", "note": "game news/previews" },
+        { "site": "insidegames", "type": "html_pw","name": "インサイド",           "lang": "ja", "url": "https://www.inside-games.jp/",           "status": "active", "note": "Nintendo/game news" },
+        { "site": "cosp",        "type": "html_pw","name": "Cure WorldCosplay",   "lang": "ja", "url": "https://www.cosp.jp/",                   "status": "active", "note": "cosplay community" },
+        { "site": "amiami",      "type": "html_pw","name": "AmiAmi",              "lang": "en", "url": "https://www.amiami.com/eng/",             "status": "active", "note": "figure/hobby shop" },
+        { "site": "goodsmile",   "type": "html_pw","name": "グッドスマイルカンパニー","lang": "ja", "url": "https://www.goodsmile.com/ja",           "status": "active", "note": "Nendoroid/figma figures" },
+        { "site": "1999_co_jp",  "type": "html_pw","name": "ホビーサーチ",         "lang": "ja", "url": "https://www.1999.co.jp/",                "status": "active", "note": "hobby/model/figure shop" },
+        { "site": "animejapan",  "type": "html_pw","name": "AnimeJapan",          "lang": "ja", "url": "https://anime-japan.jp/",                "status": "active", "note": "anime expo/event" },
+        { "site": "comiket",     "type": "html_pw","name": "コミックマーケット",   "lang": "ja", "url": "https://www.comiket.co.jp/",             "status": "active", "note": "Comiket doujin event" }
       ]
     },
     "台灣生活": {
