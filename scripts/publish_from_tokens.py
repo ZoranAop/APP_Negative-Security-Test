@@ -586,66 +586,101 @@ def main() -> int:
     tasks = []
     text_fallback_count = 0
     consistency_trimmed = 0
-    # Aspect-ratio tolerance for multi-image consistency (default 0.25 = 25%)
+
+    # =========================================================================
+    # Image Selection Rules (媒体内容规范)
+    # =========================================================================
+    # Image posts:
+    #   - Maximum: POST_MAX_IMAGES (default 9) images per post
+    #   - Minimum: 1 image (if at least 1 passes all quality checks)
+    #   - Best-effort: take as many qualifying images as available, up to max
+    #   - If 0 images qualify → fallback to text-only post
+    #   - Multi-image consistency: all images in a post should have similar
+    #     aspect ratio (landscape/portrait/square grouped, ±25% AR tolerance)
+    #
+    # Video posts:
+    #   - Exactly 1 video per post (media_info type=video)
+    #   - Video posts are handled by post_video.py, not this script
+    #
+    # Text posts:
+    #   - No media, content only (media_info type=text)
+    #   - Used when: no images provided, or all images fail quality checks
+    # =========================================================================
+    _max_images = int(os.getenv("POST_MAX_IMAGES", "9"))
     _ar_tolerance = float(os.getenv("POST_IMAGE_AR_TOLERANCE", "0.25"))
 
-    def _filter_consistent_images(orig_urls: list[str]) -> list[str]:
-        """For multi-image posts, keep only images with similar aspect ratios.
-        Groups by landscape/square/portrait, picks the largest group.
-        Prevents jarring layout with mixed orientations."""
-        if len(orig_urls) <= 1:
-            return orig_urls
-        # Get dimensions for each URL
+    def _select_images(orig_urls: list[str]) -> list[str]:
+        """Select best images for a post following media content rules.
+
+        1. Filter to only successfully uploaded images (in cache)
+        2. For multi-image: group by aspect ratio, keep consistent set
+        3. Cap at POST_MAX_IMAGES (default 9)
+        4. If 0 remain → returns empty (caller will use text-only)
+
+        Returns S3 URLs ready for publishing."""
+        # Step 1: get eligible URLs (uploaded successfully)
+        eligible = [u for u in orig_urls if u in cache]
+        if not eligible:
+            return []
+
+        # Step 2: multi-image consistency filter
+        if len(eligible) > 1:
+            eligible = _filter_consistent(eligible)
+
+        # Step 3: cap to max images
+        eligible = eligible[:_max_images]
+
+        # Step 4: map to S3 URLs
+        return [cache[u] for u in eligible if u in cache]
+
+    def _filter_consistent(urls: list[str]) -> list[str]:
+        """Keep only images with similar aspect ratios for clean grid layout."""
         items = []
-        for u in orig_urls:
-            if u in cache and u in img_dimensions:
+        for u in urls:
+            if u in img_dimensions:
                 w, h = img_dimensions[u]
                 ar = w / h if h > 0 else 1.0
-                items.append((u, ar, w, h))
+                items.append((u, ar))
+            else:
+                items.append((u, 1.33))  # assume landscape if unknown
+
         if len(items) <= 1:
-            return orig_urls  # can't filter without dimension data
+            return urls
 
-        # Group by orientation: landscape (ar > 1.1), portrait (ar < 0.9), square (0.9-1.1)
-        landscape = [(u, ar) for u, ar, w, h in items if ar > 1.1]
-        portrait = [(u, ar) for u, ar, w, h in items if ar < 0.9]
-        square = [(u, ar) for u, ar, w, h in items if 0.9 <= ar <= 1.1]
+        # Group by orientation
+        landscape = [(u, ar) for u, ar in items if ar > 1.1]
+        portrait = [(u, ar) for u, ar in items if ar < 0.9]
+        square = [(u, ar) for u, ar in items if 0.9 <= ar <= 1.1]
 
-        # Pick the largest orientation group
-        groups = [("landscape", landscape), ("portrait", portrait), ("square", square)]
-        groups.sort(key=lambda x: len(x[1]), reverse=True)
-        best_name, best_group = groups[0]
+        # Pick largest group
+        groups = sorted([landscape, portrait, square], key=len, reverse=True)
+        best = groups[0]
+        if not best:
+            return urls
 
-        if not best_group:
-            return orig_urls
-
-        # Within the chosen group, further filter by AR consistency
-        # Use median AR as reference, keep images within tolerance
-        ars = sorted(ar for _, ar in best_group)
+        # Within group, filter by median AR ± tolerance
+        ars = sorted(ar for _, ar in best)
         median_ar = ars[len(ars) // 2]
-        consistent = [u for u, ar in best_group
-                      if abs(ar - median_ar) / median_ar <= _ar_tolerance]
-
-        if consistent:
-            return consistent
-        # Fallback: return the group as-is
-        return [u for u, _ in best_group]
+        consistent = [u for u, ar in best
+                      if abs(ar - median_ar) / max(median_ar, 0.01) <= _ar_tolerance]
+        return consistent if consistent else [u for u, _ in best]
 
     for i, row in enumerate(rows):
         email = emails[i % len(emails)]
         original = [u.strip() for u in (row.get("image_urls") or "").split(",") if u.strip()]
-        s3_eligible = [u for u in original if u in cache]
 
-        # Multi-image consistency: filter to similar aspect ratios
-        if len(s3_eligible) > 1:
-            consistent = _filter_consistent_images(s3_eligible)
-            if len(consistent) < len(s3_eligible):
-                consistency_trimmed += 1
-            s3_eligible = consistent
+        # Apply image selection rules
+        s3imgs = _select_images(original)
 
-        s3imgs = [cache[u] for u in s3_eligible if u in cache]
-        # If all images were watermarked/failed, post as text-only (description only)
+        # Track consistency trimming
+        raw_eligible = [u for u in original if u in cache]
+        if len(raw_eligible) > 1 and len(s3imgs) < len(raw_eligible):
+            consistency_trimmed += 1
+
+        # If all images were watermarked/failed/empty, post as text-only
         if original and not s3imgs:
             text_fallback_count += 1
+
         tasks.append({
             "csv_line": i + 1,
             "email": email,
