@@ -131,6 +131,7 @@
         { "site": "caranddriver",    "type": "html_pw","name": "Car and Driver",    "lang": "en", "url": "https://www.caranddriver.com",                          "status": "active" },
         { "site": "roadandtrack",    "type": "html_pw","name": "Road & Track",      "lang": "en", "url": "https://www.roadandtrack.com",                          "status": "active" },
         { "site": "bonappetit",      "type": "html_pw","name": "Bon Appétit",       "lang": "en", "url": "https://www.bonappetit.com",                            "status": "active" },
+        { "site": "food52",          "type": "html_pw","name": "Food52",            "lang": "en", "url": "https://food52.com/",                                    "status": "active" },
         { "site": "foodandwine",     "type": "html_pw","name": "Food & Wine",       "lang": "en", "url": "https://www.foodandwine.com",                           "status": "active" },
         { "site": "seriouseats",     "type": "html_pw","name": "Serious Eats",      "lang": "en", "url": "https://www.seriouseats.com",                           "status": "active" },
         { "site": "tastingtable",    "type": "html_pw","name": "Tasting Table",     "lang": "en", "url": "https://www.tastingtable.com",                          "status": "active" },
