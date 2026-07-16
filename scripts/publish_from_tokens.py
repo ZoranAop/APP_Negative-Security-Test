@@ -643,14 +643,19 @@ def main() -> int:
         if len(eligible) > 1:
             eligible = _filter_consistent_resolution(eligible)
 
-        # Step 4: grid-friendly count
+        # Step 4: orientation-aware max count
+        # Portrait images take more vertical space; limit count for better layout
+        if len(eligible) > 1:
+            eligible = _cap_by_orientation(eligible)
+
+        # Step 5: grid-friendly count
         if _grid_enabled and len(eligible) > 1:
             eligible = _adjust_to_grid(eligible)
 
-        # Step 5: sort by resolution descending (hero image first)
+        # Step 6: sort by resolution descending (hero image first)
         eligible = _sort_by_quality(eligible)
 
-        # Step 6: cap to max images
+        # Step 7: cap to max images
         eligible = eligible[:_max_images]
 
         # Map to S3 URLs
@@ -708,6 +713,41 @@ def main() -> int:
         min_res = median_res / 3.0
         filtered = [u for u, s in sizes if s >= min_res]
         return filtered if filtered else urls
+
+    def _cap_by_orientation(urls: list[str]) -> list[str]:
+        """Apply orientation-aware max image count for better feed layout.
+
+        Portrait (vertical) images occupy more screen height, so displaying
+        many in one post creates a cramped layout. Limits:
+          - Portrait (AR < 0.9):  max 4 images (2x2 grid looks best)
+          - Square (0.9~1.1):    max 9 images (3x3 grid)
+          - Landscape (AR > 1.1): max 6 images (2x3 or 3x2 grid)
+
+        Configurable via POST_MAX_PORTRAIT_IMAGES / POST_MAX_LANDSCAPE_IMAGES."""
+        if len(urls) <= 1:
+            return urls
+        _max_portrait = int(os.getenv("POST_MAX_PORTRAIT_IMAGES", "4"))
+        _max_landscape = int(os.getenv("POST_MAX_LANDSCAPE_IMAGES", "6"))
+        _max_square = int(os.getenv("POST_MAX_SQUARE_IMAGES", "9"))
+
+        # Determine dominant orientation of this set
+        ars = []
+        for u in urls:
+            if u in img_dimensions:
+                w, h = img_dimensions[u]
+                ars.append(w / h if h > 0 else 1.0)
+            else:
+                ars.append(1.33)
+        if not ars:
+            return urls
+        median_ar = sorted(ars)[len(ars) // 2]
+
+        if median_ar < 0.9:  # portrait dominant
+            return urls[:_max_portrait]
+        elif median_ar > 1.1:  # landscape dominant
+            return urls[:_max_landscape]
+        else:  # square dominant
+            return urls[:_max_square]
 
     def _adjust_to_grid(urls: list[str]) -> list[str]:
         """Adjust image count to a grid-friendly number for clean feed layout.
