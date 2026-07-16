@@ -46,14 +46,26 @@
       "kind": "image_text",
       "tag": "Science",
       "lang": "en",
-      "description": "美国官方科学机构图文新闻（NASA/NSF/NIST/NOAA/NIH/DOE），英文图文发布。采集/发布走 scripts/fetch_us_science.py + scripts/run_us_science.py。每条帖带1张官方图片+英文第一人称科学评论配文（150-300字符）。",
+      "description": "美国/国际顶级科学媒体+官方机构图文新闻，英文图文发布。采集/发布走 scripts/fetch_us_science.py + scripts/run_us_science.py。来源：NASA/NSF/NIST/NOAA/NIH/DOE + National Geographic/BBC Earth/Smithsonian/Discover/Scientific American/Science News/Live Science/New Scientist/Nature/Science/Earth.org/Mongabay。",
       "sources": [
-        { "site": "nasa",   "type": "rss", "name": "NASA",            "lang": "en", "url": "https://www.nasa.gov/feed/",                       "status": "active" },
-        { "site": "nsf",    "type": "rss", "name": "NSF",             "lang": "en", "url": "https://www.nsf.gov/rss/rss_www_news.xml",          "status": "active" },
-        { "site": "nist",   "type": "rss", "name": "NIST",            "lang": "en", "url": "https://www.nist.gov/news-events/news/rss.xml",     "status": "active" },
-        { "site": "energy", "type": "rss", "name": "Dept. of Energy", "lang": "en", "url": "https://www.energy.gov/rss.xml",                    "status": "active" },
-        { "site": "noaa",   "type": "html","name": "NOAA",            "lang": "en", "url": "https://www.noaa.gov/news",                         "status": "active" },
-        { "site": "nih",    "type": "html","name": "NIH",             "lang": "en", "url": "https://www.nih.gov/news-events/news-releases",     "status": "active" }
+        { "site": "nasa",              "type": "rss",    "name": "NASA",                "lang": "en", "url": "https://www.nasa.gov/feed/",                       "status": "active" },
+        { "site": "nsf",               "type": "rss",    "name": "NSF",                 "lang": "en", "url": "https://www.nsf.gov/rss/rss_www_news.xml",          "status": "active" },
+        { "site": "nist",              "type": "rss",    "name": "NIST",                "lang": "en", "url": "https://www.nist.gov/news-events/news/rss.xml",     "status": "active" },
+        { "site": "energy",            "type": "rss",    "name": "Dept. of Energy",     "lang": "en", "url": "https://www.energy.gov/rss.xml",                    "status": "active" },
+        { "site": "noaa",              "type": "html",   "name": "NOAA",                "lang": "en", "url": "https://www.noaa.gov/news",                         "status": "active" },
+        { "site": "nih",               "type": "html",   "name": "NIH",                 "lang": "en", "url": "https://www.nih.gov/news-events/news-releases",     "status": "active" },
+        { "site": "natgeo",            "type": "html_pw","name": "National Geographic", "lang": "en", "url": "https://www.nationalgeographic.com",                "status": "active" },
+        { "site": "bbcearth",          "type": "html_pw","name": "BBC Earth",           "lang": "en", "url": "https://www.bbcearth.com",                          "status": "active" },
+        { "site": "earthorg",          "type": "html_pw","name": "Earth.org",           "lang": "en", "url": "https://earth.org",                                 "status": "active" },
+        { "site": "mongabay",          "type": "html_pw","name": "Mongabay",            "lang": "en", "url": "https://mongabay.com",                              "status": "active" },
+        { "site": "discover",          "type": "html_pw","name": "Discover Magazine",   "lang": "en", "url": "https://www.discovermagazine.com",                  "status": "active" },
+        { "site": "smithsonian",       "type": "html_pw","name": "Smithsonian Magazine","lang": "en", "url": "https://www.smithsonianmag.com",                    "status": "active" },
+        { "site": "sciamerican",       "type": "html_pw","name": "Scientific American", "lang": "en", "url": "https://www.scientificamerican.com",                "status": "active" },
+        { "site": "sciencenews",       "type": "html_pw","name": "Science News",        "lang": "en", "url": "https://www.sciencenews.org",                       "status": "active" },
+        { "site": "livescience",       "type": "html_pw","name": "Live Science",        "lang": "en", "url": "https://www.livescience.com",                       "status": "active" },
+        { "site": "newscientist",      "type": "html_pw","name": "New Scientist",       "lang": "en", "url": "https://www.newscientist.com",                      "status": "active" },
+        { "site": "nature",            "type": "html_pw","name": "Nature",              "lang": "en", "url": "https://www.nature.com",                            "status": "active" },
+        { "site": "science",           "type": "html_pw","name": "Science (AAAS)",      "lang": "en", "url": "https://www.science.org",                           "status": "active" }
       ]
     },
     "科技&AI&美国": {
