@@ -139,6 +139,20 @@
         { "site": "tripzilla", "type": "html_pw", "name": "TripZilla Singapore", "lang": "en", "url": "https://www.tripzilla.com/category/destinations/asia/southeast-asia/singapore","status": "active" }
       ]
     },
+    "越南生活": {
+      "label": "越南生活",
+      "kind": "image_text",
+      "tag": "Lifestyle",
+      "lang": "en",
+      "description": "越南生活类媒体图文（Saigoneer/Báo Mới/Tuổi Trẻ/Vietnam News/Time Out Hanoi），英文图文发布。采集/发布走 scripts/fetch_vn_life.py + scripts/run_vietnam.py。内容涵盖越南美食、街头文化、旅游景点、城市生活等话题。Saigoneer为英文站，其余为越南语站采集图片后用英文文案发布。",
+      "sources": [
+        { "site": "saigoneer",   "type": "html_pw", "name": "Saigoneer",           "lang": "en", "url": "https://saigoneer.com/",                                          "status": "active" },
+        { "site": "baomoi",      "type": "html_pw", "name": "Báo Mới",             "lang": "vi", "url": "https://baomoi.com/",                                              "status": "active" },
+        { "site": "tuoitre",     "type": "html_pw", "name": "Tuổi Trẻ",            "lang": "vi", "url": "https://tuoitre.vn/",                                              "status": "active" },
+        { "site": "vietnamnews", "type": "html_pw", "name": "Vietnam News",        "lang": "en", "url": "https://vietnamnews.vn/life-style",                                "status": "active" },
+        { "site": "timeout",     "type": "html_pw", "name": "Time Out Hanoi",      "lang": "en", "url": "https://www.timeout.com/hanoi",                                    "status": "active" }
+      ]
+    },
     "科技": {
       "label": "科技",
       "kind": "text",
