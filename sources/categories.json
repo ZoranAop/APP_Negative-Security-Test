@@ -169,7 +169,11 @@
         { "site": "goodsmile",   "type": "html_pw","name": "グッドスマイルカンパニー","lang": "ja", "url": "https://www.goodsmile.com/ja",           "status": "active", "note": "Nendoroid/figma figures" },
         { "site": "1999_co_jp",  "type": "html_pw","name": "ホビーサーチ",         "lang": "ja", "url": "https://www.1999.co.jp/",                "status": "active", "note": "hobby/model/figure shop" },
         { "site": "animejapan",  "type": "html_pw","name": "AnimeJapan",          "lang": "ja", "url": "https://anime-japan.jp/",                "status": "active", "note": "anime expo/event" },
-        { "site": "comiket",     "type": "html_pw","name": "コミックマーケット",   "lang": "ja", "url": "https://www.comiket.co.jp/",             "status": "active", "note": "Comiket doujin event" }
+        { "site": "comiket",     "type": "html_pw","name": "コミックマーケット",   "lang": "ja", "url": "https://www.comiket.co.jp/",             "status": "active", "note": "Comiket doujin event" },
+        { "site": "girlswalker", "type": "html_pw","name": "GirlsWalker",         "lang": "ja", "url": "https://girlswalker.com/",                "status": "active", "note": "女性ファッション/トレンド" },
+        { "site": "ar_mag",      "type": "html_pw","name": "ar(アール)",           "lang": "ja", "url": "https://ar-mag.jp/",                      "status": "active", "note": "女性ファッション誌" },
+        { "site": "bisweb",      "type": "html_pw","name": "bis(ビス)",            "lang": "ja", "url": "https://bisweb.jp/",                      "status": "active", "note": "20代女性ファッション" },
+        { "site": "oricon",      "type": "html_pw","name": "ORICON NEWS",          "lang": "ja", "url": "https://www.oricon.co.jp/",               "status": "active", "note": "エンタメ/音楽/ランキング" }
       ]
     },
     "台灣生活": {
@@ -186,7 +190,10 @@
         { "site": "nownews",      "type": "html","name": "NOWnews生活",     "lang": "zh_hant", "url": "https://www.nownews.com/cat/life/",         "status": "pending", "note": "RSS已下線，需HTML解析" },
         { "site": "tvbs_woman",   "type": "html","name": "TVBS女人我最大",   "lang": "zh_hant", "url": "https://woman.tvbs.com.tw/queenspick",     "status": "pending", "note": "需HTML解析" },
         { "site": "decomyplace",  "type": "html_pw","name": "DECOmyplace", "lang": "zh_hant", "url": "https://decomyplace.com/",                  "status": "pending", "note": "需Playwright，直連403，室內設計/居家佈置" },
-        { "site": "mobile01",     "type": "html_pw","name": "Mobile01居家", "lang": "zh_hant", "url": "https://www.mobile01.com/category.php?id=9","status": "pending", "note": "需Playwright，詳情頁JS渲染，居家生活/裝潢" }
+        { "site": "mobile01",     "type": "html_pw","name": "Mobile01居家", "lang": "zh_hant", "url": "https://www.mobile01.com/category.php?id=9","status": "pending", "note": "需Playwright，詳情頁JS渲染，居家生活/裝潢" },
+        { "site": "vogue_tw",    "type": "html_pw","name": "Vogue Taiwan",    "lang": "zh_hant", "url": "https://www.vogue.com.tw/",                 "status": "active", "note": "台灣時尚/生活" },
+        { "site": "marieclaire_tw","type": "html_pw","name": "Marie Claire台灣","lang": "zh_hant", "url": "https://www.marieclaire.com.tw/",           "status": "active", "note": "台灣時尚/美妝/生活" },
+        { "site": "bella_tw",    "type": "html_pw","name": "Bella儂儂",       "lang": "zh_hant", "url": "https://www.bella.tw/lifestyle/all",         "status": "active", "note": "台灣女性生活風格" }
       ]
     },
     "马来西亚生活": {
