@@ -590,32 +590,44 @@ def main() -> int:
     # =========================================================================
     # Image Selection Rules (媒体内容规范)
     # =========================================================================
-    # Image posts:
+    # Image posts (media_info type=image):
     #   - Maximum: POST_MAX_IMAGES (default 9) images per post
     #   - Minimum: 1 image (if at least 1 passes all quality checks)
     #   - Best-effort: take as many qualifying images as available, up to max
     #   - If 0 images qualify → fallback to text-only post
-    #   - Multi-image consistency: all images in a post should have similar
-    #     aspect ratio (landscape/portrait/square grouped, ±25% AR tolerance)
+    #   - Quality gates applied during upload:
+    #       * Watermark domain skip (POST_WATERMARK_SKIP_HOSTS)
+    #       * Minimum pixel dimensions (POST_MIN_IMAGE_WIDTH x HEIGHT)
+    #   - Multi-image presentation rules:
+    #       * Aspect ratio consistency: group by orientation, keep same type
+    #       * Resolution consistency: prefer images of similar pixel size
+    #       * Grid-friendly count: prefer 1/2/3/4/6/9 (trim 5→4, 7→6, 8→6)
+    #       * Sort order: largest/highest-quality image first (hero image)
     #
-    # Video posts:
-    #   - Exactly 1 video per post (media_info type=video)
-    #   - Video posts are handled by post_video.py, not this script
+    # Video posts (media_info type=video):
+    #   - Exactly 1 video per post (handled by post_video.py)
+    #   - Contains video_url + thumbnail_url
     #
-    # Text posts:
-    #   - No media, content only (media_info type=text)
-    #   - Used when: no images provided, or all images fail quality checks
+    # Text posts (media_info type=text):
+    #   - No media, content description only
+    #   - Auto-fallback when no images pass quality checks
     # =========================================================================
     _max_images = int(os.getenv("POST_MAX_IMAGES", "9"))
     _ar_tolerance = float(os.getenv("POST_IMAGE_AR_TOLERANCE", "0.25"))
+    # Grid-friendly counts: these numbers form clean visual grids in most feeds
+    _grid_friendly = {1, 2, 3, 4, 6, 9}
+    _grid_enabled = os.getenv("POST_GRID_FRIENDLY", "true").lower() in ("1", "true", "yes")
 
     def _select_images(orig_urls: list[str]) -> list[str]:
         """Select best images for a post following media content rules.
 
+        Pipeline:
         1. Filter to only successfully uploaded images (in cache)
-        2. For multi-image: group by aspect ratio, keep consistent set
-        3. Cap at POST_MAX_IMAGES (default 9)
-        4. If 0 remain → returns empty (caller will use text-only)
+        2. Aspect ratio consistency: group by orientation, keep same type
+        3. Resolution consistency: remove outliers (>2x median resolution diff)
+        4. Grid-friendly count adjustment (trim to nearest clean grid number)
+        5. Sort: largest image first (hero/cover image)
+        6. Cap at POST_MAX_IMAGES (default 9)
 
         Returns S3 URLs ready for publishing."""
         # Step 1: get eligible URLs (uploaded successfully)
@@ -623,17 +635,28 @@ def main() -> int:
         if not eligible:
             return []
 
-        # Step 2: multi-image consistency filter
+        # Step 2: aspect ratio consistency
         if len(eligible) > 1:
-            eligible = _filter_consistent(eligible)
+            eligible = _filter_consistent_ar(eligible)
 
-        # Step 3: cap to max images
+        # Step 3: resolution consistency (remove outlier sizes)
+        if len(eligible) > 1:
+            eligible = _filter_consistent_resolution(eligible)
+
+        # Step 4: grid-friendly count
+        if _grid_enabled and len(eligible) > 1:
+            eligible = _adjust_to_grid(eligible)
+
+        # Step 5: sort by resolution descending (hero image first)
+        eligible = _sort_by_quality(eligible)
+
+        # Step 6: cap to max images
         eligible = eligible[:_max_images]
 
-        # Step 4: map to S3 URLs
+        # Map to S3 URLs
         return [cache[u] for u in eligible if u in cache]
 
-    def _filter_consistent(urls: list[str]) -> list[str]:
+    def _filter_consistent_ar(urls: list[str]) -> list[str]:
         """Keep only images with similar aspect ratios for clean grid layout."""
         items = []
         for u in urls:
@@ -643,7 +666,6 @@ def main() -> int:
                 items.append((u, ar))
             else:
                 items.append((u, 1.33))  # assume landscape if unknown
-
         if len(items) <= 1:
             return urls
 
@@ -664,6 +686,51 @@ def main() -> int:
         consistent = [u for u, ar in best
                       if abs(ar - median_ar) / max(median_ar, 0.01) <= _ar_tolerance]
         return consistent if consistent else [u for u, _ in best]
+
+    def _filter_consistent_resolution(urls: list[str]) -> list[str]:
+        """Remove images with drastically different resolution from the set.
+        Prevents mixing a 1200px image with a 400px image in the same post."""
+        if len(urls) <= 1:
+            return urls
+        sizes = []
+        for u in urls:
+            if u in img_dimensions:
+                w, h = img_dimensions[u]
+                sizes.append((u, w * h))  # total pixel count
+            else:
+                sizes.append((u, 800 * 600))  # assume medium if unknown
+        if not sizes:
+            return urls
+        # Compute median resolution
+        sorted_sizes = sorted(s for _, s in sizes)
+        median_res = sorted_sizes[len(sorted_sizes) // 2]
+        # Keep images within 3x of median (generous — just removes extreme outliers)
+        min_res = median_res / 3.0
+        filtered = [u for u, s in sizes if s >= min_res]
+        return filtered if filtered else urls
+
+    def _adjust_to_grid(urls: list[str]) -> list[str]:
+        """Adjust image count to a grid-friendly number for clean feed layout.
+        Grid-friendly: 1, 2, 3, 4, 6, 9.
+        Trims excess: 5→4, 7→6, 8→6. Does NOT add images."""
+        n = len(urls)
+        if n in _grid_friendly or n <= 1:
+            return urls
+        # Find nearest smaller grid-friendly number
+        targets = sorted(x for x in _grid_friendly if x < n)
+        if targets:
+            target = targets[-1]  # largest grid-friendly number below current
+            return urls[:target]
+        return urls
+
+    def _sort_by_quality(urls: list[str]) -> list[str]:
+        """Sort images by pixel count descending — best/largest image first (hero)."""
+        def _px(u):
+            if u in img_dimensions:
+                w, h = img_dimensions[u]
+                return w * h
+            return 0
+        return sorted(urls, key=_px, reverse=True)
 
     for i, row in enumerate(rows):
         email = emails[i % len(emails)]
