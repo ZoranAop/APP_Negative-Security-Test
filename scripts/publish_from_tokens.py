@@ -736,7 +736,10 @@ def main() -> int:
         email = emails[i % len(emails)]
         original = [u.strip() for u in (row.get("image_urls") or "").split(",") if u.strip()]
 
-        # Apply image selection rules
+        # Apply image selection rules (graceful degradation):
+        # original N images → quality/AR/resolution filter → grid adjust → final M images
+        # If M < N: post publishes with fewer (but consistent) images
+        # If M = 0: fallback to text-only post
         s3imgs = _select_images(original)
 
         # Track consistency trimming
@@ -754,13 +757,22 @@ def main() -> int:
             "nickname": nickname_by.get(email, ""),
             "content": row.get("content", ""),
             "s3_images": s3imgs,
+            "_orig_img_count": len(original),
+            "_final_img_count": len(s3imgs),
             "_source": row.get("_source", ""),
             "_lang": row.get("_lang", ""),
             "_scene": row.get("_scene", ""),
             "_dedupe_key": row.get("_dedupe_key", ""),
         })
+
+    # Summary log: show degradation stats
+    degraded = [(t["_orig_img_count"], t["_final_img_count"])
+                for t in tasks if t["_orig_img_count"] > 0 and t["_final_img_count"] < t["_orig_img_count"]]
+    if degraded:
+        log_info(f"[Phase 3] {len(degraded)} post(s) image count reduced for quality "
+                 f"(e.g. {degraded[0][0]}→{degraded[0][1]} imgs)")
     if consistency_trimmed:
-        log_info(f"[Phase 3] {consistency_trimmed} post(s) trimmed for image dimension consistency")
+        log_info(f"[Phase 3] {consistency_trimmed} post(s) trimmed for dimension consistency")
     if text_fallback_count:
         log_info(f"[Phase 3] {text_fallback_count} post(s) will be text-only "
                  f"(watermarked/failed images skipped, using content description)")
@@ -783,10 +795,14 @@ def main() -> int:
             r = f.result()
             results.append(r)
             tag = "\u2713" if r["success"] else "\u2717"
-            mode = "[text]" if not r.get("s3_images") else ""
+            n_img = len(r.get("s3_images") or [])
+            if n_img == 0:
+                mode = "[text]"
+            else:
+                mode = f"[{n_img}img]"
             log_info(f"  {tag} [{i}/{len(tasks)}] {r['nickname'] or r['email']} "
                      f"lang={r.get('_lang','')} src={r.get('_source','')} "
-                     f"{mode} {r['info'][:70]}")
+                     f"{mode} {r['info'][:60]}")
 
     ok = sum(1 for r in results if r["success"])
     log_success(f"[Done] {ok}/{len(results)}")
