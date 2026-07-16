@@ -38,6 +38,14 @@
           ],
           "img_host": "img.aituitu.com",
           "referer": "https://ww.aituitu.com/"
+        },
+        {
+          "site": "tooopen",
+          "type": "html_pw",
+          "base": "https://desk.tooopen.com",
+          "url": "https://desk.tooopen.com/",
+          "referer": "https://desk.tooopen.com/",
+          "note": "桌面壁纸/美女写真图库"
         }
       ]
     },
