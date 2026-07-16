@@ -126,6 +126,19 @@
         { "site": "mobile01",     "type": "html_pw","name": "Mobile01居家", "lang": "zh_hant", "url": "https://www.mobile01.com/category.php?id=9","status": "pending", "note": "需Playwright，詳情頁JS渲染，居家生活/裝潢" }
       ]
     },
+    "新加坡生活": {
+      "label": "新加坡生活",
+      "kind": "image_text",
+      "tag": "Lifestyle",
+      "lang": "en",
+      "description": "新加坡生活类媒体图文（Her World/Eatbook/Time Out/TripZilla），英文图文发布。采集/发布走 scripts/fetch_sg_life.py + scripts/run_singapore.py。内容涵盖美食、生活方式、旅游景点、城市文化等新加坡日常生活话题。",
+      "sources": [
+        { "site": "herworld",  "type": "html_pw", "name": "Her World Singapore", "lang": "en", "url": "https://www.herworld.com/life",                                              "status": "active" },
+        { "site": "eatbook",   "type": "html_pw", "name": "Eatbook.sg",          "lang": "en", "url": "https://eatbook.sg/",                                                        "status": "active" },
+        { "site": "timeout",   "type": "html_pw", "name": "Time Out Singapore",  "lang": "en", "url": "https://www.timeout.com/singapore",                                          "status": "active" },
+        { "site": "tripzilla", "type": "html_pw", "name": "TripZilla Singapore", "lang": "en", "url": "https://www.tripzilla.com/category/destinations/asia/southeast-asia/singapore","status": "active" }
+      ]
+    },
     "科技": {
       "label": "科技",
       "kind": "text",
