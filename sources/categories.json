@@ -83,16 +83,20 @@
       "kind": "image_text",
       "tag": "Lifestyle",
       "lang": "en",
-      "description": "美国生活类媒体图文（Refinery29/The Everygirl/GQ/Esquire/BuzzFeed/USA Today/Martha Stewart/Thrillist），英文图文发布。采集/发布走 scripts/fetch_us_life.py + scripts/run_us_life.py。内容涵盖时尚、美食、家居、文化、趣味等美国日常生活话题。",
+      "description": "美国生活类媒体图文（Refinery29/The Everygirl/GQ/Esquire/BuzzFeed/USA Today/Martha Stewart/Thrillist/TripAdvisor/The Culture Trip/Lonely Planet/CN Traveler），英文图文发布。采集/发布走 scripts/fetch_us_life.py + scripts/run_us_life.py。内容涵盖时尚、美食、家居、文化、户外活动、旅行等美国日常生活话题。",
       "sources": [
-        { "site": "refinery29",    "type": "rss", "name": "Refinery29",     "lang": "en", "url": "https://www.refinery29.com/en-us/rss.xml",              "status": "active" },
-        { "site": "theeverygirl",  "type": "rss", "name": "The Everygirl",  "lang": "en", "url": "https://theeverygirl.com/feed/",                        "status": "active" },
-        { "site": "gq",            "type": "rss", "name": "GQ",             "lang": "en", "url": "https://www.gq.com/feed/rss",                           "status": "active" },
-        { "site": "esquire",       "type": "rss", "name": "Esquire",        "lang": "en", "url": "https://www.esquire.com/rss/all.xml/",                  "status": "active" },
-        { "site": "buzzfeed",      "type": "atom","name": "BuzzFeed",       "lang": "en", "url": "https://www.buzzfeed.com/us.xml",                       "status": "active" },
-        { "site": "usatoday",      "type": "html","name": "USA Today",      "lang": "en", "url": "https://www.usatoday.com/",                             "status": "active" },
-        { "site": "marthastewart", "type": "html","name": "Martha Stewart", "lang": "en", "url": "https://www.marthastewart.com/",                        "status": "active" },
-        { "site": "thrillist",     "type": "html","name": "Thrillist",      "lang": "en", "url": "https://www.thrillist.com/",                            "status": "active" }
+        { "site": "refinery29",    "type": "rss",    "name": "Refinery29",       "lang": "en", "url": "https://www.refinery29.com/en-us/rss.xml",              "status": "active" },
+        { "site": "theeverygirl",  "type": "rss",    "name": "The Everygirl",    "lang": "en", "url": "https://theeverygirl.com/feed/",                        "status": "active" },
+        { "site": "gq",            "type": "rss",    "name": "GQ",               "lang": "en", "url": "https://www.gq.com/feed/rss",                           "status": "active" },
+        { "site": "esquire",       "type": "rss",    "name": "Esquire",          "lang": "en", "url": "https://www.esquire.com/rss/all.xml/",                  "status": "active" },
+        { "site": "buzzfeed",      "type": "atom",   "name": "BuzzFeed",         "lang": "en", "url": "https://www.buzzfeed.com/us.xml",                       "status": "active" },
+        { "site": "usatoday",      "type": "html",   "name": "USA Today",        "lang": "en", "url": "https://www.usatoday.com/",                             "status": "active" },
+        { "site": "marthastewart", "type": "html",   "name": "Martha Stewart",   "lang": "en", "url": "https://www.marthastewart.com/",                        "status": "active" },
+        { "site": "thrillist",     "type": "html",   "name": "Thrillist",        "lang": "en", "url": "https://www.thrillist.com/",                            "status": "active" },
+        { "site": "tripadvisor",   "type": "html_pw","name": "TripAdvisor Outdoor","lang": "en", "url": "https://www.tripadvisor.com/Attractions-h1-Outdoor_Activities.html", "status": "active" },
+        { "site": "culturetrip",   "type": "html_pw","name": "The Culture Trip",  "lang": "en", "url": "https://theculturetrip.com/",                          "status": "active" },
+        { "site": "lonelyplanet",  "type": "html_pw","name": "Lonely Planet",     "lang": "en", "url": "https://www.lonelyplanet.com/",                        "status": "active" },
+        { "site": "cntraveler",    "type": "html_pw","name": "Condé Nast Traveler","lang": "en", "url": "https://www.cntraveler.com/",                          "status": "active" }
       ]
     },
     "日本生活": {
