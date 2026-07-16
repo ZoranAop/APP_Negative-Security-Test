@@ -189,6 +189,24 @@
         { "site": "mobile01",     "type": "html_pw","name": "Mobile01居家", "lang": "zh_hant", "url": "https://www.mobile01.com/category.php?id=9","status": "pending", "note": "需Playwright，詳情頁JS渲染，居家生活/裝潢" }
       ]
     },
+    "马来西亚生活": {
+      "label": "马来西亚生活",
+      "kind": "image_text",
+      "tag": "Lifestyle",
+      "lang": "en",
+      "description": "马来西亚生活类媒体图文（SAYS/WorldOfBuzz/Lifestyle Asia KL/KL Foodie/Penang Foodie/Malaysia Food & Travel/Lowyat/SoyaCincau/Kakuchopurei），英文/马来语图文发布。采集/发布走 scripts/fetch_backpackers_my.py + scripts/run_malaysia.py。内容涵盖美食、生活、科技、游戏等马来西亚日常话题。",
+      "sources": [
+        { "site": "says",              "type": "html_pw", "name": "SAYS Malaysia",          "lang": "en", "url": "https://says.com/my",                       "status": "active", "note": "Malaysian viral/lifestyle news" },
+        { "site": "worldofbuzz",       "type": "html_pw", "name": "World Of Buzz",          "lang": "en", "url": "https://worldofbuzz.com/",                   "status": "active", "note": "Malaysian trending/lifestyle" },
+        { "site": "lifestyleasia_kl",  "type": "html_pw", "name": "Lifestyle Asia KL",      "lang": "en", "url": "https://www.lifestyleasia.com/kl/",          "status": "active", "note": "KL luxury lifestyle/food/travel" },
+        { "site": "klfoodie",          "type": "html_pw", "name": "KL Foodie",              "lang": "en", "url": "https://klfoodie.com/",                       "status": "active", "note": "Kuala Lumpur food reviews" },
+        { "site": "penangfoodie",      "type": "html_pw", "name": "Penang Foodie",          "lang": "en", "url": "https://penangfoodie.com/",                   "status": "active", "note": "Penang food reviews" },
+        { "site": "myfoodtravel",      "type": "html_pw", "name": "Malaysia Food & Travel", "lang": "en", "url": "https://malaysiafoodandtravel.com/",          "status": "active", "note": "MY food & travel blog" },
+        { "site": "lowyat",            "type": "html_pw", "name": "Lowyat.NET",             "lang": "en", "url": "https://www.lowyat.net/",                     "status": "active", "note": "Malaysian tech/gadgets" },
+        { "site": "soyacincau",        "type": "html_pw", "name": "SoyaCincau",             "lang": "en", "url": "https://soyacincau.com/",                     "status": "active", "note": "Malaysian tech/telco" },
+        { "site": "kakuchopurei",      "type": "html_pw", "name": "Kakuchopurei",           "lang": "en", "url": "https://www.kakuchopurei.com/",               "status": "active", "note": "Malaysian gaming/esports" }
+      ]
+    },
     "新加坡生活": {
       "label": "新加坡生活",
       "kind": "image_text",
