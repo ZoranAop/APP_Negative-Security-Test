@@ -550,9 +550,26 @@ def main() -> int:
     upload_urls = [u for u in all_urls if u not in watermark_skipped]
     log_info(f"[Phase 2] uploading {len(upload_urls)} unique urls")
     cache: dict[str, str] = {}
+    img_dimensions: dict[str, tuple[int, int]] = {}  # url -> (width, height)
     for i, u in enumerate(upload_urls, 1):
         try:
             upload_url_to_s3(u, creds, cache, images_dir=Path("images"))
+            # Record dimensions for consistency filtering
+            if u in cache:
+                url_hash = hashlib.md5(u.encode()).hexdigest()[:12]
+                ext = ".jpg"
+                for e in (".png", ".webp", ".gif"):
+                    if e in u.lower():
+                        ext = e
+                        break
+                local = Path("images") / f"downloaded_{url_hash}{ext}"
+                if local.exists():
+                    try:
+                        from PIL import Image as _DimImg
+                        with _DimImg.open(local) as _dim:
+                            img_dimensions[u] = _dim.size
+                    except Exception:
+                        pass
             if i % 20 == 0:
                 log_info(f"  uploaded {i}/{len(upload_urls)}")
         except Exception as e:  # noqa: BLE001
@@ -568,10 +585,64 @@ def main() -> int:
 
     tasks = []
     text_fallback_count = 0
+    consistency_trimmed = 0
+    # Aspect-ratio tolerance for multi-image consistency (default 0.25 = 25%)
+    _ar_tolerance = float(os.getenv("POST_IMAGE_AR_TOLERANCE", "0.25"))
+
+    def _filter_consistent_images(orig_urls: list[str]) -> list[str]:
+        """For multi-image posts, keep only images with similar aspect ratios.
+        Groups by landscape/square/portrait, picks the largest group.
+        Prevents jarring layout with mixed orientations."""
+        if len(orig_urls) <= 1:
+            return orig_urls
+        # Get dimensions for each URL
+        items = []
+        for u in orig_urls:
+            if u in cache and u in img_dimensions:
+                w, h = img_dimensions[u]
+                ar = w / h if h > 0 else 1.0
+                items.append((u, ar, w, h))
+        if len(items) <= 1:
+            return orig_urls  # can't filter without dimension data
+
+        # Group by orientation: landscape (ar > 1.1), portrait (ar < 0.9), square (0.9-1.1)
+        landscape = [(u, ar) for u, ar, w, h in items if ar > 1.1]
+        portrait = [(u, ar) for u, ar, w, h in items if ar < 0.9]
+        square = [(u, ar) for u, ar, w, h in items if 0.9 <= ar <= 1.1]
+
+        # Pick the largest orientation group
+        groups = [("landscape", landscape), ("portrait", portrait), ("square", square)]
+        groups.sort(key=lambda x: len(x[1]), reverse=True)
+        best_name, best_group = groups[0]
+
+        if not best_group:
+            return orig_urls
+
+        # Within the chosen group, further filter by AR consistency
+        # Use median AR as reference, keep images within tolerance
+        ars = sorted(ar for _, ar in best_group)
+        median_ar = ars[len(ars) // 2]
+        consistent = [u for u, ar in best_group
+                      if abs(ar - median_ar) / median_ar <= _ar_tolerance]
+
+        if consistent:
+            return consistent
+        # Fallback: return the group as-is
+        return [u for u, _ in best_group]
+
     for i, row in enumerate(rows):
         email = emails[i % len(emails)]
         original = [u.strip() for u in (row.get("image_urls") or "").split(",") if u.strip()]
-        s3imgs = [cache[u] for u in original if u in cache]
+        s3_eligible = [u for u in original if u in cache]
+
+        # Multi-image consistency: filter to similar aspect ratios
+        if len(s3_eligible) > 1:
+            consistent = _filter_consistent_images(s3_eligible)
+            if len(consistent) < len(s3_eligible):
+                consistency_trimmed += 1
+            s3_eligible = consistent
+
+        s3imgs = [cache[u] for u in s3_eligible if u in cache]
         # If all images were watermarked/failed, post as text-only (description only)
         if original and not s3imgs:
             text_fallback_count += 1
@@ -586,6 +657,8 @@ def main() -> int:
             "_scene": row.get("_scene", ""),
             "_dedupe_key": row.get("_dedupe_key", ""),
         })
+    if consistency_trimmed:
+        log_info(f"[Phase 3] {consistency_trimmed} post(s) trimmed for image dimension consistency")
     if text_fallback_count:
         log_info(f"[Phase 3] {text_fallback_count} post(s) will be text-only "
                  f"(watermarked/failed images skipped, using content description)")
