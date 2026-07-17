@@ -39,21 +39,51 @@ except Exception:
 # ---------------------------------------------------------------------------
 
 SITES = [
+    # Global top platforms
+    {"key": "vestiaire", "name": "VestiaireCollective", "url": "https://www.vestiairecollective.com", "region": "GLOBAL"},
+    {"key": "therealreal", "name": "TheRealReal", "url": "https://www.therealreal.com", "region": "GLOBAL"},
+    {"key": "fashionphile", "name": "Fashionphile", "url": "https://www.fashionphile.com", "region": "GLOBAL"},
+    {"key": "rebag", "name": "Rebag", "url": "https://www.rebag.com", "region": "GLOBAL"},
+    {"key": "theluxurycloset", "name": "TheLuxuryCloset", "url": "https://www.theluxurycloset.com", "region": "GLOBAL"},
+    {"key": "collectorsquare", "name": "CollectorSquare", "url": "https://www.collectorsquare.com", "region": "GLOBAL"},
+    {"key": "wpdiamonds", "name": "WPDiamonds", "url": "https://www.wpdiamonds.com", "region": "GLOBAL"},
+    # Japan
+    {"key": "komehyo", "name": "Komehyo", "url": "https://komehyo.jp", "region": "JP"},
+    {"key": "brandoff_jp", "name": "BrandOffJP", "url": "https://www.brandoff.co.jp", "region": "JP"},
+    {"key": "allu", "name": "ALLU", "url": "https://allu-official.com", "region": "JP"},
+    {"key": "reclo", "name": "Reclo", "url": "https://reclo.jp", "region": "JP"},
+    {"key": "ragtag", "name": "RAGTAG", "url": "https://www.ragtag.jp", "region": "JP"},
+    {"key": "2ndstreet", "name": "2ndStreet", "url": "https://www.2ndstreet.jp", "region": "JP"},
+    {"key": "daikokuya", "name": "Daikokuya", "url": "https://www.daikokuya78.com", "region": "JP"},
+    {"key": "otakaraya", "name": "Otakaraya", "url": "https://ec.otakaraya.jp", "region": "JP"},
+    # Singapore / Southeast Asia
     {"key": "huntstreet", "name": "HuntStreet", "url": "https://www.huntstreet.com", "region": "SG"},
     {"key": "styletribute", "name": "StyleTribute", "url": "https://www.styletribute.com", "region": "SG"},
+    {"key": "ecoring_sg", "name": "EcoRingSG", "url": "https://eco-ring.com.sg", "region": "SG"},
     {"key": "carousell", "name": "Carousell", "url": "https://www.carousell.com", "region": "SG"},
-    {"key": "brandoff", "name": "BrandOff", "url": "https://www.brandoff.com.hk", "region": "HK"},
+    {"key": "chadiluxury", "name": "ChadiLuxury", "url": "https://chadiluxury.com", "region": "SG"},
     {"key": "hulaluxe", "name": "HulaLuxe", "url": "https://www.hulaluxe.com", "region": "SG"},
     {"key": "belluxestore", "name": "BelluxeStore", "url": "https://www.belluxestore.com", "region": "SG"},
     {"key": "luxee", "name": "Luxee", "url": "https://luxee.me", "region": "SG"},
+    {"key": "brandoff", "name": "BrandOff", "url": "https://www.brandoff.com.hk", "region": "HK"},
+    # Taiwan
     {"key": "popchill", "name": "PopChill", "url": "https://www.popchill.com", "region": "TW"},
     {"key": "carousell_tw", "name": "CarousellTW", "url": "https://www.carousell.com.tw", "region": "TW"},
-    {"key": "yahoobid_tw", "name": "YahooBidTW", "url": "https://tw.bid.yahoo.com", "region": "TW"},
+    {"key": "luxuryvalley", "name": "LuxuryValley", "url": "https://www.luxuryvalley.asia", "region": "TW"},
+    # Malaysia
     {"key": "luxeavenue", "name": "LuxeAvenue", "url": "https://luxeavenue.com.my", "region": "MY"},
     {"key": "carousell_my", "name": "CarousellMY", "url": "https://www.carousell.com.my", "region": "MY"},
+    # Thailand
     {"key": "sfbrandname", "name": "SFBrandName", "url": "https://www.sfbrandname.com", "region": "TH"},
     {"key": "brandnamemoney", "name": "BrandNameMoney", "url": "https://www.brandnamemoney.com", "region": "TH"},
+    {"key": "ecoring_th", "name": "EcoRingTH", "url": "https://eco-ring.co.th", "region": "TH"},
     {"key": "zalind", "name": "Zalind", "url": "https://www.zalind.com", "region": "TH"},
+    # Korea
+    {"key": "kream", "name": "KREAM", "url": "https://kream.co.kr", "region": "KR"},
+    {"key": "mustit", "name": "MUSTIT", "url": "https://mustit.co.kr", "region": "KR"},
+    {"key": "balaan", "name": "Balaan", "url": "https://www.balaan.co.kr", "region": "KR"},
+    {"key": "bunjang", "name": "Bunjang", "url": "https://m.bunjang.co.kr", "region": "KR"},
+    {"key": "soldout", "name": "SoldOut", "url": "https://soldout.co.kr", "region": "KR"},
 ]
 
 HEADERS = {

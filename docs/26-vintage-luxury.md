@@ -42,25 +42,73 @@
 
 | 站点域名 | 话题标签名 |
 |----------|-----------|
+| vestiairecollective.com | `#VestiaireCollective` |
+| therealreal.com | `#TheRealReal` |
+| fashionphile.com | `#Fashionphile` |
+| rebag.com | `#Rebag` |
+| theluxurycloset.com | `#TheLuxuryCloset` |
+| collectorsquare.com | `#CollectorSquare` |
+| wpdiamonds.com | `#WPDiamonds` |
+| komehyo.jp | `#Komehyo` |
+| brandoff.co.jp | `#BrandOffJP` |
+| allu-official.com | `#ALLU` |
+| reclo.jp | `#Reclo` |
+| ragtag.jp | `#RAGTAG` |
+| 2ndstreet.jp | `#2ndStreet` |
+| daikokuya78.com | `#Daikokuya` |
+| ec.otakaraya.jp | `#Otakaraya` |
 | huntstreet.com | `#HuntStreet` |
 | styletribute.com | `#StyleTribute` |
+| eco-ring.com.sg | `#EcoRingSG` |
 | carousell.com | `#Carousell` |
-| brandoff.com.hk | `#BrandOff` |
+| chadiluxury.com | `#ChadiLuxury` |
 | hulaluxe.com | `#HulaLuxe` |
 | belluxestore.com | `#BelluxeStore` |
 | luxee.me | `#Luxee` |
+| brandoff.com.hk | `#BrandOff` |
 | popchill.com | `#PopChill` |
 | carousell.com.tw | `#CarousellTW` |
-| tw.bid.yahoo.com | `#YahooBidTW` |
+| luxuryvalley.asia | `#LuxuryValley` |
 | luxeavenue.com.my | `#LuxeAvenue` |
 | carousell.com.my | `#CarousellMY` |
 | sfbrandname.com | `#SFBrandName` |
 | brandnamemoney.com | `#BrandNameMoney` |
+| eco-ring.co.th | `#EcoRingTH` |
 | zalind.com | `#Zalind` |
+| kream.co.kr | `#KREAM` |
+| mustit.co.kr | `#MUSTIT` |
+| balaan.co.kr | `#Balaan` |
+| m.bunjang.co.kr | `#Bunjang` |
+| soldout.co.kr | `#SoldOut` |
 
 ---
 
-## 26.2 源站点清单（15 个）
+## 26.2 源站点清单（38 个）
+
+### 全球顶级二手奢侈品平台
+
+| 站点 | URL | 类型 |
+|------|-----|------|
+| Vestiaire Collective | `https://www.vestiairecollective.com` | 全球最大二手奢侈品平台（法国） |
+| The RealReal | `https://www.therealreal.com` | 美国最大认证二手奢侈品平台 |
+| Fashionphile | `https://www.fashionphile.com` | 美国高端二手包/配饰 |
+| Rebag | `https://www.rebag.com` | 美国名牌包买卖/寄售 |
+| The Luxury Closet | `https://www.theluxurycloset.com` | 中东/全球二手奢侈品 |
+| Collector Square | `https://www.collectorsquare.com` | 法国中古腕表/珠宝/包 |
+| WP Diamonds | `https://www.wpdiamonds.com` | 全球钻石/腕表/名牌包回收 |
+
+### 日本中古市场
+
+| 站点 | URL | 类型 |
+|------|-----|------|
+| Komehyo | `https://komehyo.jp` | 日本最大中古名牌连锁（名古屋） |
+| Brand Off JP | `https://www.brandoff.co.jp` | 日本 Brand Off 本土（金�的中古） |
+| ALLU | `https://allu-official.com` | 日本高端中古精品（Valuence 集团） |
+| Reclo | `https://reclo.jp` | 日本二手品牌寄售平台 |
+| RAGTAG | `https://www.ragtag.jp` | 日本二手设计师品牌买取/贩卖 |
+| 2nd STREET | `https://www.2ndstreet.jp` | 日本综合二手连锁（含奢侈品） |
+| Daikokuya | `https://www.daikokuya78.com` | 日本大黑屋（中古名牌质屋） |
+| Otakaraya | `https://ec.otakaraya.jp` | 日本お宝屋中古名牌 EC |
 
 ### 新加坡/东南亚
 
@@ -68,22 +116,12 @@
 |------|-----|------|
 | Hunt Street | `https://www.huntstreet.com` | 新加坡/东南亚二手奢侈品电商 |
 | Style Tribute | `https://www.styletribute.com` | 新加坡轻奢寄售平台 |
+| Eco Ring SG | `https://eco-ring.com.sg` | 日系中古名牌（新加坡分店） |
 | Carousell | `https://www.carousell.com` | 东南亚综合二手交易（含奢侈品） |
+| Chadi Luxury | `https://chadiluxury.com` | 东南亚中古奢侈品精选 |
 | Hula Luxe | `https://www.hulaluxe.com` | 东南亚二手名牌包/奢侈品 |
 | Belluxe Store | `https://www.belluxestore.com` | 东南亚中古奢侈品精选店 |
 | Luxee | `https://luxee.me` | 东南亚轻奢二手平台 |
-
-### 马来西亚
-
-| 站点 | URL | 类型 |
-|------|-----|------|
-| Luxe Avenue MY | `https://luxeavenue.com.my` | 马来西亚中古奢侈品 |
-| Carousell MY | `https://www.carousell.com.my` | 马来西亚 Carousell（含奢侈品） |
-
-### 香港
-
-| 站点 | URL | 类型 |
-|------|-----|------|
 | Brand Off HK | `https://www.brandoff.com.hk` | 香港中古名牌店（日本品牌） |
 
 ### 台湾
@@ -92,7 +130,14 @@
 |------|-----|------|
 | PopChill | `https://www.popchill.com` | 台湾二手精品/中古包平台 |
 | Carousell TW | `https://www.carousell.com.tw` | 台湾 Carousell（含奢侈品） |
-| Yahoo 拍卖 TW | `https://tw.bid.yahoo.com` | 台湾 Yahoo 拍卖（含名牌二手） |
+| Luxury Valley | `https://www.luxuryvalley.asia` | 亚洲中古奢侈品（台湾/港澳） |
+
+### 马来西亚
+
+| 站点 | URL | 类型 |
+|------|-----|------|
+| Luxe Avenue MY | `https://luxeavenue.com.my` | 马来西亚中古奢侈品 |
+| Carousell MY | `https://www.carousell.com.my` | 马来西亚 Carousell（含奢侈品） |
 
 ### 泰国
 
@@ -100,7 +145,18 @@
 |------|-----|------|
 | SF Brand Name | `https://www.sfbrandname.com` | 泰国中古名牌交易 |
 | Brand Name Money | `https://www.brandnamemoney.com` | 泰国名牌包/奢侈品买卖 |
+| Eco Ring TH | `https://eco-ring.co.th` | 日系中古名牌（泰国分店） |
 | Zalind | `https://www.zalind.com` | 泰国二手奢侈品平台 |
+
+### 韩国
+
+| 站点 | URL | 类型 |
+|------|-----|------|
+| KREAM | `https://kream.co.kr` | 韩国限定/二手奢侈品交易平台 |
+| MUST IT | `https://mustit.co.kr` | 韩国名牌/奢侈品电商 |
+| Balaan | `https://www.balaan.co.kr` | 韩国正品奢侈品/中古交易 |
+| Bunjang | `https://m.bunjang.co.kr` | 韩国最大二手交易平台（含名牌） |
+| SoldOut | `https://soldout.co.kr` | 韩国限定/球鞋/奢侈品转售 |
 
 ---
 
@@ -112,7 +168,7 @@ py -3 scripts/fetch_vintage_luxury.py `
     --output moments_vintage_luxury.csv
 ```
 
-- 从 15 个站点轮询采集商品图文（商品标题 + 商品主图 CDN URL）
+- 从 38 个站点轮询采集商品图文（商品标题 + 商品主图 CDN URL）
 - 自动为每条内容生成英文话题标签（含站点英文名）
 - 输出标准 moments CSV，可直接进入 `publish_from_tokens.py` 发布
 
