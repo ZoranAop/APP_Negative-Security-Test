@@ -135,7 +135,8 @@ AD_PATTERNS = [
     "svg", "gif", "placeholder", "facebook", "google", "twitter", "social",
     "share", "cookie", "cart", "payment", "visa", "mastercard", "apple-pay",
     "footer", "header-", "nav-", "menu", "flag", "loading", "spinner",
-    "klarna", "paypal", "afterpay", "atome", "grab-pay",
+    "klarna", "paypal", "afterpay", "atome", "grab-pay", "applepay",
+    "country", "lang-", "locale", "currency",
 ]
 
 
