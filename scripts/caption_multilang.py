@@ -571,50 +571,114 @@ _STOPWORDS = set("的了是在也和與及並而或但很更最都會就把讓�
 
 
 def _zh_hashtags_from(text: str, scene: str, source: str) -> list[str]:
-    """Derive up to 3 topical hashtags from the article's own words.
+    """Derive up to 3 topical hashtags — universal strategy for all content types.
 
-    Strategy (optimized for XHS):
-    1. First try to extract existing #hashtags from original content (小红书自带话题)
-    2. If not enough, derive from keywords in the text
-    3. Fallback to scene/source-based defaults
+    Priority:
+    1. Extract existing #hashtags from original content (e.g. XHS native tags)
+    2. Scene-aware keyword derivation (varies by content topic)
+    3. Randomized fallback pool (avoids all posts using same defaults)
+
+    Designed to avoid repetition: uses text hash as seed for fallback selection,
+    ensuring different content gets different fallback tags.
     """
     tags: list[str] = []
 
-    # Step 1: Extract existing hashtags from original content (priority)
+    # Step 1: Extract existing hashtags from original content (highest priority)
     existing_tags = re.findall(r"#[\w\u4e00-\u9fff\u3400-\u4dbf]+", text or "")
     for t in existing_tags:
-        if t not in tags and len(t) >= 2 and len(t) <= 20:
+        if t not in tags and 2 <= len(t) <= 20:
             tags.append(t)
         if len(tags) >= 3:
             return tags[:3]
 
-    # Step 2: Keyword-based derivation
-    KEY = ["台北", "台南", "高雄", "台中", "花蓮", "台東", "宜蘭", "九份", "墾丁",
-           "阿里山", "合歡山", "日月潭", "太魯閣", "淡水", "北投", "夜市", "老街",
-           "咖啡", "美食", "設計", "展覽", "攝影", "鏡頭", "人像", "風景", "旅行",
-           "建築", "文創", "海邊", "山", "祭典", "部落", "小旅行", "電影", "音樂",
-           "時尚", "穿搭", "球鞋", "手錶", "旅宿", "選物",
-           # 小红书常见主题关键词
-           "健身", "减肥", "护肤", "穿搭", "美食", "探店", "旅游", "日常",
-           "学习", "考研", "职场", "育儿", "宠物", "家居", "装修", "数码"]
-    low = text or ""
-    for k in KEY:
-        if k in low and ("#" + k) not in tags:
-            tags.append("#" + k)
-        if len(tags) >= 3:
-            break
+    # Step 2: Scene + keyword-based derivation (broad coverage)
+    SCENE_KEYWORDS = {
+        "food": ["美食", "料理", "食譜", "烘焙", "甜點", "咖啡", "探店", "餐廳",
+                 "夜市", "小吃", "做饭", "下厨", "食材", "早餐", "晚餐", "火锅"],
+        "travel": ["旅行", "旅遊", "出遊", "風景", "海邊", "山", "露營", "民宿",
+                   "打卡", "景點", "自由行", "度假", "海岛", "古镇", "公路旅行"],
+        "fashion": ["穿搭", "時尚", "球鞋", "包包", "配飾", "潮流", "新品", "搭配",
+                    "ootd", "look", "风格", "复古", "极简", "vintage"],
+        "beauty": ["護膚", "彩妝", "防曬", "底妝", "眼妝", "唇膏", "美甲", "髮型",
+                   "护肤", "化妆", "面膜", "精华", "素颜", "变美"],
+        "fitness": ["健身", "減肥", "瑜伽", "跑步", "運動", "增肌", "体态", "塑形",
+                    "拉伸", "有氧", "力量", "打卡"],
+        "life": ["日常", "生活", "記錄", "分享", "心情", "感悟", "日記", "碎片",
+                 "plog", "vlog", "宅家", "独居"],
+        "work": ["職場", "工作", "創業", "副業", "面試", "辭職", "自由職業", "远程",
+                 "升职", "离职", "求职", "简历", "考研", "学习"],
+        "pet": ["寵物", "貓", "狗", "猫咪", "狗狗", "萌宠", "铲屎官", "养猫", "养狗"],
+        "home": ["家居", "裝修", "收納", "佈置", "居家", "改造", "租房", "好物"],
+        "tech": ["數碼", "手機", "電腦", "app", "开箱", "测评", "科技", "AI", "编程"],
+        "parent": ["育兒", "寶寶", "早教", "輔食", "孕期", "母婴", "带娃", "亲子"],
+        "drama": ["追劇", "影評", "電影", "電視劇", "動漫", "剧荒", "综艺", "推荐"],
+    }
 
-    # Step 3: Fallback
-    if len(tags) < 3:
-        base = {"gq": "#GQ品味", "sony": "#攝影日常", "shoppingdesign": "#設計生活"}.get(source, "")
-        if base and base not in tags:
-            tags.append(base)
-    if len(tags) < 3:
-        for extra in ["#生活記錄", "#好心情", "#日常"]:
-            if extra not in tags:
-                tags.append(extra)
+    low = (text or "").lower()
+    # Detect which scenes match the content
+    matched_scenes = []
+    for sc, keywords in SCENE_KEYWORDS.items():
+        if any(k.lower() in low for k in keywords):
+            matched_scenes.append(sc)
+
+    # Pick keywords from matched scenes
+    for sc in matched_scenes:
+        for k in SCENE_KEYWORDS[sc]:
+            if k.lower() in low and f"#{k}" not in tags:
+                tags.append(f"#{k}")
             if len(tags) >= 3:
-                break
+                return tags[:3]
+
+    # Step 3: Randomized fallback (seeded by text content to avoid all-same defaults)
+    seed = sum(ord(c) for c in (text or "")[:100]) if text else 0
+
+    # Scene-based fallback pools
+    FALLBACK_POOLS = {
+        "food": ["#美食分享", "#今日美食", "#吃货日常", "#探店打卡", "#自制美食", "#下厨房"],
+        "travel": ["#旅行日记", "#出发吧", "#风景这边独好", "#周末出游", "#一路风景", "#说走就走"],
+        "fashion": ["#今日穿搭", "#每日look", "#风格穿搭", "#时尚灵感", "#衣橱分享", "#好看推荐"],
+        "beauty": ["#护肤心得", "#今日妆容", "#美妆分享", "#变美日记", "#好物安利", "#素颜日记"],
+        "fitness": ["#运动打卡", "#健身日常", "#自律生活", "#每日运动", "#身材管理", "#健康生活"],
+        "life": ["#生活碎片", "#日常记录", "#今日份", "#随手拍", "#平凡生活", "#小确幸"],
+        "work": ["#职场日常", "#工作心得", "#成长记录", "#学习笔记", "#效率提升", "#干货分享"],
+        "pet": ["#萌宠日常", "#猫咪日常", "#铲屎官", "#宠物日记", "#毛孩子", "#吸猫"],
+        "home": ["#家居灵感", "#居家日常", "#收纳整理", "#租房改造", "#生活好物", "#温馨小窝"],
+        "tech": ["#数码好物", "#科技控", "#开箱分享", "#好物推荐", "#效率工具", "#极客"],
+        "parent": ["#育儿日常", "#宝宝成长", "#带娃记录", "#新手妈妈", "#亲子时光", "#早教"],
+        "drama": ["#追剧日常", "#好剧推荐", "#影视推荐", "#剧荒救星", "#周末追剧", "#必看好剧"],
+    }
+    GENERIC_FALLBACK = [
+        "#生活记录", "#好心情", "#日常", "#每日分享", "#今日份",
+        "#随手记录", "#灵感", "#笔记", "#推荐", "#分享日常",
+        "#值得记录", "#小确幸", "#好物分享", "#打卡",
+    ]
+
+    # Use matched scene pool or generic
+    if matched_scenes:
+        pool = FALLBACK_POOLS.get(matched_scenes[0], GENERIC_FALLBACK)
+    else:
+        pool = GENERIC_FALLBACK
+
+    # Source-specific override
+    source_pools = {
+        "gq": ["#GQ品味", "#男性时尚", "#精致生活"],
+        "sony": ["#摄影日常", "#镜头记录", "#光影"],
+        "shoppingdesign": ["#设计生活", "#美学日常", "#创意灵感"],
+    }
+    if source in source_pools:
+        pool = source_pools[source]
+
+    # Seeded selection from pool (different text → different tags)
+    import random as _rng
+    r = _rng.Random(seed)
+    remaining_needed = 3 - len(tags)
+    available = [t for t in pool if t not in tags]
+    if len(available) >= remaining_needed:
+        picks = r.sample(available, remaining_needed)
+    else:
+        picks = available
+    tags.extend(picks)
+
     return tags[:3]
 
 
