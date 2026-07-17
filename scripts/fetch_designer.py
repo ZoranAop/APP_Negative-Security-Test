@@ -132,20 +132,17 @@ EXTRA_TAGS = [
     "#QuietLuxury", "#Streetwear", "#ContemporaryFashion",
 ]
 
-# Ad/junk image filter patterns (comprehensive — same as fetch_vintage_luxury.py)
-AD_PATTERNS = [
-    "logo", "icon", "favicon", "avatar", "sprite", "banner", "ad-", "ads/",
-    "newsletter", "popup", "promo", "1x1", "pixel", "tracking",
-    "badge", "svg", "gif", "placeholder", "facebook",
-    "google", "twitter", "social", "share", "cookie",
-    "cart", "payment", "visa", "mastercard", "apple-pay", "applepay",
-    "footer", "header-", "nav-", "menu", "flag", "loading", "spinner",
-    "klarna", "paypal", "afterpay", "atome", "grab-pay",
-    "country", "lang-", "locale", "currency",
-]
+# Ad/junk filtering and deep crawl — use shared image_quality module
+from image_quality import (
+    fetch_product_page_image,
+    extract_product_links,
+    is_product_image,
+    is_high_quality,
+    upgrade_image_url,
+    PRODUCT_AD_PATTERNS,
+)
 
 IMG_RE = re.compile(r'(?:src|data-src)="(https?://[^"]+\.(?:jpg|jpeg|png|webp)[^"]*)"', re.I)
-OG_IMG_RE = re.compile(r'<meta[^>]*property="og:image"[^>]*content="([^"]+)"', re.I)
 
 
 def _fetch_url(url, timeout=15):
@@ -160,75 +157,29 @@ def _fetch_url(url, timeout=15):
             time.sleep(1)
 
 
-def _is_ad_image(url):
-    """Check if URL looks like an ad/tracking/icon/flag/payment image."""
-    low = url.lower()
-    return any(pat in low for pat in AD_PATTERNS)
-
-
-def _is_large_image_url(url):
-    """Heuristic: URL suggests a large/product image (not thumbnail/icon)."""
-    low = url.lower()
-    # Positive signals for product images
-    if any(s in low for s in ["product", "large", "1200", "1000", "800", "original",
-                               "master", "grande", "1024", "2048", "hero", "main",
-                               "upload", "catalog", "/p/", "/item/"]):
-        return True
-    # Negative signals (small/utility images)
-    if any(s in low for s in ["thumb", "small", "tiny", "50x", "100x", "150x",
-                               "200x", "icon", "mini", "_s.", "_xs.", "_t.",
-                               "40x", "24x", "30x", "60x", "flag", "country"]):
-        return False
-    return len(url) > 80
-
-
-def _extract_product_links(html):
-    """Extract product/item detail page links from a listing page."""
-    links = []
-    patterns = [
-        r'href="(/products/[^"#?]+)"',
-        r'href="(/collections/[^"]+/products/[^"#?]+)"',
-        r'href="(/p/[^"#?]+)"',
-        r'href="(/item/[^"#?]+)"',
-        r'href="(/shop/[^"#?]+)"',
-        r'href="(/en[^"]*/products?/[^"#?]+)"',
-    ]
-    for pat in patterns:
-        found = re.findall(pat, html)
-        for link in found:
-            if link not in links and not _is_ad_image(link):
-                links.append(link)
-    return links[:10]
-
-
 def _extract_quality_images(html, limit=5):
-    """Extract high-quality product images using og:image + large URL heuristics.
-
-    Strategy:
-    1. og:image meta tag (hero product image, guaranteed large)
-    2. Large product images (URL pattern matching)
-    3. Filter all ads/flags/payments/icons
-    """
+    """Extract high-quality product images using shared quality module."""
     images = []
     seen = set()
 
     # Priority 1: og:image
-    og_imgs = OG_IMG_RE.findall(html)
+    og_imgs = re.findall(r'<meta[^>]*property="og:image"[^>]*content="([^"]+)"', html, re.I)
     for img in og_imgs:
-        if img not in seen and not _is_ad_image(img):
+        if img not in seen and is_product_image(img) and is_high_quality(img):
             seen.add(img)
-            images.append(img)
+            images.append(upgrade_image_url(img))
 
-    # Priority 2: large product images from page content
+    # Priority 2: large product images
     all_imgs = IMG_RE.findall(html)
     for img in all_imgs:
         if img in seen:
             continue
         seen.add(img)
-        if _is_ad_image(img):
+        if not is_product_image(img):
             continue
-        if _is_large_image_url(img):
-            images.append(img)
+        if not is_high_quality(img):
+            continue
+        images.append(upgrade_image_url(img))
         if len(images) >= limit:
             break
 
@@ -250,12 +201,12 @@ def _generate_caption(site_name, rng):
 
 
 def fetch_site_content(site, per_site=3, rng=None):
-    """Fetch product images using deep crawl (listing → product page → og:image).
+    """Fetch product images using deep crawl via shared image_quality module.
 
     Strategy:
     1. Fetch listing/homepage
     2. Extract product detail page links (二级页面)
-    3. Visit product pages for og:image / large product images (三级页面)
+    3. Visit product pages via fetch_product_page_image() (三级页面)
     4. Fallback: extract images directly from listing page
     """
     if rng is None:
@@ -266,23 +217,22 @@ def fetch_site_content(site, per_site=3, rng=None):
         html = _fetch_url(site["url"])
 
         # Step 1: Try deep crawl — find product links
-        product_links = _extract_product_links(html)
+        product_links = extract_product_links(html)
 
         if product_links:
-            # Step 2: Visit product detail pages for high-quality images
+            # Step 2: Visit product detail pages using shared module
             base_url = site["url"].rstrip("/")
             for link in product_links[:per_site + 2]:
                 if len(results) >= per_site:
                     break
                 full_url = base_url + link if link.startswith("/") else link
                 try:
-                    product_html = _fetch_url(full_url)
-                    imgs = _extract_quality_images(product_html, limit=2)
-                    if imgs:
+                    img = fetch_product_page_image(full_url)
+                    if img:
                         caption = _generate_caption(site["name"], rng)
                         results.append({
                             "content": caption,
-                            "image_urls": imgs[0],
+                            "image_urls": img,
                             "site_key": site["key"],
                             "site_name": site["name"],
                         })
