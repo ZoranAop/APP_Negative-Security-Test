@@ -149,6 +149,120 @@ def fetch_detail_page_image(article_url: str, timeout: int = 15) -> Optional[str
     return None
 
 
+# ---------------------------------------------------------------------------
+# Product/e-commerce deep crawl (shared by vintage_luxury + designer tags)
+# ---------------------------------------------------------------------------
+
+# Comprehensive ad/junk/payment image filter patterns
+PRODUCT_AD_PATTERNS = [
+    "logo", "icon", "favicon", "avatar", "sprite", "banner", "ad-", "ads/",
+    "newsletter", "popup", "promo", "1x1", "pixel", "tracking", "badge",
+    "svg", "gif", "placeholder", "facebook", "google", "twitter", "social",
+    "share", "cookie", "cart", "payment", "visa", "mastercard", "apple-pay",
+    "footer", "header-", "nav-", "menu", "flag", "loading", "spinner",
+    "klarna", "paypal", "afterpay", "atome", "grab-pay", "applepay",
+    "country", "lang-", "locale", "currency",
+]
+
+
+def is_product_image(url: str) -> bool:
+    """Check if URL is a valid product image (not ad/icon/flag/payment)."""
+    if not url:
+        return False
+    low = url.lower()
+    if any(pat in low for pat in PRODUCT_AD_PATTERNS):
+        return False
+    # Positive signals for large/product images
+    if any(s in low for s in ["product", "large", "1200", "1000", "800", "original",
+                               "master", "grande", "1024", "2048", "hero", "main",
+                               "upload", "catalog", "/p/", "/item/"]):
+        return True
+    # Negative signals (small/utility)
+    if any(s in low for s in ["thumb", "small", "tiny", "50x", "100x", "150x",
+                               "200x", "icon", "mini", "_s.", "_xs.", "_t.",
+                               "40x", "24x", "30x", "60x", "flag", "country"]):
+        return False
+    return len(url) > 70
+
+
+def extract_product_links(html: str) -> list[str]:
+    """Extract product/item detail page links from a listing/collection page.
+
+    Detects common e-commerce URL patterns:
+    /products/*, /collections/*/products/*, /p/*, /item/*, /shop/*, /goods/*
+    """
+    links: list[str] = []
+    patterns = [
+        r'href="(/products/[^"#?]+)"',
+        r'href="(/collections/[^"]+/products/[^"#?]+)"',
+        r'href="(/p/[^"#?]+)"',
+        r'href="(/item/[^"#?]+)"',
+        r'href="(/shop/[^"#?]+)"',
+        r'href="(/en[^"]*/products?/[^"#?]+)"',
+        r'href="(/catalog/product/[^"#?]+)"',
+        r'href="(/goods/[^"#?]+)"',
+    ]
+    for pat in patterns:
+        found = re.findall(pat, html)
+        for link in found:
+            if link not in links:
+                links.append(link)
+    return links[:10]
+
+
+def fetch_product_page_image(product_url: str, timeout: int = 15) -> Optional[str]:
+    """Fetch a product detail page and extract the best product image.
+
+    Priority: og:image > twitter:image > large product <img> in page body.
+    Filters out ads, flags, payment icons, and small thumbnails.
+
+    This is the shared deep-crawl function for e-commerce/product pages,
+    used by vintage_luxury and designer tags. For article/news pages,
+    use fetch_detail_page_image() instead.
+    """
+    try:
+        r = requests.get(
+            product_url,
+            headers={"User-Agent": UA},
+            timeout=timeout,
+            allow_redirects=True,
+        )
+        if r.status_code != 200:
+            return None
+        html = r.text[:100000]
+    except Exception:
+        return None
+
+    # 1. og:image (most reliable for product pages)
+    og = re.search(r'<meta[^>]*property=["\']og:image["\'][^>]*content=["\']([^"\']+)["\']', html)
+    if not og:
+        og = re.search(r'<meta[^>]*content=["\']([^"\']+)["\'][^>]*property=["\']og:image["\']', html)
+    if og:
+        img = og.group(1).strip()
+        if is_product_image(img) and is_high_quality(img):
+            return upgrade_image_url(img)
+
+    # 2. twitter:image
+    tw = re.search(r'<meta[^>]*name=["\']twitter:image["\'][^>]*content=["\']([^"\']+)["\']', html)
+    if not tw:
+        tw = re.search(r'<meta[^>]*content=["\']([^"\']+)["\'][^>]*name=["\']twitter:image["\']', html)
+    if tw:
+        img = tw.group(1).strip()
+        if is_product_image(img) and is_high_quality(img):
+            return upgrade_image_url(img)
+
+    # 3. Large product images from page body
+    imgs = re.findall(
+        r'(?:src|data-src)=["\']([^"\']+\.(?:jpg|jpeg|png|webp)[^"\']*)["\']',
+        html[:80000]
+    )
+    for img in imgs:
+        if is_product_image(img) and is_high_quality(img):
+            return upgrade_image_url(img)
+
+    return None
+
+
 def extract_article_links_from_rss(rss_xml: str, max_items: int = 20) -> list[str]:
     """从RSS XML中提取文章链接列表。"""
     links = []
