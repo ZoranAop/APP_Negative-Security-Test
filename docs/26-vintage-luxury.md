@@ -168,19 +168,68 @@ py -3 scripts/fetch_vintage_luxury.py `
     --output moments_vintage_luxury.csv
 ```
 
-- 从 38 个站点轮询采集商品图文（商品标题 + 商品主图 CDN URL）
+- 从 38 个站点**深度采集**商品图文（列表页 → 产品详情页 → og:image/大图）
 - 自动为每条内容生成英文话题标签（含站点英文名）
+- 图片质量管线：过滤广告图、水印图、支付图标、小尺寸图
 - 输出标准 moments CSV，可直接进入 `publish_from_tokens.py` 发布
 
 ---
 
-## 26.4 端到端 runbook
+## 26.4 图片深度采集与质量保障
+
+### 深度采集流程（二级/三级页面）
+
+```
+一级页面（列表/首页）→ 提取产品详情页链接（/products/*, /item/*, /p/*）
+   ↓
+二级页面（产品详情页）→ 提取 og:image / 大图 URL
+   ↓
+图片质量验证 → 过滤广告/水印/小图 → 输出 CSV
+```
+
+### 图片提取优先级
+
+| 优先级 | 来源 | 说明 |
+|--------|------|------|
+| 1 | `og:image` meta 标签 | 产品详情页的 hero 图，通常为最高质量（>800px） |
+| 2 | 大图 URL 特征匹配 | URL 含 `product/large/original/master/1200/grande` |
+| 3 | 列表页图片（兜底） | 无法进入二级页面时，从一级页面直接提取 |
+
+### 广告/垃圾图过滤（强化列表）
+
+以下 URL 特征的图片自动跳过：
+
+```
+logo, icon, favicon, avatar, sprite, banner, ad-, ads/,
+newsletter, popup, promo, 1x1, pixel, tracking, badge,
+svg, gif, placeholder, facebook, google, twitter, social,
+share, cookie, cart, payment, visa, mastercard, apple-pay,
+footer, header-, nav-, menu, flag, loading, spinner,
+klarna, paypal, afterpay, atome, grab-pay
+```
+
+### 尺寸门槛（发布阶段 `publish_from_tokens.py`）
+
+| 检查 | 规则 | 处理 |
+|------|------|------|
+| 最小尺寸 | < 400×300px | 跳过上传，帖子降级为纯文本 |
+| 宫格调整 | 多图时 → {1,2,4,6,9} | 自动裁剪非友好数 |
+| 质量排序 | 最大分辨率图排首位 | 封面位展示最佳图 |
+
+---
+
+## 26.5 端到端 runbook
 
 ```powershell
-# 1. 采集中古轻奢图文素材
+# 1. 深度采集中古轻奢图文素材（列表页→产品页→大图）
 py -3 scripts/fetch_vintage_luxury.py --target 30 --output moments_vintage_luxury.csv
 
-# 2. 发布（自动执行图片质量管线：尺寸验证 + 宫格调整）
+# 2.（可选）文案差异化改写
+py -3 scripts/caption_multilang.py `
+    --input moments_vintage_luxury.csv --output moments.csv `
+    --langs en --content-aware
+
+# 3. 发布（自动执行图片质量管线：尺寸验证 + 广告过滤 + 宫格调整）
 py -3 scripts/publish_from_tokens.py `
     --accounts-csv accounts_10.csv --csv moments_vintage_luxury.csv `
     --concurrency 4 --tokens-out result/tokens.json
@@ -188,17 +237,18 @@ py -3 scripts/publish_from_tokens.py `
 
 ---
 
-## 26.5 与其他标签的区别
+## 26.6 与其他标签的区别
 
-| 标签 | 内容类型 | 语言 | 话题标签 | 图片 |
-|------|---------|------|---------|------|
-| `web3` | 资讯/评论 | en/zh_hant | `#web3 #crypto` | 无（纯文本） |
-| `xhs`（小红书） | 生活方式 | zh | 原文话题 | 多图 |
-| `vintage_luxury`（中古轻奢） | 商品展示 | **en** | **必带站点英文名** | 商品图 |
+| 标签 | 内容类型 | 语言 | 话题标签 | 图片 | 采集深度 |
+|------|---------|------|---------|------|---------|
+| `web3` | 资讯/评论 | en/zh_hant | `#web3 #crypto` | 无（纯文本） | RSS/API |
+| `xhs`（小红书） | 生活方式 | zh | 原文话题 | 多图 | 详情页 imageList |
+| `vintage_luxury`（中古轻奢） | 商品展示 | **en** | **必带站点英文名** | 商品图 | **列表→产品页→og:image** |
+| `designer`（设计师） | 设计师商品 | **en** | **必带站点英文名** | 产品图 | **列表→产品页→og:image** |
 
 ---
 
-## 26.6 安全
+## 26.7 安全
 
 - 沿用 `docs/09-security.md`：不入库任何账号/密码/token。
-- 15 个站点均为公开商品页面，无需登录即可浏览。
+- 38 个站点均为公开商品页面，无需登录即可浏览。
