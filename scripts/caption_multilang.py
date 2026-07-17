@@ -735,8 +735,13 @@ def content_aware_caption(title: str, excerpt: str, scene: str, source: str,
     pat = patterns[seed % len(patterns)]
     body = pat.format(topic=topic, comment=comment)
     body = body[:120]
-    tags = " ".join(_zh_hashtags_from((ct + " " + (excerpt or "")), scene, source))
-    return f"{body} {tags}"
+    # Deduplicate: don't append hashtags already present in the body
+    existing_in_body = set(re.findall(r"#[\w\u4e00-\u9fff\u3400-\u4dbf]+", body))
+    all_tags = _zh_hashtags_from((ct + " " + (excerpt or "")), scene, source)
+    deduped_tags = [t for t in all_tags if t not in existing_in_body]
+    if deduped_tags:
+        return f"{body} {' '.join(deduped_tags)}"
+    return body
 
 
 def _first_sentence(excerpt: str, limit: int = 46) -> str:
