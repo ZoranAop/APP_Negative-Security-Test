@@ -258,20 +258,60 @@ for img in images:
 py -3 scripts/crawl_xhs_multiimg.py `
     --target 25 --delay 1.5 --output moments_xhs_multi.csv
 
-# 2.（可选）多语言文案改写
+# 2. 文案改写（content-aware 模式：基于原文差异化改写，避免模板重复）
 py -3 scripts/caption_multilang.py `
-    --input moments_xhs_multi.csv --output moments.csv --langs en,zh_hant,ja
+    --input moments_xhs_multi.csv --output moments.csv `
+    --langs zh_hant --content-aware
 
 # 3. 两阶段发布（自动执行多图质量管线：水印裁切→尺寸验证→AR一致→网格调整）
 py -3 scripts/publish_from_tokens.py `
-    --accounts-csv accounts_10.csv --csv moments_xhs_multi.csv `
+    --accounts-csv accounts_10.csv --csv moments.csv `
     --concurrency 4 --tokens-out result/tokens.json
 ```
 
-> 实测验证：10 账号 × 2 帖 = **20/20** 成功，Phase2 上传 124 张图片（124/124）；
-> 13 帖触发多图质量筛选（AR 一致性 + 分辨率过滤），13 帖触发网格调整；
-> 最终发帖图片数分布：9图×1, 4图×12, 3图×3, 1图×4。
-> 平均原始 6.0 张/帖 → 发布 3.6 张/帖（质量优先）。
+> 实测验证：10 账号 × 2 帖 = **20/20** 成功，Phase2 上传 101 张图片（101/101）；
+> 11 帖触发多图质量筛选（AR 一致性 + 分辨率过滤），11 帖触发网格调整；
+> 最终发帖图片数分布：9图×1, 6图×1, 4图×12, 2图×4, 1图×2。
+> 文案唯一性：20/20（content-aware 模式确保每帖内容不重复）。
+
+### 文案改写策略（`--content-aware` 模式）
+
+小红书采集的原始内容本身就是优质的中文图文，文案改写需要**保留原文个性化信息**
+而非用通用模板替换。
+
+#### 推荐：`--content-aware`（差异化改写）
+
+```powershell
+# 基于每行原始标题生成独特文案（保留原文特色 + 附加目标语言评论）
+py -3 scripts/caption_multilang.py `
+    --input moments_xhs.csv --output moments.csv `
+    --langs zh_hant --content-aware
+```
+
+效果示例：
+```
+最近在看《心理创伤 #漫画 #小熊虫》，這篇的視角很對我的味。 #台灣 #生活記錄 #編輯精選
+分享：家常菜！一周大集合3！ 比起浪漫，我更喜欢烟火气的平淡与真实——美食配上這種氛圍，誰能抵擋。 #台灣 #美食
+职场真正实用的表情包🫡 最想说的是: 别整这死出，话说明白点｜看完心情都變好了。 #台灣 #生活記錄
+```
+
+#### 不推荐：纯模板模式（无 `--content-aware`）
+
+```powershell
+# 纯模板改写（丢失原文信息，重复度高）
+py -3 scripts/caption_multilang.py --input moments.csv --output out.csv --langs zh_hant
+```
+
+问题：会产生大量重复模板（如"只是一個想留下來的小片段"出现多次），
+丢失小红书原始内容的丰富上下文。
+
+#### 对比
+
+| 模式 | 唯一性 | 原文保留 | 适用场景 |
+|------|--------|---------|---------|
+| `--content-aware` | 20/20（100%唯一） | 保留标题+正文关键信息 | **小红书（推荐）** |
+| 纯模板（无flag） | 低（模板池有限） | 完全丢失 | 图库类（opennana/lovimg） |
+| `--use-llm` | 高 | 高（LLM 改写） | 有 LLM API 时使用 |
 
 ### 搜索采集的限制
 
