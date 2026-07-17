@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-fetch_web3.py — 统一 Web3 资讯多源采集器：从 9 个 Web3 媒体各取 N 条最新消息，
+fetch_web3.py — 统一 Web3 资讯多源采集器：从 14 个 Web3/Crypto/Tech 媒体各取 N 条最新消息，
 统一打上 web3 标签，产出纯文本 moments CSV（image_urls 空 → media_info type=text）。
 
 支持来源（--sources，逗号分隔；默认全部）：
@@ -13,9 +13,14 @@ fetch_web3.py — 统一 Web3 资讯多源采集器：从 9 个 Web3 媒体各�
   bingx       BingX News         https://bingx.com/zh-tc/news/web3                    (HTML SSR)
   blockweeks  BlockWeeks         https://blockweeks.com/feed/                         (RSS)
   wublock     吴说 WuBlock        https://www.wublock123.com/                          (HTML + Aliyun WAF cookie)
+  e27         e27.co             https://e27.co/feed/                                 (RSS, 东南亚创投/科技)
+  techinasia  Tech in Asia       https://www.techinasia.com/feed                      (RSS, 亚洲科技/创业)
+  coinlive    CoinLive           https://www.coinlive.com/news                        (HTML, Crypto 新闻)
+  superteam   Superteam SG       https://superteam.sg/                                (HTML, Solana 生态/Web3 社区)
+  blockhead   Blockhead          https://www.blockhead.co/                            (HTML, 东南亚 Crypto/Web3)
 
 用法：
-  py -3 scripts/fetch_web3.py --sources techflow,foresight,menews,web3caff,panews,bingx,blockweeks,wublock,web3bbs `
+  py -3 scripts/fetch_web3.py --sources techflow,foresight,menews,web3caff,panews,bingx,blockweeks,wublock,web3bbs,e27,techinasia,coinlive,superteam,blockhead `
      --per-site 10 --dedupe-file state/seen_web3.json --output web3_raw.csv
 
 去重：--dedupe-file 记录已用消息（归一化标题），跨批次自动跳过、不重复发。
@@ -245,10 +250,109 @@ def fetch_wublock(n):
     return out
 
 
+# ---------------------------------------------------------------------------
+# Southeast Asia Web3 / Tech / Crypto sources
+# ---------------------------------------------------------------------------
+
+def fetch_e27(n):
+    """e27.co — Southeast Asia startup & tech news (RSS feed)."""
+    r = _get("https://e27.co/feed/", headers={"User-Agent": UA})
+    r.encoding = "utf-8"
+    out = []
+    for it in re.findall(r"<item>(.*?)</item>", r.text, re.S):
+        m = re.search(r"<title>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?</title>", it, re.S)
+        if not m:
+            continue
+        t = html.unescape(m.group(1).strip())
+        # Extract description/brief
+        dm = re.search(r"<description>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?</description>", it, re.S)
+        brief = ""
+        if dm:
+            brief = re.sub(r"<[^>]+>", "", html.unescape(dm.group(1))).strip()[:200]
+        if t and len(t) >= 6:
+            out.append({"title": t, "brief": brief, "site": "e27"})
+        if len(out) >= n:
+            break
+    return out
+
+
+def fetch_techinasia(n):
+    """techinasia.com — Asia tech & startup news (RSS feed)."""
+    r = _get("https://www.techinasia.com/feed", headers={"User-Agent": UA})
+    r.encoding = "utf-8"
+    out = []
+    for it in re.findall(r"<item>(.*?)</item>", r.text, re.S):
+        m = re.search(r"<title>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?</title>", it, re.S)
+        if not m:
+            continue
+        t = html.unescape(m.group(1).strip())
+        dm = re.search(r"<description>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?</description>", it, re.S)
+        brief = ""
+        if dm:
+            brief = re.sub(r"<[^>]+>", "", html.unescape(dm.group(1))).strip()[:200]
+        if t and len(t) >= 6:
+            out.append({"title": t, "brief": brief, "site": "techinasia"})
+        if len(out) >= n:
+            break
+    return out
+
+
+def fetch_coinlive(n):
+    """coinlive.com — Crypto & Web3 news (HTML scraping)."""
+    r = _get("https://www.coinlive.com/news",
+             headers={"User-Agent": UA, "Accept-Language": "en-US,en;q=0.9"})
+    out, seen = [], set()
+    # Try extracting article titles from common patterns
+    titles = re.findall(r'<h[234][^>]*>(.*?)</h[234]>', r.text, re.DOTALL)
+    for raw in titles:
+        t = html.unescape(re.sub(r"<[^>]+>", "", raw)).strip()
+        if t and len(t) >= 8 and t not in seen:
+            seen.add(t)
+            out.append({"title": t, "brief": "", "site": "coinlive"})
+        if len(out) >= n:
+            break
+    return out
+
+
+def fetch_superteam(n):
+    """superteam.sg — Singapore Web3 community / Solana ecosystem."""
+    r = _get("https://superteam.sg/",
+             headers={"User-Agent": UA, "Accept-Language": "en-US,en;q=0.9"})
+    out, seen = [], set()
+    # Extract headings and project titles
+    titles = re.findall(r'<h[234][^>]*>(.*?)</h[234]>', r.text, re.DOTALL)
+    for raw in titles:
+        t = html.unescape(re.sub(r"<[^>]+>", "", raw)).strip()
+        if t and len(t) >= 6 and t not in seen:
+            seen.add(t)
+            out.append({"title": t, "brief": "", "site": "superteam"})
+        if len(out) >= n:
+            break
+    return out
+
+
+def fetch_blockhead(n):
+    """blockhead.co — Southeast Asia crypto & Web3 news."""
+    r = _get("https://www.blockhead.co/",
+             headers={"User-Agent": UA, "Accept-Language": "en-US,en;q=0.9"})
+    out, seen = [], set()
+    titles = re.findall(r'<h[234][^>]*>(.*?)</h[234]>', r.text, re.DOTALL)
+    for raw in titles:
+        t = html.unescape(re.sub(r"<[^>]+>", "", raw)).strip()
+        if t and len(t) >= 8 and t not in seen:
+            seen.add(t)
+            out.append({"title": t, "brief": "", "site": "blockhead"})
+        if len(out) >= n:
+            break
+    return out
+
+
 FETCHERS = {
     "techflow": fetch_techflow, "web3bbs": fetch_web3bbs, "foresight": fetch_foresight,
     "menews": fetch_menews, "web3caff": fetch_web3caff, "panews": fetch_panews,
     "bingx": fetch_bingx, "blockweeks": fetch_blockweeks, "wublock": fetch_wublock,
+    "e27": fetch_e27, "techinasia": fetch_techinasia, "coinlive": fetch_coinlive,
+    "superteam": fetch_superteam, "blockhead": fetch_blockhead,
 }
 ALL_SOURCES = list(FETCHERS.keys())
 

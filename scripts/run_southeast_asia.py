@@ -35,6 +35,16 @@ run_southeast_asia.py — 东南亚内容一键发布（按国家标签自动匹
 
     # 列出所有支持的国家
     py -3 scripts/run_southeast_asia.py --list-countries
+
+泰国 (Thailand) 本地内容源站点：
+    - https://www.beartai.com/          — 泰国科技/数码/生活方式媒体
+    - https://www.blognone.com/         — 泰国科技新闻/创业资讯
+    - https://www.timeout.com/bangkok   — 曼谷生活/美食/活动/旅游指南
+    - https://worldcup.readthecloud.co/ — 世界杯专题内容（泰国视角）
+    - https://www.kapook.com/           — 泰国综合生活门户（娱乐/星座/美食/旅游）
+    - https://www.sanook.com/           — 泰国综合娱乐/新闻/体育门户
+    以上站点已注册在 COUNTRIES["thailand"]["local_sources"]，
+    后续可配合 fetch_th_life.py 实现本地内容采集（RSS / HTML 解析）。
 """
 from __future__ import annotations
 
@@ -84,6 +94,14 @@ COUNTRIES = {
         "query": "thailand bangkok temple beach",
         "hashtags": ["#Thailand", "#AmazingThailand", "#AseanTravel"],
         "fallback_lang": "en",
+        "local_sources": [
+            "https://www.beartai.com/",          # 泰国科技/生活媒体
+            "https://www.blognone.com/",          # 泰国科技新闻
+            "https://www.timeout.com/bangkok",    # 曼谷生活/餐饮/活动
+            "https://worldcup.readthecloud.co/",  # 世界杯专题（泰国视角）
+            "https://www.kapook.com/",            # 泰国综合生活门户
+            "https://www.sanook.com/",            # 泰国综合娱乐/新闻
+        ],
     },
     "vietnam": {
         "name_en": "Vietnam",

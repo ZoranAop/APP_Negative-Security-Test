@@ -615,7 +615,8 @@ def main() -> int:
     _max_images = int(os.getenv("POST_MAX_IMAGES", "9"))
     _ar_tolerance = float(os.getenv("POST_IMAGE_AR_TOLERANCE", "0.25"))
     # Grid-friendly counts: these numbers form clean visual grids in most feeds
-    _grid_friendly = {1, 2, 3, 4, 6, 9}
+    # 1(单图), 2(1×2), 4(2×2), 6(2×3), 9(3×3) — 小红书最佳宫格布局
+    _grid_friendly = {1, 2, 4, 6, 9}
     _grid_enabled = os.getenv("POST_GRID_FRIENDLY", "true").lower() in ("1", "true", "yes")
 
     def _select_images(orig_urls: list[str]) -> list[str]:
@@ -751,8 +752,8 @@ def main() -> int:
 
     def _adjust_to_grid(urls: list[str]) -> list[str]:
         """Adjust image count to a grid-friendly number for clean feed layout.
-        Grid-friendly: 1, 2, 3, 4, 6, 9.
-        Trims excess: 5→4, 7→6, 8→6. Does NOT add images."""
+        Grid-friendly: 1, 2, 4, 6, 9 (optimized for XHS/square feed grids).
+        Trims excess: 3→2, 5→4, 7→6, 8→6. Does NOT add images."""
         n = len(urls)
         if n in _grid_friendly or n <= 1:
             return urls
