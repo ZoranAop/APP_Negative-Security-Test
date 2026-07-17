@@ -571,23 +571,46 @@ _STOPWORDS = set("的了是在也和與及並而或但很更最都會就把讓�
 
 
 def _zh_hashtags_from(text: str, scene: str, source: str) -> list[str]:
-    """Derive up to 3 topical hashtags from the article's own words."""
+    """Derive up to 3 topical hashtags from the article's own words.
+
+    Strategy (optimized for XHS):
+    1. First try to extract existing #hashtags from original content (小红书自带话题)
+    2. If not enough, derive from keywords in the text
+    3. Fallback to scene/source-based defaults
+    """
     tags: list[str] = []
-    base = {"gq": "#GQ品味", "sony": "#攝影日常", "shoppingdesign": "#設計生活"}.get(source, "#台灣")
-    tags.append(base)
+
+    # Step 1: Extract existing hashtags from original content (priority)
+    existing_tags = re.findall(r"#[\w\u4e00-\u9fff\u3400-\u4dbf]+", text or "")
+    for t in existing_tags:
+        if t not in tags and len(t) >= 2 and len(t) <= 20:
+            tags.append(t)
+        if len(tags) >= 3:
+            return tags[:3]
+
+    # Step 2: Keyword-based derivation
     KEY = ["台北", "台南", "高雄", "台中", "花蓮", "台東", "宜蘭", "九份", "墾丁",
            "阿里山", "合歡山", "日月潭", "太魯閣", "淡水", "北投", "夜市", "老街",
            "咖啡", "美食", "設計", "展覽", "攝影", "鏡頭", "人像", "風景", "旅行",
            "建築", "文創", "海邊", "山", "祭典", "部落", "小旅行", "電影", "音樂",
-           "時尚", "穿搭", "球鞋", "手錶", "旅宿", "選物"]
+           "時尚", "穿搭", "球鞋", "手錶", "旅宿", "選物",
+           # 小红书常见主题关键词
+           "健身", "减肥", "护肤", "穿搭", "美食", "探店", "旅游", "日常",
+           "学习", "考研", "职场", "育儿", "宠物", "家居", "装修", "数码"]
     low = text or ""
     for k in KEY:
         if k in low and ("#" + k) not in tags:
             tags.append("#" + k)
         if len(tags) >= 3:
             break
+
+    # Step 3: Fallback
     if len(tags) < 3:
-        for extra in ["#台灣", "#生活記錄", "#編輯精選"]:
+        base = {"gq": "#GQ品味", "sony": "#攝影日常", "shoppingdesign": "#設計生活"}.get(source, "")
+        if base and base not in tags:
+            tags.append(base)
+    if len(tags) < 3:
+        for extra in ["#生活記錄", "#好心情", "#日常"]:
             if extra not in tags:
                 tags.append(extra)
             if len(tags) >= 3:
