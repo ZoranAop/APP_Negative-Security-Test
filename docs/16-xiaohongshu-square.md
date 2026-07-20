@@ -344,3 +344,137 @@ py -3 scripts/caption_multilang.py --input moments.csv --output out.csv --langs 
 3. 从搜索结果的 `__INITIAL_STATE__.search.feeds` 提取数据
 
 目前 explore 推荐流已能满足大部分内容采集需求。
+
+## 16.8 小红书视频采集与发布
+
+> 从小红书 explore 推荐流采集**视频**笔记，经 S3 上传后发布到 XXAI 广场。
+> 与图文流程（§16.4）类似，但 media_info 走 `type=video` 路径（见 docs/06-post-video.md）。
+
+### 视频采集流程
+
+小红书视频笔记的数据结构与图文不同，采集时需注意：
+
+```
+explore 推荐流 (GET /explore)
+  └─ feeds[].noteCard.type == "video"    ← 筛选视频笔记
+  └─ feeds[].noteCard.cover              ← 封面图（fallback 用）
+  └─ feeds[].id / xsecToken             ← 进入详情页
+
+详情页 (GET /explore/{note_id}?xsec_token=...)
+  └─ __INITIAL_STATE__.note.noteDetailMap[id].note
+       ├─ type: "video"
+       ├─ title / desc                   ← 文案
+       ├─ video.media.stream.h264[0]     ← 视频流
+       │    ├─ masterUrl                 ← 首选
+       │    └─ backupUrl                 ← 备选
+       └─ video.image                    ← 封面图
+            ├─ urlDefault                ← 首选
+            └─ url                       ← 备选
+```
+
+### 视频封面 fallback 机制（重要）
+
+实测发现，详情页 `video.image` 字段**有时为空**（约 60% 的视频笔记缺失此字段）。
+必须实现多级 fallback：
+
+| 优先级 | 来源 | 字段路径 |
+|--------|------|----------|
+| 1 | 详情页 video.image | `note.video.image.urlDefault` / `.url` |
+| 2 | 详情页 imageList[0] | `note.imageList[0].urlDefault` |
+| 3 | explore feed cover | `noteCard.cover.urlDefault` / `.urlPre` |
+
+**如果三级都为空，则跳过该视频（无法发布无封面的视频）。**
+
+### 视频发布完整流程
+
+```
+1. 登录 test 环境: POST https://testapi-x.tp-ex.com/login
+   body: {"email": ..., "password": ..., "device_id": ..., "device_name": ...}
+   → data.token
+
+2. 获取 S3 临时凭证: POST /file/upload/credentials
+   → access_key_id / secret_access_key / session_token / region / bucket / domain
+
+3. 下载视频 mp4 + 封面图
+   请求头必须带:
+     User-Agent: <桌面浏览器 UA>
+     Referer: https://www.xiaohongshu.com/
+
+4. boto3 上传到 S3
+   key: square/original/YYYY/MM/DD/{uuid}.mp4 / {uuid}.jpg
+   ContentType: video/mp4 / image/jpeg
+
+5. POST http://100.64.0.53:8889/api/v1/moments/
+   body:
+   {
+     "content": "<文案>",
+     "visibility": 0,
+     "media_info": {
+       "type": "video",
+       "video_url": "https://{domain}/{key}.mp4",
+       "thumbnail_url": "https://{domain}/{key}.jpg"
+     }
+   }
+   → data.moment_id
+```
+
+### 环境差异
+
+| 环境 | 登录 API | 发布 API | 用户来源 |
+|------|----------|----------|----------|
+| **test** | `testapi-x.tp-ex.com/login` | `100.64.0.53:8889/api/v1/moments/` | `test_企管用户_邮箱密码pincode_500.csv.xlsx` |
+| **dev** | `devapi-x.tp-ex.com/login` | `100.64.0.47:8889/api/v1/moments/` | `pre_企管用户2000.csv` / 用户池 |
+
+- **test 环境登录字段为 `email`**（非 `username`），否则返回 `code=10002`。
+- test 500 用户表格式：`序号, 用户昵称, 注册账户, 用户密码, 用户邮箱, Pincode`。
+
+### 实战验证
+
+2026-07-20 实测（test 环境）：
+
+- 5 个用户 × 5 条视频 = **5/5 成功**
+- 视频来源：小红书 explore 推荐流（美食、运动、护肤、书法等主题）
+- 视频大小范围：1.1 MB ~ 56.4 MB
+- 封面图大小：75 KB ~ 252 KB
+
+| 用户 | 视频 | moment_id |
+|------|------|-----------|
+| Elijah Hall | Brushlettering练字｜浅浅的白绿混色 | (首批) |
+| 赵鹿鸣 | 脆脆薯饼～外酥里糯 | `734310659499495424` |
+| Aadhya | 沉浸式制冰 | `734310722699268096` |
+| 敦子 | 300块钱还是和老婆一起吃个宵夜香！ | `734310830635487232` |
+| Mia Rodriguez | 中式早餐🥟好久没有这样吃 | `734310906061656064` |
+
+### Runbook（小红书视频 → 广场发布）
+
+```powershell
+# 1. 采集视频（crawl_xhs.py 已支持 type=video，自动下载 mp4 + 生成缩略图）
+py -3 scripts/crawl_xhs.py --target 5 --delay 1.5 --csv moments_video.csv --images-dir images
+
+# 2. 逐账号发布视频
+#    需要从 moments_video.csv 中读取 video_url 和 thumbnail_url 列
+py -3 scripts/post_video.py --account <email> --accounts-csv <csv> `
+    --video <local_or_url> --cover <local_or_url> --caption "文案"
+```
+
+或使用独立脚本一次性完成（采集 + 登录 + S3 + 发布）：
+
+```powershell
+# 设置环境变量指向 test
+$env:LOGIN_URL = "https://testapi-x.tp-ex.com/login"
+$env:UPLOAD_CREDENTIALS_URL = "https://testapi-x.tp-ex.com/file/upload/credentials"
+$env:MOMENTS_API_URL = "http://100.64.0.53:8889/api/v1/moments/"
+
+py -3 scripts/post_video.py --account u_5x3ghocm@xxai.com `
+    --accounts-csv "test_企管用户_邮箱密码pincode_500.csv.xlsx" `
+    --video <mp4_url> --cover <cover_url> --caption "视频文案"
+```
+
+### 注意事项
+
+1. **视频下载超时**：小红书视频文件较大（最大 50+ MB），`timeout` 建议 ≥120s。
+2. **封面必须有效**：`thumbnail_url` 为空会导致发布成功但前端无法展示。
+3. **Referer 防盗链**：下载视频/封面时必须带 `Referer: https://www.xiaohongshu.com/`。
+4. **explore JSON 解析**：页面约 1MB，`__INITIAL_STATE__` 结束位置应以 `</script>` 标签定位（而非逐字符匹配大括号），否则解析耗时极长。
+5. **登录间隔**：多账号顺序登录，间隔 ≥2.5s，避免 429。
+6. **S3 上传 ContentType**：视频必须为 `video/mp4`，封面为 `image/jpeg` 或 `image/png`。
