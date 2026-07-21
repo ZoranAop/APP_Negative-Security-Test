@@ -18,6 +18,7 @@
 | ------------------------ | -------------------------------------------------------- |
 | `scripts/crawl_xhs.py`   | 小红书采集脚本：独立命令行爬虫 + `iter_rows()`（供多源统一调度） |
 | `scripts/crawl_xhs_multiimg.py` | 小红书多图采集脚本：详情页提取全部 imageList CDN 直链 |
+| `scripts/run_xhs_video.py` | 小红书视频一键脚本：采集 explore 视频 → S3 上传 → 批量发布（含重试/Referer/标签一致） |
 | `scripts/multi_source_fetch.py` | 已注册 `xhs` 源（`--sources ...,xhs`）             |
 | `mcp/src/tools.ts`       | 提供 `fetch_xhs` MCP 工具                                 |
 | `docs/16-xiaohongshu-square.md` | 本文档                                            |
@@ -446,6 +447,40 @@ explore 推荐流 (GET /explore)
 | Mia Rodriguez | 中式早餐🥟好久没有这样吃 | `734310906061656064` |
 
 ### Runbook（小红书视频 → 广场发布）
+
+#### 推荐方式：`run_xhs_video.py` 一键脚本（采集 + 发布）
+
+```powershell
+# 设置环境变量指向 test
+$env:LOGIN_URL = "https://testapi-x.tp-ex.com/login"
+$env:UPLOAD_CREDENTIALS_URL = "https://testapi-x.tp-ex.com/file/upload/credentials"
+$env:MOMENTS_API_URL = "http://100.64.0.53:8889/api/v1/moments/"
+
+# 20 用户各发 1 个视频（自动采集 + 发布）
+py -3 scripts/run_xhs_video.py `
+    --accounts-xlsx "test_企管用户_邮箱密码pincode_500.csv.xlsx" `
+    --num-users 20 --env test --yes
+
+# 只采集不发布（预览模式）
+py -3 scripts/run_xhs_video.py --crawl-only --target 30 --output my_videos.csv
+
+# 从已有 CSV 发布（跳过采集）
+py -3 scripts/run_xhs_video.py `
+    --accounts-xlsx accounts.xlsx --csv moments_video.csv --num-users 10 --env test --yes
+```
+
+`run_xhs_video.py` 内置的关键优化：
+
+| 优化项 | 说明 |
+|--------|------|
+| **环境自适应登录** | test 环境用 `email` 字段，dev 环境用 `username` |
+| **Referer 自动映射** | xhscdn.com → `Referer: https://www.xiaohongshu.com/`（避免封面 403） |
+| **封面多级 fallback** | `video.image` → `imageList[0]` → explore feed cover |
+| **失败自动重试** | 下载超时自动切换备用视频（`--max-retries`） |
+| **文案标签一致性** | 保留原始 #标签 / 关键词推导 / 兜底默认 |
+| **登录间隔可配** | `--login-spacing`（默认 5s，避免 429） |
+
+#### 逐条发布方式（单账号单视频）
 
 ```powershell
 # 1. 采集视频（crawl_xhs.py 已支持 type=video，自动下载 mp4 + 生成缩略图）

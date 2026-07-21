@@ -64,6 +64,7 @@ xxai-square-publisher/
 │   ├── assemble_mixed.py           # 混合交错组装：每人随机帖数 + T/I/Q 交错 + 单语分配 + 配文去重（见 docs/25）
 │   ├── web3_caption_by_role.py     # web3 资讯专用文案：按新闻意图 + 发帖者角色语言改写第一人称点评
 │   ├── run_mixed.py                # 混合交错一键发布（采集 → 组装 → 发布层优化 + 回写去重，见 docs/25）
+│   ├── run_xhs_video.py            # 小红书视频一键发布（采集 explore 视频 → S3 上传 → 批量发布，见 docs/16 §16.8）
 │   ├── gitlab_pull.py              # 从 GitLab 拉取真实账号 CSV
 │   ├── config.py utils.py retry.py validation.py
 │   └── legacy/README.md            # 历史脚本说明
