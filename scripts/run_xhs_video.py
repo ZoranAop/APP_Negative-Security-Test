@@ -10,6 +10,7 @@ run_xhs_video.py — 小红书视频采集 → 批量发布到 XXAI 广场（一
   4. 确保每条视频的文案描述与 #话题标签 语言一致
 
 核心优化：
+  - 视频大小过滤：采集阶段 HEAD 预检 + 下载后二次校验（默认 ≤15MB，可配）
   - 登录字段自适应：test 环境用 email / dev 环境用 username
   - Referer 自动映射：xhscdn.com → xiaohongshu.com Referer（避免 403）
   - 封面多级 fallback：video.image → imageList[0] → explore feed cover
@@ -22,6 +23,9 @@ run_xhs_video.py — 小红书视频采集 → 批量发布到 XXAI 广场（一
 
     # 指定视频数量和环境
     py -3 scripts/run_xhs_video.py --accounts-xlsx accounts.xlsx --num-users 10 --env test
+
+    # 限制视频大小为 10MB 以内
+    py -3 scripts/run_xhs_video.py --accounts-xlsx accounts.xlsx --num-users 10 --max-video-size 10
 
     # 只采集不发布（预览模式）
     py -3 scripts/run_xhs_video.py --crawl-only --target 30 --output my_videos.csv
@@ -135,6 +139,10 @@ TOPIC_TAG_MAP = {
 
 DEFAULT_TAGS_FALLBACK = ["日常", "生活", "记录"]
 
+# 视频大小策略（默认值，可通过 CLI --max-video-size 覆盖）
+DEFAULT_MAX_VIDEO_SIZE_MB = 15  # 默认最大 15MB
+DEFAULT_MIN_VIDEO_SIZE_MB = 0.5  # 最小 0.5MB（过小可能是损坏文件）
+
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # 工具函数
@@ -151,6 +159,30 @@ def resolve_referer(url: str) -> str:
         if domain_substr in hostname:
             return referer
     return "https://www.xiaohongshu.com/"
+
+
+def probe_video_size(url: str, timeout: int = 10) -> float:
+    """
+    通过 HEAD 请求探测视频文件大小（MB）。
+
+    返回值：
+      > 0: 实际大小（MB）
+      -1: 无法获取（服务器不返回 Content-Length）
+
+    用于采集阶段预过滤超大/超小视频，避免浪费下载带宽。
+    """
+    try:
+        headers = {
+            "User-Agent": XHS_HEADERS["User-Agent"],
+            "Referer": resolve_referer(url),
+        }
+        resp = requests.head(url, headers=headers, timeout=timeout, allow_redirects=True)
+        cl = resp.headers.get("Content-Length")
+        if cl:
+            return int(cl) / 1024 / 1024
+    except Exception:
+        pass
+    return -1
 
 
 def ensure_tag_consistency(content: str) -> str:
@@ -295,7 +327,9 @@ def fetch_video_detail(note_id: str, xsec_token: str) -> Optional[dict]:
     }
 
 
-def crawl_xhs_videos(target: int = 25, delay: float = 1.5, max_rounds: int = 10) -> list[dict]:
+def crawl_xhs_videos(target: int = 25, delay: float = 1.5, max_rounds: int = 10,
+                     max_size_mb: float = DEFAULT_MAX_VIDEO_SIZE_MB,
+                     min_size_mb: float = DEFAULT_MIN_VIDEO_SIZE_MB) -> list[dict]:
     """
     批量采集小红书视频笔记。
 
@@ -303,12 +337,14 @@ def crawl_xhs_videos(target: int = 25, delay: float = 1.5, max_rounds: int = 10)
         target: 目标视频数量
         delay: 详情页请求间隔（秒），防频控
         max_rounds: 最大 explore 请求轮数
+        max_size_mb: 视频最大大小（MB），超过则跳过（默认 15MB）
+        min_size_mb: 视频最小大小（MB），低于则跳过（默认 0.5MB）
 
     Returns:
-        list of {note_id, video_url, cover_url, content}
+        list of {note_id, video_url, cover_url, content, size_mb}
     """
     log(f"\n{'═'*60}")
-    log(f"  Phase 0: 采集小红书视频 (目标: {target} 条)")
+    log(f"  Phase 0: 采集小红书视频 (目标: {target} 条, ≤{max_size_mb}MB)")
     log(f"{'═'*60}")
 
     collected = []
@@ -340,18 +376,31 @@ def crawl_xhs_videos(target: int = 25, delay: float = 1.5, max_rounds: int = 10)
                 # 封面 fallback：详情页为空时用 explore feed 的封面
                 if not detail["cover_url"] and brief["cover_fallback"]:
                     detail["cover_url"] = brief["cover_fallback"]
-                if detail["video_url"] and detail["cover_url"]:
-                    collected.append(detail)
-                    title_short = detail["content"][:40].replace("\n", " ")
-                    log(f"  [OK] #{len(collected)}: {title_short}")
-                else:
+                if not detail["video_url"] or not detail["cover_url"]:
                     log(f"  [SKIP] 无视频/封面: {brief['note_id']}")
+                    continue
+
+                # 视频大小预检（HEAD 请求探测）
+                size_mb = probe_video_size(detail["video_url"])
+                if size_mb > 0:
+                    if size_mb > max_size_mb:
+                        log(f"  [SKIP] 视频过大 {size_mb:.1f}MB > {max_size_mb}MB: {brief['title'][:25]}")
+                        continue
+                    if size_mb < min_size_mb:
+                        log(f"  [SKIP] 视频过小 {size_mb:.1f}MB < {min_size_mb}MB: {brief['title'][:25]}")
+                        continue
+
+                detail["size_mb"] = size_mb
+                collected.append(detail)
+                size_str = f"{size_mb:.1f}MB" if size_mb > 0 else "?MB"
+                title_short = detail["content"][:40].replace("\n", " ")
+                log(f"  [OK] #{len(collected)} ({size_str}): {title_short}")
             else:
                 log(f"  [SKIP] 详情页失败: {brief['note_id']}")
 
         time.sleep(2)  # 轮间冷却
 
-    log(f"\n[采集完成] 共获取 {len(collected)} 条视频")
+    log(f"\n[采集完成] 共获取 {len(collected)} 条视频 (≤{max_size_mb}MB)")
     return collected
 
 
@@ -569,6 +618,10 @@ def parse_args():
     ap.add_argument("--crawl-delay", type=float, default=1.5, help="采集详情页间隔秒数（默认 1.5）")
     ap.add_argument("--crawl-only", action="store_true", help="只采集不发布（输出 CSV）")
     ap.add_argument("--output", default="moments_video.csv", help="采集输出 CSV 路径（默认 moments_video.csv）")
+    ap.add_argument("--max-video-size", type=float, default=DEFAULT_MAX_VIDEO_SIZE_MB,
+                    help=f"视频最大大小 MB（默认 {DEFAULT_MAX_VIDEO_SIZE_MB}，超过则跳过）")
+    ap.add_argument("--min-video-size", type=float, default=DEFAULT_MIN_VIDEO_SIZE_MB,
+                    help=f"视频最小大小 MB（默认 {DEFAULT_MIN_VIDEO_SIZE_MB}，低于则跳过）")
 
     # 发布参数
     ap.add_argument("--csv", default="", help="已有视频 CSV（跳过采集直接发布）")
@@ -594,6 +647,7 @@ def main() -> int:
     log(f"  LOGIN_URL:  {config.LOGIN_URL}")
     log(f"  MOMENTS:    {config.MOMENTS_API_URL}")
     log(f"  用户数量:    {args.num_users}")
+    log(f"  视频大小:    {args.min_video_size}~{args.max_video_size} MB")
     log("═" * 60)
 
     # ─── Phase 0: 采集或加载视频 ─────────────────────────────────────────
@@ -604,10 +658,12 @@ def main() -> int:
             videos = list(csv.DictReader(f))
         log(f"[加载] 读取到 {len(videos)} 条视频")
     else:
-        # 采集
+        # 采集（带大小过滤）
         videos_raw = crawl_xhs_videos(
             target=args.target,
             delay=args.crawl_delay,
+            max_size_mb=args.max_video_size,
+            min_size_mb=args.min_video_size,
         )
         # 写入 CSV
         out_path = args.output
@@ -716,6 +772,12 @@ def main() -> int:
                 local_video = download_file(video["video_url"], media_dir, args.download_timeout)
                 size_mb = local_video.stat().st_size / 1024 / 1024
                 log(f"  [3/5] 视频: {size_mb:.1f} MB")
+
+                # 下载后二次校验大小（HEAD 可能拿不到 Content-Length）
+                if size_mb > args.max_video_size:
+                    log(f"  [SKIP] 下载后实际 {size_mb:.1f}MB > {args.max_video_size}MB，跳过")
+                    local_video.unlink(missing_ok=True)
+                    raise RuntimeError(f"视频过大 {size_mb:.1f}MB")
 
                 log(f"  [3/5] 下载封面...")
                 local_cover = download_file(video["thumbnail_url"], media_dir, 60)
