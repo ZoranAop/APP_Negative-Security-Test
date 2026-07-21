@@ -11,6 +11,7 @@ run_xhs_video.py — 小红书视频采集 → 批量发布到 XXAI 广场（一
 
 核心优化：
   - 视频大小过滤：采集阶段 HEAD 预检 + 下载后二次校验（默认 ≤15MB，可配）
+  - 视频时长过滤：详情页提取 duration 字段，默认 ≤90s（可配 --max-duration）
   - 登录字段自适应：test 环境用 email / dev 环境用 username
   - Referer 自动映射：xhscdn.com → xiaohongshu.com Referer（避免 403）
   - 封面多级 fallback：video.image → imageList[0] → explore feed cover
@@ -26,6 +27,9 @@ run_xhs_video.py — 小红书视频采集 → 批量发布到 XXAI 广场（一
 
     # 限制视频大小为 10MB 以内
     py -3 scripts/run_xhs_video.py --accounts-xlsx accounts.xlsx --num-users 10 --max-video-size 10
+
+    # 限制视频时长为 60 秒以内
+    py -3 scripts/run_xhs_video.py --accounts-xlsx accounts.xlsx --num-users 10 --max-duration 60
 
     # 只采集不发布（预览模式）
     py -3 scripts/run_xhs_video.py --crawl-only --target 30 --output my_videos.csv
@@ -142,6 +146,9 @@ DEFAULT_TAGS_FALLBACK = ["日常", "生活", "记录"]
 # 视频大小策略（默认值，可通过 CLI --max-video-size 覆盖）
 DEFAULT_MAX_VIDEO_SIZE_MB = 15  # 默认最大 15MB
 DEFAULT_MIN_VIDEO_SIZE_MB = 0.5  # 最小 0.5MB（过小可能是损坏文件）
+
+# 视频时长策略（默认值，可通过 CLI --max-duration 覆盖）
+DEFAULT_MAX_VIDEO_DURATION_SEC = 90  # 默认最长 90 秒
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -290,12 +297,23 @@ def fetch_video_detail(note_id: str, xsec_token: str) -> Optional[dict]:
     video = note.get("video", {})
     stream = video.get("media", {}).get("stream", {})
     video_url = ""
+    duration_ms = 0
     if stream:
         h264_list = stream.get("h264", [])
         if h264_list:
             video_url = h264_list[0].get("masterUrl", "") or h264_list[0].get("backupUrl", "")
+            # 时长：优先从流信息获取（单位毫秒）
+            duration_ms = h264_list[0].get("duration", 0)
     if not video_url:
         return None
+
+    # 时长 fallback：从 video.capa.duration 或 video.duration 获取
+    if not duration_ms:
+        duration_ms = video.get("capa", {}).get("duration", 0)
+    if not duration_ms:
+        duration_ms = video.get("duration", 0)
+
+    duration_sec = duration_ms / 1000.0 if duration_ms else 0
 
     # 封面图多级 fallback
     cover_url = ""
@@ -324,12 +342,14 @@ def fetch_video_detail(note_id: str, xsec_token: str) -> Optional[dict]:
         "video_url": video_url,
         "cover_url": cover_url,
         "content": content,
+        "duration_sec": duration_sec,
     }
 
 
 def crawl_xhs_videos(target: int = 25, delay: float = 1.5, max_rounds: int = 10,
                      max_size_mb: float = DEFAULT_MAX_VIDEO_SIZE_MB,
-                     min_size_mb: float = DEFAULT_MIN_VIDEO_SIZE_MB) -> list[dict]:
+                     min_size_mb: float = DEFAULT_MIN_VIDEO_SIZE_MB,
+                     max_duration_sec: float = DEFAULT_MAX_VIDEO_DURATION_SEC) -> list[dict]:
     """
     批量采集小红书视频笔记。
 
@@ -339,12 +359,13 @@ def crawl_xhs_videos(target: int = 25, delay: float = 1.5, max_rounds: int = 10,
         max_rounds: 最大 explore 请求轮数
         max_size_mb: 视频最大大小（MB），超过则跳过（默认 15MB）
         min_size_mb: 视频最小大小（MB），低于则跳过（默认 0.5MB）
+        max_duration_sec: 视频最大时长（秒），超过则跳过（默认 90s）
 
     Returns:
-        list of {note_id, video_url, cover_url, content, size_mb}
+        list of {note_id, video_url, cover_url, content, size_mb, duration_sec}
     """
     log(f"\n{'═'*60}")
-    log(f"  Phase 0: 采集小红书视频 (目标: {target} 条, ≤{max_size_mb}MB)")
+    log(f"  Phase 0: 采集小红书视频 (目标: {target} 条, ≤{max_size_mb}MB, ≤{max_duration_sec}s)")
     log(f"{'═'*60}")
 
     collected = []
@@ -380,6 +401,12 @@ def crawl_xhs_videos(target: int = 25, delay: float = 1.5, max_rounds: int = 10,
                     log(f"  [SKIP] 无视频/封面: {brief['note_id']}")
                     continue
 
+                # 视频时长预检（从详情页 JSON 提取）
+                dur = detail.get("duration_sec", 0)
+                if dur > 0 and dur > max_duration_sec:
+                    log(f"  [SKIP] 视频过长 {dur:.0f}s > {max_duration_sec}s: {brief['title'][:25]}")
+                    continue
+
                 # 视频大小预检（HEAD 请求探测）
                 size_mb = probe_video_size(detail["video_url"])
                 if size_mb > 0:
@@ -393,14 +420,15 @@ def crawl_xhs_videos(target: int = 25, delay: float = 1.5, max_rounds: int = 10,
                 detail["size_mb"] = size_mb
                 collected.append(detail)
                 size_str = f"{size_mb:.1f}MB" if size_mb > 0 else "?MB"
-                title_short = detail["content"][:40].replace("\n", " ")
-                log(f"  [OK] #{len(collected)} ({size_str}): {title_short}")
+                dur_str = f"{dur:.0f}s" if dur > 0 else "?s"
+                title_short = detail["content"][:35].replace("\n", " ")
+                log(f"  [OK] #{len(collected)} ({size_str}/{dur_str}): {title_short}")
             else:
                 log(f"  [SKIP] 详情页失败: {brief['note_id']}")
 
         time.sleep(2)  # 轮间冷却
 
-    log(f"\n[采集完成] 共获取 {len(collected)} 条视频 (≤{max_size_mb}MB)")
+    log(f"\n[采集完成] 共获取 {len(collected)} 条视频 (≤{max_size_mb}MB, ≤{max_duration_sec}s)")
     return collected
 
 
@@ -622,6 +650,8 @@ def parse_args():
                     help=f"视频最大大小 MB（默认 {DEFAULT_MAX_VIDEO_SIZE_MB}，超过则跳过）")
     ap.add_argument("--min-video-size", type=float, default=DEFAULT_MIN_VIDEO_SIZE_MB,
                     help=f"视频最小大小 MB（默认 {DEFAULT_MIN_VIDEO_SIZE_MB}，低于则跳过）")
+    ap.add_argument("--max-duration", type=float, default=DEFAULT_MAX_VIDEO_DURATION_SEC,
+                    help=f"视频最大时长 秒（默认 {DEFAULT_MAX_VIDEO_DURATION_SEC}，超过则跳过）")
 
     # 发布参数
     ap.add_argument("--csv", default="", help="已有视频 CSV（跳过采集直接发布）")
@@ -647,7 +677,7 @@ def main() -> int:
     log(f"  LOGIN_URL:  {config.LOGIN_URL}")
     log(f"  MOMENTS:    {config.MOMENTS_API_URL}")
     log(f"  用户数量:    {args.num_users}")
-    log(f"  视频大小:    {args.min_video_size}~{args.max_video_size} MB")
+    log(f"  视频限制:    ≤{args.max_video_size}MB, ≤{args.max_duration}s")
     log("═" * 60)
 
     # ─── Phase 0: 采集或加载视频 ─────────────────────────────────────────
@@ -658,12 +688,13 @@ def main() -> int:
             videos = list(csv.DictReader(f))
         log(f"[加载] 读取到 {len(videos)} 条视频")
     else:
-        # 采集（带大小过滤）
+        # 采集（带大小+时长过滤）
         videos_raw = crawl_xhs_videos(
             target=args.target,
             delay=args.crawl_delay,
             max_size_mb=args.max_video_size,
             min_size_mb=args.min_video_size,
+            max_duration_sec=args.max_duration,
         )
         # 写入 CSV
         out_path = args.output
