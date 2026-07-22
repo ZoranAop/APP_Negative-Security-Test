@@ -174,166 +174,167 @@ LANG_VIA = {
 }
 
 # 语言 → 发帖人角色 → 第一人称句式骨架。用 {title}{tag} 组合，全局去重。
-# ★ 模板原则：纯描述性第一人称语气，无任何新闻/快讯/速报头部前缀 ★
-# ★ 不使用 "XX快訊｜" "Tech brief |" "今日科技｜" 等新闻体裁式呈现 ★
+# ★ 模板原则：直接描述内容 + 简短个人感受，不使用任何格式化标记 ★
+# ★ 禁止使用：「」【】（）｜| —— : ： / 等装饰性符号和前缀 ★
+# ★ 最终呈现形态示例：{title}，个人感受 {tag} ★
 # 6 语言：繁体中文 zh_hant / 英文 en / 日文 ja / 马来语 ms / 印地语 hi / 孟加拉语 bn
 LANG_TEMPLATES = {
     "zh_hant": {
         "科技从業者": [
-            "{title}——以從業者角度看，這條資訊值得關注，行業風向又變了 {tag}",
-            "剛看到一則報導：{title}。身為業內人，我覺得這透露出不少訊號 {tag}",
-            "{title}。這類進展對我們做技術的來說很有參考價值 {tag}",
+            "{title}，行業風向又變了，值得關注 {tag}",
+            "{title}，身為業內人覺得這透露出不少訊號 {tag}",
+            "{title}，這類進展對做技術的來說很有參考價值 {tag}",
         ],
         "科技愛好者": [
-            "{title}。身為數碼控，這個我必須先收藏 {tag}",
-            "看到這條：{title}，越看越入迷，科技迷狂喜 {tag}",
-            "{title}。這波技術演進真的很有意思，分享給同好 {tag}",
+            "{title}，身為數碼控必須先收藏 {tag}",
+            "{title}，越看越入迷 {tag}",
+            "{title}，這波技術演進真的很有意思 {tag}",
         ],
         "投資觀察者": [
-            "{title}。從投資角度看，這裡面藏著機會與變數 {tag}",
-            "{title}。盯賽道的朋友可以留意一下這條 {tag}",
-            "值得記一筆：{title}，資本市場大概率會有反應 {tag}",
+            "{title}，從投資角度看這裡面藏著機會 {tag}",
+            "{title}，盯賽道的朋友可以留意一下 {tag}",
+            "{title}，資本市場大概率會有反應 {tag}",
         ],
         "媒體觀察員": [
-            "{title}。這條資訊量不小，轉來一起看 {tag}",
-            "幫大家劃重點：{title} {tag}",
-            "{title}。一句話看懂今天的科技熱點 {tag}",
+            "{title}，這條資訊量不小 {tag}",
+            "{title}，一句話看懂今天的科技熱點 {tag}",
+            "{title}，轉來一起看看 {tag}",
         ],
     },
     "en": {
         "Tech Insider": [
-            "{title} — from an industry insider's view, this one's worth watching. {tag}",
-            "Just read this report: {title}. As someone in the field, I see real signals here. {tag}",
-            "{title}. Genuinely useful reference for those of us building tech. {tag}",
+            "{title}, this one's worth watching from an insider's view {tag}",
+            "{title}, as someone in the field I see real signals here {tag}",
+            "{title}, genuinely useful reference for those of us building tech {tag}",
         ],
         "Tech Enthusiast": [
-            "{title}. As a gadget nerd, bookmarking this one. {tag}",
-            "Saw this: {title} — the more I read, the more hooked I am. {tag}",
-            "{title}. This wave of tech is genuinely fascinating. {tag}",
+            "{title}, bookmarking this one {tag}",
+            "{title}, the more I read the more hooked I am {tag}",
+            "{title}, this wave of tech is genuinely fascinating {tag}",
         ],
         "Market Watcher": [
-            "{title}. From an investing angle, there's opportunity hidden here. {tag}",
-            "{title}. Worth a look if you track this space. {tag}",
-            "Noting this: {title} — markets will likely react. {tag}",
+            "{title}, from an investing angle there's opportunity hidden here {tag}",
+            "{title}, worth a look if you track this space {tag}",
+            "{title}, markets will likely react {tag}",
         ],
         "Media Observer": [
-            "{title}. This one carries real weight — sharing it. {tag}",
-            "Key takeaway: {title} {tag}",
-            "{title}. Today's tech headline in one line. {tag}",
+            "{title}, this one carries real weight {tag}",
+            "{title}, today's tech headline worth sharing {tag}",
+            "{title}, paying attention to this one {tag}",
         ],
     },
     "ja": {
         "技術者": [
-            "{title}——技術者の視点では、これは注目に値するニュースです {tag}",
-            "この報道を読みました：{title}。業界人として、いくつものシグナルを感じます {tag}",
-            "{title}。技術に携わる自分にとって参考になる進展です {tag}",
+            "{title}、技術者の視点では注目に値する {tag}",
+            "{title}、業界人としていくつものシグナルを感じる {tag}",
+            "{title}、技術に携わる自分にとって参考になる {tag}",
         ],
         "ガジェット好き": [
-            "{title}。ガジェット好きとして、まず保存 {tag}",
-            "見つけた：{title}、読むほどに引き込まれます {tag}",
-            "{title}。この技術の進化は本当に面白い、共有します {tag}",
+            "{title}、ガジェット好きとしてまず保存 {tag}",
+            "{title}、読むほどに引き込まれる {tag}",
+            "{title}、この技術の進化は本当に面白い {tag}",
         ],
         "投資ウォッチャー": [
-            "{title}。投資目線だと、ここにチャンスが潜んでいます {tag}",
-            "{title}。この分野を追う人は要チェック {tag}",
-            "メモ：{title}、市場は反応しそうです {tag}",
+            "{title}、投資目線だとここにチャンスが潜んでいる {tag}",
+            "{title}、この分野を追う人は要チェック {tag}",
+            "{title}、市場は反応しそう {tag}",
         ],
         "メディア観察者": [
-            "{title}。この報道は情報量が多い、共有します {tag}",
-            "要点だけ：{title} {tag}",
-            "{title}。今日のテックの見出しを一言で {tag}",
+            "{title}、情報量が多い内容だ {tag}",
+            "{title}、今日のテックで押さえておきたい {tag}",
+            "{title}、共有しておく {tag}",
         ],
     },
     "ms": {
         "Orang Dalam Teknologi": [
-            "{title} — dari sudut orang dalam industri, ini wajar diberi perhatian. {tag}",
-            "Baru baca laporan ini: {title}. Sebagai orang dalam bidang, saya nampak isyarat penting. {tag}",
-            "{title}. Perkembangan berguna buat kami yang membina teknologi. {tag}",
+            "{title}, dari sudut orang dalam industri ini wajar diberi perhatian {tag}",
+            "{title}, sebagai orang dalam bidang saya nampak isyarat penting {tag}",
+            "{title}, perkembangan berguna buat kami yang membina teknologi {tag}",
         ],
         "Peminat Teknologi": [
-            "{title}. Sebagai peminat gajet, saya simpan dulu. {tag}",
-            "Terjumpa berita ini: {title} — makin dibaca makin menarik. {tag}",
-            "{title}. Gelombang teknologi ini sangat menarik, kongsi sini. {tag}",
+            "{title}, sebagai peminat gajet saya simpan dulu {tag}",
+            "{title}, makin dibaca makin menarik {tag}",
+            "{title}, gelombang teknologi ini sangat menarik {tag}",
         ],
         "Pemerhati Pasaran": [
-            "{title}. Dari sudut pelaburan, ada peluang tersembunyi di sini. {tag}",
-            "{title}. Patut diberi perhatian jika anda ikut bidang ini. {tag}",
-            "Catat ini: {title} — pasaran mungkin bertindak balas. {tag}",
+            "{title}, dari sudut pelaburan ada peluang tersembunyi di sini {tag}",
+            "{title}, patut diberi perhatian jika anda ikut bidang ini {tag}",
+            "{title}, pasaran mungkin bertindak balas {tag}",
         ],
         "Pemerhati Media": [
-            "{title}. Liputan ini padat maklumat — saya kongsikan. {tag}",
-            "Intipati: {title} {tag}",
-            "{title}. Tajuk teknologi hari ini dalam satu ayat. {tag}",
+            "{title}, liputan ini padat maklumat {tag}",
+            "{title}, tajuk teknologi hari ini yang perlu diketahui {tag}",
+            "{title}, saya kongsikan di sini {tag}",
         ],
     },
     "hi": {
         "टेक विशेषज्ञ": [
-            "{title} — इंडस्ट्री के नज़रिये से यह खबर ध्यान देने लायक है। {tag}",
-            "अभी यह रिपोर्ट पढ़ी: {title}। एक जानकार के तौर पर मुझे इसमें अहम संकेत दिखते हैं। {tag}",
-            "{title}। तकनीक में काम करने वालों के लिए यह उपयोगी जानकारी है। {tag}",
+            "{title}, इंडस्ट्री के नज़रिये से यह ध्यान देने लायक है {tag}",
+            "{title}, एक जानकार के तौर पर इसमें अहम संकेत दिखते हैं {tag}",
+            "{title}, तकनीक में काम करने वालों के लिए उपयोगी जानकारी {tag}",
         ],
         "टेक प्रेमी": [
-            "{title}। गैजेट प्रेमी होने के नाते इसे सहेज रहा हूँ। {tag}",
-            "यह देखा: {title} — जितना पढ़ो उतना दिलचस्प। {tag}",
-            "{title}। तकनीक की यह लहर वाकई रोचक है, साझा कर रहा हूँ। {tag}",
+            "{title}, गैजेट प्रेमी होने के नाते इसे सहेज रहा हूँ {tag}",
+            "{title}, जितना पढ़ो उतना दिलचस्प {tag}",
+            "{title}, तकनीक की यह लहर वाकई रोचक है {tag}",
         ],
         "बाज़ार पर्यवेक्षक": [
-            "{title}। निवेश के नज़रिये से इसमें अवसर छिपा है। {tag}",
-            "{title}। अगर आप इस क्षेत्र पर नज़र रखते हैं तो देखिए। {tag}",
-            "नोट करें: {title} — बाज़ार प्रतिक्रिया दे सकता है। {tag}",
+            "{title}, निवेश के नज़रिये से इसमें अवसर छिपा है {tag}",
+            "{title}, इस क्षेत्र पर नज़र रखने वालों के लिए ज़रूरी {tag}",
+            "{title}, बाज़ार प्रतिक्रिया दे सकता है {tag}",
         ],
         "मीडिया पर्यवेक्षक": [
-            "{title}। यह रिपोर्ट जानकारी से भरी है — साझा कर रहा हूँ। {tag}",
-            "मुख्य बात: {title} {tag}",
-            "{title}। आज की टेक सुर्खी एक लाइन में। {tag}",
+            "{title}, यह जानकारी से भरी खबर है {tag}",
+            "{title}, आज की टेक सुर्खी {tag}",
+            "{title}, साझा कर रहा हूँ {tag}",
         ],
     },
     "bn": {
         "প্রযুক্তি বিশেষজ্ঞ": [
-            "{title} — ইন্ডাস্ট্রির দৃষ্টিতে এই খবরটি নজর দেওয়ার মতো। {tag}",
-            "এইমাত্র এই প্রতিবেদন পড়লাম: {title}। মাঠের মানুষ হিসেবে আমি এতে গুরুত্বপূর্ণ ইঙ্গিত দেখি। {tag}",
-            "{title}। প্রযুক্তিতে যারা কাজ করি তাদের জন্য কাজের তথ্য। {tag}",
+            "{title}, ইন্ডাস্ট্রির দৃষ্টিতে এটি নজর দেওয়ার মতো {tag}",
+            "{title}, মাঠের মানুষ হিসেবে এতে গুরুত্বপূর্ণ ইঙ্গিত দেখি {tag}",
+            "{title}, প্রযুক্তিতে যারা কাজ করি তাদের জন্য কাজের তথ্য {tag}",
         ],
         "প্রযুক্তিপ্রেমী": [
-            "{title}। গ্যাজেটপ্রেমী হিসেবে এটি সংরক্ষণ করছি। {tag}",
-            "এটি দেখলাম: {title} — যত পড়ি তত আগ্রহ বাড়ে। {tag}",
-            "{title}। প্রযুক্তির এই ঢেউ সত্যিই চমৎকার, শেয়ার করছি। {tag}",
+            "{title}, গ্যাজেটপ্রেমী হিসেবে সংরক্ষণ করছি {tag}",
+            "{title}, যত পড়ি তত আগ্রহ বাড়ে {tag}",
+            "{title}, প্রযুক্তির এই ঢেউ সত্যিই চমৎকার {tag}",
         ],
         "বাজার পর্যবেক্ষক": [
-            "{title}। বিনিয়োগের দৃষ্টিতে এখানে সুযোগ লুকিয়ে আছে। {tag}",
-            "{title}। এই খাত অনুসরণ করলে দেখে নিন। {tag}",
-            "টুকে রাখুন: {title} — বাজার সাড়া দিতে পারে। {tag}",
+            "{title}, বিনিয়োগের দৃষ্টিতে এখানে সুযোগ লুকিয়ে আছে {tag}",
+            "{title}, এই খাত অনুসরণ করলে দেখে নিন {tag}",
+            "{title}, বাজার সাড়া দিতে পারে {tag}",
         ],
         "মিডিয়া পর্যবেক্ষক": [
-            "{title}। এই প্রতিবেদন তথ্যবহুল — শেয়ার করছি। {tag}",
-            "মূল কথা: {title} {tag}",
-            "{title}। আজকের টেক শিরোনাম এক লাইনে। {tag}",
+            "{title}, এই তথ্য গুরুত্বপূর্ণ {tag}",
+            "{title}, আজকের টেক শিরোনাম {tag}",
+            "{title}, শেয়ার করছি {tag}",
         ],
     },
 }
 
-# 印尼语模板（与马来语类似但有本地化差异）
-# ★ 纯描述性第一人称，无新闻体裁前缀 ★
+# 印尼语模板
+# ★ 纯描述性第一人称，无格式化符号 ★
 LANG_TEMPLATES["id"] = {
     "Pakar Teknologi": [
-        "{title} — dari sudut pandang industri, ini layak diperhatikan. {tag}",
-        "Baru baca laporan ini: {title}. Sebagai orang di bidang ini, saya melihat sinyal penting. {tag}",
-        "{title}. Perkembangan yang berguna bagi kami yang membangun teknologi. {tag}",
+        "{title}, dari sudut pandang industri ini layak diperhatikan {tag}",
+        "{title}, sebagai orang di bidang ini saya melihat sinyal penting {tag}",
+        "{title}, perkembangan yang berguna bagi kami yang membangun teknologi {tag}",
     ],
     "Penggemar Teknologi": [
-        "{title}. Sebagai penggemar gadget, saya simpan ini. {tag}",
-        "Menemukan berita ini: {title} — semakin dibaca semakin menarik. {tag}",
-        "{title}. Gelombang teknologi ini sangat menarik, berbagi di sini. {tag}",
+        "{title}, sebagai penggemar gadget saya simpan ini {tag}",
+        "{title}, semakin dibaca semakin menarik {tag}",
+        "{title}, gelombang teknologi ini sangat menarik {tag}",
     ],
     "Pengamat Pasar": [
-        "{title}. Dari sudut investasi, ada peluang tersembunyi di sini. {tag}",
-        "{title}. Patut diperhatikan jika Anda mengikuti bidang ini. {tag}",
-        "Catat ini: {title} — pasar mungkin akan bereaksi. {tag}",
+        "{title}, dari sudut investasi ada peluang tersembunyi di sini {tag}",
+        "{title}, patut diperhatikan jika Anda mengikuti bidang ini {tag}",
+        "{title}, pasar mungkin akan bereaksi {tag}",
     ],
     "Pengamat Media": [
-        "{title}. Liputan ini padat informasi — saya bagikan. {tag}",
-        "Intisari: {title} {tag}",
-        "{title}. Judul teknologi hari ini dalam satu baris. {tag}",
+        "{title}, liputan ini padat informasi {tag}",
+        "{title}, judul teknologi hari ini yang perlu diketahui {tag}",
+        "{title}, saya bagikan di sini {tag}",
     ],
 }
 
