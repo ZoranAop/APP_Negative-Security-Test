@@ -86,15 +86,15 @@ def _env(name: str, default: str = "") -> str:
     return os.getenv(name, default)
 
 
-LOGIN_URL       = _env("LOGIN_URL", "https://testapi-x.tp-ex.com/login")
-UPLOAD_CRED_URL = _env("UPLOAD_CREDENTIALS_URL", "https://testapi-x.tp-ex.com/file/upload/credentials")
+LOGIN_URL       = _env("LOGIN_URL", "https://api.xxai.com/login")
+UPLOAD_CRED_URL = _env("UPLOAD_CREDENTIALS_URL", "https://api.xxai.com/file/upload/credentials")
 # 房间发帖走 feed 网关域名（客户端实测）；也可用内网 MOMENTS_API_URL。
 MOMENTS_API_URL = _env("ROOM_MOMENTS_API_URL",
-                       _env("MOMENTS_API_URL", "https://testapi-feed-x.tp-ex.com/api/v1/moments"))
+                       _env("MOMENTS_API_URL", "https://feed-api.xxai.com/api/v1/moments"))
 # Matrix client-server API base（到 /rooms 的前缀）
-MATRIX_BASE     = _env("MATRIX_API_BASE", "https://testd-x.tp-ex.com/_matrix/client/v3/rooms")
+MATRIX_BASE     = _env("MATRIX_API_BASE", "https://d.xxai.com/_matrix/client/v3/rooms")
 # 读房间 feed（核对用）
-ROOM_FEED_URL   = _env("ROOM_FEED_URL", "http://100.64.0.53:8889/api/v1/feed/room_moments")
+ROOM_FEED_URL   = _env("ROOM_FEED_URL", "https://feed-api.xxai.com/api/v1/feed/room_moments")
 
 DEVICE_ID   = _env("POST_DEVICE_ID", "auto_poster")
 DEVICE_NAME = _env("POST_DEVICE_NAME", "auto_poster_client")

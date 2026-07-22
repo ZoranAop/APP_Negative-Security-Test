@@ -41,7 +41,7 @@ from config import config  # noqa: E402
 
 UPLOAD_CREDENTIALS_URL = os.getenv(
     "UPLOAD_CREDENTIALS_URL",
-    "https://devapi-x.tp-ex.com/file/upload/credentials",
+    "https://api.xxai.com/file/upload/credentials",
 )
 
 OPENNANA_REFERER = os.getenv("OPENNANA_REFERER", "https://opennana.com/")

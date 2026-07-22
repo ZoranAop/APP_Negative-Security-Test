@@ -22,20 +22,20 @@
 
 | 场景             | 端点                                                                 |
 | ---------------- | -------------------------------------------------------------------- |
-| **客户端实测**（外网 / 抓包所见） | `POST https://testapi-feed-x.tp-ex.com/api/v1/moments`               |
-| **内网直连**（仓库 `.env` 默认 / 压测） | `POST ${MOMENTS_API_URL}`（test 默认 `http://100.64.0.53:8889/api/v1/moments/`；dev 为 `100.64.0.47`）|
+| **客户端实测**（外网 / 抓包所见） | `POST https://feed-api.xxai.com/api/v1/moments`               |
+| **pre 环境**（仓库 `.env` 默认） | `POST ${MOMENTS_API_URL}`（默认 `https://feed-api.xxai.com/api/v1/moments/`）|
 
 > 两个端点是同一套接口的不同接入地址：iOS App 走 feed 网关域名
-> `testapi-feed-x.tp-ex.com`，脚本压测走内网 `100.64.0.x`。
-> 用哪个取决于你的网络环境；字段完全一致。脚本通过 `.env` 的 `MOMENTS_API_URL`
-> 或 `--api-url` 指定，也可直接填 feed 域名。
+> `feed-api.xxai.com`，脚本也走同一域名。
+> 字段完全一致。脚本通过 `.env` 的 `MOMENTS_API_URL`
+> 或 `--api-url` 指定。
 
 ## 14.2 发布到房间：`POST /api/v1/moments`
 
 | 项目     | 值                                                        |
 | -------- | --------------------------------------------------------- |
 | 方法     | `POST`                                                    |
-| 地址     | 见 §14.1.1（`https://testapi-feed-x.tp-ex.com/api/v1/moments` 或 `${MOMENTS_API_URL}`）|
+| 地址     | 见 §14.1.1（`https://feed-api.xxai.com/api/v1/moments` 或 `${MOMENTS_API_URL}`）|
 | 认证     | `Authorization: Bearer <token>`（先用 `POST ${LOGIN_URL}` 换 token） |
 | Content-Type | `application/json`                                    |
 
@@ -77,7 +77,7 @@
 ### 请求示例（对应真实抓包：VIP 群图文 + is_async）
 
 ```bash
-curl -X POST "https://testapi-feed-x.tp-ex.com/api/v1/moments" \
+curl -X POST "https://feed-api.xxai.com/api/v1/moments" \
   -H "Authorization: Bearer <token>" \
   -H "Content-Type: application/json" \
   -H "Accept-Language: zh-Hans" \
@@ -131,7 +131,7 @@ curl -X POST "https://testapi-feed-x.tp-ex.com/api/v1/moments" \
 分页方式为**游标翻页**：拿本页 `list` 最后一条的 `id` 作为下一次的 `last_id`，直到 `has_more=false`。
 
 ```bash
-curl "http://100.64.0.47:8889/api/v1/feed/room_moments?room_id=10086&page_size=20" \
+curl "https://feed-api.xxai.com/api/v1/feed/room_moments?room_id=10086&page_size=20" \
   -H "Authorization: Bearer <token>"
 ```
 
@@ -192,5 +192,4 @@ py -3 scripts/post_moments.py `
 - **响应 id 是字符串**：`moment_id` / `public_moment_id` 实测返回字符串（如 `"729599881982775296"`），脚本已 `str()` 兼容。
 - **权限**：发帖账号需具备目标房间的发帖权限；无权限时后端会返回非 0 `code`，脚本会记为失败。
 - **`is_async` / `is_vip_group` 已支持透传**：在素材 CSV 里加 `is_async` / `is_vip_group` 列（`true`/`false` 或 `1`/`0`）即可，`scripts/post_moments.py` 的 `build_payload` 会解析并写进请求体（空值不透传，用后端默认）。
-- **两个发帖端点**：客户端走 `https://testapi-feed-x.tp-ex.com/api/v1/moments`，脚本压测走内网 `${MOMENTS_API_URL}`（`100.64.0.x`）。二者字段一致，按网络环境选一个。
-- 全部 `100.64.0.x` 为内网地址，需在 VPN / 内网环境调用。
+- **发帖端点**：pre 环境统一走 `https://feed-api.xxai.com/api/v1/moments`（即 `${MOMENTS_API_URL}`）。

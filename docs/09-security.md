@@ -20,8 +20,8 @@
 GITLAB_BASE_URL=http://100.64.0.45:8999
 GITLAB_USERNAME=your_gitlab_email_here
 GITLAB_PASSWORD=your_gitlab_password_here   # 或 GITLAB_TOKEN
-LOGIN_URL=https://devapi-x.tp-ex.com/login
-MOMENTS_API_URL=http://100.64.0.47:8889/api/v1/moments/
+LOGIN_URL=https://api.xxai.com/login
+MOMENTS_API_URL=https://feed-api.xxai.com/api/v1/moments/
 ```
 
 完整列表见 `.env.example`。

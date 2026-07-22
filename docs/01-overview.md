@@ -25,9 +25,7 @@
 
 | 用途                 | 方法 + 地址（默认）                                                       |
 | -------------------- | ------------------------------------------------------------------------- |
-| 登录获取 token       | `POST ${LOGIN_URL}`（默认 `https://devapi-x.tp-ex.com/login`）            |
+| 登录获取 token       | `POST ${LOGIN_URL}`（默认 `https://api.xxai.com/login`）            |
 | 获取 S3 上传临时凭证 | `POST ${UPLOAD_CREDENTIALS_URL}`（默认 `…/file/upload/credentials`）      |
-| 发布动态             | `POST ${MOMENTS_API_URL}`（默认 `http://100.64.0.47:8889/api/v1/moments/`）|
+| 发布动态             | `POST ${MOMENTS_API_URL}`（默认 `https://feed-api.xxai.com/api/v1/moments/`）|
 | 接口文档(OpenAPI)    | `${OPENAPI_DOC_URL}`，Swagger UI 在 `/docs`                              |
-
-> ⚠️ 全部 `100.64.0.x` 都是内网地址，需在 VPN / 内网环境调用。

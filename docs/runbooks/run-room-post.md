@@ -94,7 +94,7 @@ Import-Csv $latest.FullName | Group-Object status | Format-Table -AutoSize
 $token = "<用某账号登录拿到的 token>"
 $room  = "10086"
 Invoke-RestMethod -Method Get `
-  -Uri "http://100.64.0.47:8889/api/v1/feed/room_moments?room_id=$room&page_size=20" `
+  -Uri "https://feed-api.xxai.com/api/v1/feed/room_moments?room_id=$room&page_size=20" `
   -Headers @{ Authorization = "Bearer $token" } |
   Select-Object -ExpandProperty data
 ```
@@ -116,11 +116,11 @@ $body = @{
   media_info = @{ type = "image"; images = @("https://.../a.jpg") }
 } | ConvertTo-Json -Depth 5
 Invoke-RestMethod -Method Post `
-  -Uri "https://testapi-feed-x.tp-ex.com/api/v1/moments" `
+  -Uri "https://feed-api.xxai.com/api/v1/moments" `
   -Headers @{ Authorization = "Bearer $token"; "Content-Type" = "application/json" } `
   -Body $body
 ```
 
 返回里 `moment_id` 是房间帖、`public_moment_id` 是同步的公开帖（均为字符串 id）。
 
-> 内网压测环境可把 URL 换成 `${MOMENTS_API_URL}`（如 `http://100.64.0.53:8889/api/v1/moments/`）。
+> pre 环境可把 URL 换成 `${MOMENTS_API_URL}`（即 `https://feed-api.xxai.com/api/v1/moments/`）。

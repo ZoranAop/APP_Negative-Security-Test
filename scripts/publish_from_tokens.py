@@ -442,7 +442,7 @@ def main() -> int:
     ap.add_argument("--api-url", default=config.MOMENTS_API_URL)
     ap.add_argument("--login-url", default=config.LOGIN_URL)
     ap.add_argument("--upload-url", default=os.getenv("UPLOAD_CREDENTIALS_URL",
-                                                     "https://testapi-x.tp-ex.com/file/upload/credentials"))
+                                                     "https://api.xxai.com/file/upload/credentials"))
     ap.add_argument("--concurrency", type=int, default=4)
     ap.add_argument("--timeout", type=int, default=config.POST_REQUEST_TIMEOUT)
     ap.add_argument("--login-spacing", type=float,

@@ -389,7 +389,7 @@ explore 推荐流 (GET /explore)
 ### 视频发布完整流程
 
 ```
-1. 登录 test 环境: POST https://testapi-x.tp-ex.com/login
+1. 登录 pre 环境: POST https://api.xxai.com/login
    body: {"email": ..., "password": ..., "device_id": ..., "device_name": ...}
    → data.token
 
@@ -405,7 +405,7 @@ explore 推荐流 (GET /explore)
    key: square/original/YYYY/MM/DD/{uuid}.mp4 / {uuid}.jpg
    ContentType: video/mp4 / image/jpeg
 
-5. POST http://100.64.0.53:8889/api/v1/moments/
+5. POST https://feed-api.xxai.com/api/v1/moments/
    body:
    {
      "content": "<文案>",
@@ -423,15 +423,14 @@ explore 推荐流 (GET /explore)
 
 | 环境 | 登录 API | 发布 API | 用户来源 |
 |------|----------|----------|----------|
-| **test** | `testapi-x.tp-ex.com/login` | `100.64.0.53:8889/api/v1/moments/` | `test_企管用户_邮箱密码pincode_500.csv.xlsx` |
-| **dev** | `devapi-x.tp-ex.com/login` | `100.64.0.47:8889/api/v1/moments/` | `pre_企管用户2000.csv` / 用户池 |
+| **pre** | `api.xxai.com/login` | `feed-api.xxai.com/api/v1/moments/` | `pre_企管用户2000.csv` / 用户池 |
 
-- **test 环境登录字段为 `email`**（非 `username`），否则返回 `code=10002`。
+- **pre 环境登录字段为 `email`**（非 `username`），否则返回 `code=10002`。
 - test 500 用户表格式：`序号, 用户昵称, 注册账户, 用户密码, 用户邮箱, Pincode`。
 
 ### 实战验证
 
-2026-07-20 实测（test 环境）：
+2026-07-20 实测（pre 环境）：
 
 - 5 个用户 × 5 条视频 = **5/5 成功**
 - 视频来源：小红书 explore 推荐流（美食、运动、护肤、书法等主题）
@@ -451,29 +450,29 @@ explore 推荐流 (GET /explore)
 #### 推荐方式：`run_xhs_video.py` 一键脚本（采集 + 发布）
 
 ```powershell
-# 设置环境变量指向 test
-$env:LOGIN_URL = "https://testapi-x.tp-ex.com/login"
-$env:UPLOAD_CREDENTIALS_URL = "https://testapi-x.tp-ex.com/file/upload/credentials"
-$env:MOMENTS_API_URL = "http://100.64.0.53:8889/api/v1/moments/"
+# 设置环境变量指向 pre
+$env:LOGIN_URL = "https://api.xxai.com/login"
+$env:UPLOAD_CREDENTIALS_URL = "https://api.xxai.com/file/upload/credentials"
+$env:MOMENTS_API_URL = "https://feed-api.xxai.com/api/v1/moments/"
 
 # 20 用户各发 1 个视频（自动采集 + 发布）
 py -3 scripts/run_xhs_video.py `
-    --accounts-xlsx "test_企管用户_邮箱密码pincode_500.csv.xlsx" `
-    --num-users 20 --env test --yes
+    --accounts-xlsx "pre_企管用户2000.csv" `
+    --num-users 20 --env pre --yes
 
 # 只采集不发布（预览模式）
 py -3 scripts/run_xhs_video.py --crawl-only --target 30 --output my_videos.csv
 
 # 从已有 CSV 发布（跳过采集）
 py -3 scripts/run_xhs_video.py `
-    --accounts-xlsx accounts.xlsx --csv moments_video.csv --num-users 10 --env test --yes
+    --accounts-xlsx accounts.xlsx --csv moments_video.csv --num-users 10 --env pre --yes
 ```
 
 `run_xhs_video.py` 内置的关键优化：
 
 | 优化项 | 说明 |
 |--------|------|
-| **环境自适应登录** | test 环境用 `email` 字段，dev 环境用 `username` |
+| **环境自适应登录** | pre 环境用 `email` 字段 |
 | **Referer 自动映射** | xhscdn.com → `Referer: https://www.xiaohongshu.com/`（避免封面 403） |
 | **封面多级 fallback** | `video.image` → `imageList[0]` → explore feed cover |
 | **失败自动重试** | 下载超时自动切换备用视频（`--max-retries`） |
@@ -495,10 +494,10 @@ py -3 scripts/post_video.py --account <email> --accounts-csv <csv> `
 或使用独立脚本一次性完成（采集 + 登录 + S3 + 发布）：
 
 ```powershell
-# 设置环境变量指向 test
-$env:LOGIN_URL = "https://testapi-x.tp-ex.com/login"
-$env:UPLOAD_CREDENTIALS_URL = "https://testapi-x.tp-ex.com/file/upload/credentials"
-$env:MOMENTS_API_URL = "http://100.64.0.53:8889/api/v1/moments/"
+# 设置环境变量指向 pre
+$env:LOGIN_URL = "https://api.xxai.com/login"
+$env:UPLOAD_CREDENTIALS_URL = "https://api.xxai.com/file/upload/credentials"
+$env:MOMENTS_API_URL = "https://feed-api.xxai.com/api/v1/moments/"
 
 py -3 scripts/post_video.py --account u_5x3ghocm@xxai.com `
     --accounts-csv "test_企管用户_邮箱密码pincode_500.csv.xlsx" `

@@ -467,7 +467,7 @@ def get_upload_credentials(token: str) -> dict:
     """获取 S3 临时上传凭证。"""
     upload_url = os.getenv(
         "UPLOAD_CREDENTIALS_URL",
-        "https://testapi-x.tp-ex.com/file/upload/credentials",
+        "https://api.xxai.com/file/upload/credentials",
     )
     resp = requests.post(
         upload_url,

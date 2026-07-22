@@ -45,7 +45,7 @@ PUT 一条 `xxai.fee_message`，把刚创建的 `moment_id` 作为 `post_id` 挂
 
 | 端点 | 说明 |
 | ---- | ---- |
-| `${ROOM_MOMENTS_API_URL}` | 房间发帖端点。默认走 feed 网关域名 `https://testapi-feed-x.tp-ex.com/api/v1/moments`（客户端实测），也可用内网 `${MOMENTS_API_URL}` |
+| `${ROOM_MOMENTS_API_URL}` | 房间发帖端点。默认走 feed 网关域名 `https://feed-api.xxai.com/api/v1/moments`（客户端实测），也可用 `${MOMENTS_API_URL}` |
 
 请求体（房间发帖关键字段）：
 
@@ -238,7 +238,7 @@ py -3 scripts/post_room_moments.py --csv moments_room.csv
 是否在房间 feed 顶部、图片张数是否正确：
 
 ```powershell
-$env:ROOM_FEED_URL  # 默认 http://100.64.0.53:8889/api/v1/feed/room_moments
+$env:ROOM_FEED_URL  # 默认 https://feed-api.xxai.com/api/v1/feed/room_moments
 ```
 
 ## 21.11 注意事项
@@ -246,6 +246,6 @@ $env:ROOM_FEED_URL  # 默认 http://100.64.0.53:8889/api/v1/feed/room_moments
 - **不硬编码任何凭据**：账号 / 密码 / 房间 ID 一律走环境变量或 `.env`。
 - **`room_id` 是 Matrix 风格字符串**（`!xxx:xxai.com`），原样传，别当数字。
 - **权限**：非房间创建者会被 `50006` 拒绝。
-- **端点**：客户端走 feed 域名 `testapi-feed-x.tp-ex.com`，内网压测走 `100.64.0.x`；
-  Matrix 消息走 `testd-x.tp-ex.com`。全部 `100.64.0.x` 需在内网 / VPN 环境。
+- **端点**：客户端和脚本统一走 feed 域名 `feed-api.xxai.com`；
+  Matrix 消息走 `d.xxai.com`。
 - `video_thumnail` 是后端接口的原始拼写，勿"纠正"。

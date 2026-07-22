@@ -64,9 +64,9 @@ npm run dev
         "PYTHON_BIN": "py -3",
         "GITLAB_BASE_URL": "http://100.64.0.45:8999",
         "GITLAB_TOKEN":    "glpat-xxx",
-        "LOGIN_URL":       "https://devapi-x.tp-ex.com/login",
-        "MOMENTS_API_URL": "http://100.64.0.47:8889/api/v1/moments/",
-        "UPLOAD_CREDENTIALS_URL": "https://devapi-x.tp-ex.com/file/upload/credentials"
+        "LOGIN_URL":       "https://api.xxai.com/login",
+        "MOMENTS_API_URL": "https://feed-api.xxai.com/api/v1/moments/",
+        "UPLOAD_CREDENTIALS_URL": "https://api.xxai.com/file/upload/credentials"
       }
     }
   }
