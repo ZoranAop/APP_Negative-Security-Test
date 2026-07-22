@@ -174,7 +174,8 @@ LANG_VIA = {
 }
 
 # 语言 → 发帖人角色 → 第一人称句式骨架。用 {title}{tag} 组合，全局去重。
-# ★ 来源过滤机制：模板中不再显式包含 {site}/{via}，避免暴露转载来源 ★
+# ★ 模板原则：纯描述性第一人称语气，无任何新闻/快讯/速报头部前缀 ★
+# ★ 不使用 "XX快訊｜" "Tech brief |" "今日科技｜" 等新闻体裁式呈现 ★
 # 6 语言：繁体中文 zh_hant / 英文 en / 日文 ja / 马来语 ms / 印地语 hi / 孟加拉语 bn
 LANG_TEMPLATES = {
     "zh_hant": {
@@ -184,17 +185,17 @@ LANG_TEMPLATES = {
             "{title}。這類進展對我們做技術的來說很有參考價值 {tag}",
         ],
         "科技愛好者": [
-            "科技快訊｜{title}。身為數碼控，這個我必須先收藏 {tag}",
+            "{title}。身為數碼控，這個我必須先收藏 {tag}",
             "看到這條：{title}，越看越入迷，科技迷狂喜 {tag}",
             "{title}。這波技術演進真的很有意思，分享給同好 {tag}",
         ],
         "投資觀察者": [
-            "【風向】{title}。從投資角度看，這裡面藏著機會與變數 {tag}",
+            "{title}。從投資角度看，這裡面藏著機會與變數 {tag}",
             "{title}。盯賽道的朋友可以留意一下這條 {tag}",
-            "值得記一筆｜{title}，資本市場大概率會有反應 {tag}",
+            "值得記一筆：{title}，資本市場大概率會有反應 {tag}",
         ],
         "媒體觀察員": [
-            "今日科技｜{title}。這條報導資訊量不小，轉來一起看 {tag}",
+            "{title}。這條資訊量不小，轉來一起看 {tag}",
             "幫大家劃重點：{title} {tag}",
             "{title}。一句話看懂今天的科技熱點 {tag}",
         ],
@@ -206,17 +207,17 @@ LANG_TEMPLATES = {
             "{title}. Genuinely useful reference for those of us building tech. {tag}",
         ],
         "Tech Enthusiast": [
-            "Tech brief | {title}. As a gadget nerd, bookmarking this one. {tag}",
+            "{title}. As a gadget nerd, bookmarking this one. {tag}",
             "Saw this: {title} — the more I read, the more hooked I am. {tag}",
             "{title}. This wave of tech is genuinely fascinating. {tag}",
         ],
         "Market Watcher": [
-            "[Signal] {title}. From an investing angle, there's opportunity hidden here. {tag}",
+            "{title}. From an investing angle, there's opportunity hidden here. {tag}",
             "{title}. Worth a look if you track this space. {tag}",
-            "Noting this | {title} — markets will likely react. {tag}",
+            "Noting this: {title} — markets will likely react. {tag}",
         ],
         "Media Observer": [
-            "Today in tech | {title}. This coverage carries real weight — sharing it. {tag}",
+            "{title}. This one carries real weight — sharing it. {tag}",
             "Key takeaway: {title} {tag}",
             "{title}. Today's tech headline in one line. {tag}",
         ],
@@ -228,17 +229,17 @@ LANG_TEMPLATES = {
             "{title}。技術に携わる自分にとって参考になる進展です {tag}",
         ],
         "ガジェット好き": [
-            "テック速報｜{title}。ガジェット好きとして、まず保存 {tag}",
+            "{title}。ガジェット好きとして、まず保存 {tag}",
             "見つけた：{title}、読むほどに引き込まれます {tag}",
             "{title}。この技術の進化は本当に面白い、共有します {tag}",
         ],
         "投資ウォッチャー": [
-            "【風向き】{title}。投資目線だと、ここにチャンスが潜んでいます {tag}",
+            "{title}。投資目線だと、ここにチャンスが潜んでいます {tag}",
             "{title}。この分野を追う人は要チェック {tag}",
-            "メモ｜{title}、市場は反応しそうです {tag}",
+            "メモ：{title}、市場は反応しそうです {tag}",
         ],
         "メディア観察者": [
-            "今日のテック｜{title}。この報道は情報量が多い、共有します {tag}",
+            "{title}。この報道は情報量が多い、共有します {tag}",
             "要点だけ：{title} {tag}",
             "{title}。今日のテックの見出しを一言で {tag}",
         ],
@@ -250,17 +251,17 @@ LANG_TEMPLATES = {
             "{title}. Perkembangan berguna buat kami yang membina teknologi. {tag}",
         ],
         "Peminat Teknologi": [
-            "Ringkasan teknologi | {title}. Sebagai peminat gajet, saya simpan dulu. {tag}",
+            "{title}. Sebagai peminat gajet, saya simpan dulu. {tag}",
             "Terjumpa berita ini: {title} — makin dibaca makin menarik. {tag}",
             "{title}. Gelombang teknologi ini sangat menarik, kongsi sini. {tag}",
         ],
         "Pemerhati Pasaran": [
-            "[Isyarat] {title}. Dari sudut pelaburan, ada peluang tersembunyi di sini. {tag}",
+            "{title}. Dari sudut pelaburan, ada peluang tersembunyi di sini. {tag}",
             "{title}. Patut diberi perhatian jika anda ikut bidang ini. {tag}",
-            "Catat ini | {title} — pasaran mungkin bertindak balas. {tag}",
+            "Catat ini: {title} — pasaran mungkin bertindak balas. {tag}",
         ],
         "Pemerhati Media": [
-            "Teknologi hari ini | {title}. Liputan ini padat maklumat — saya kongsikan. {tag}",
+            "{title}. Liputan ini padat maklumat — saya kongsikan. {tag}",
             "Intipati: {title} {tag}",
             "{title}. Tajuk teknologi hari ini dalam satu ayat. {tag}",
         ],
@@ -272,17 +273,17 @@ LANG_TEMPLATES = {
             "{title}। तकनीक में काम करने वालों के लिए यह उपयोगी जानकारी है। {tag}",
         ],
         "टेक प्रेमी": [
-            "टेक ख़बर | {title}। गैजेट प्रेमी होने के नाते इसे सहेज रहा हूँ। {tag}",
+            "{title}। गैजेट प्रेमी होने के नाते इसे सहेज रहा हूँ। {tag}",
             "यह देखा: {title} — जितना पढ़ो उतना दिलचस्प। {tag}",
             "{title}। तकनीक की यह लहर वाकई रोचक है, साझा कर रहा हूँ। {tag}",
         ],
         "बाज़ार पर्यवेक्षक": [
-            "[संकेत] {title}। निवेश के नज़रिये से इसमें अवसर छिपा है। {tag}",
+            "{title}। निवेश के नज़रिये से इसमें अवसर छिपा है। {tag}",
             "{title}। अगर आप इस क्षेत्र पर नज़र रखते हैं तो देखिए। {tag}",
-            "नोट करें | {title} — बाज़ार प्रतिक्रिया दे सकता है। {tag}",
+            "नोट करें: {title} — बाज़ार प्रतिक्रिया दे सकता है। {tag}",
         ],
         "मीडिया पर्यवेक्षक": [
-            "आज की तकनीक | {title}। यह रिपोर्ट जानकारी से भरी है — साझा कर रहा हूँ। {tag}",
+            "{title}। यह रिपोर्ट जानकारी से भरी है — साझा कर रहा हूँ। {tag}",
             "मुख्य बात: {title} {tag}",
             "{title}। आज की टेक सुर्खी एक लाइन में। {tag}",
         ],
@@ -294,17 +295,17 @@ LANG_TEMPLATES = {
             "{title}। প্রযুক্তিতে যারা কাজ করি তাদের জন্য কাজের তথ্য। {tag}",
         ],
         "প্রযুক্তিপ্রেমী": [
-            "টেক সংবাদ | {title}। গ্যাজেটপ্রেমী হিসেবে এটি সংরক্ষণ করছি। {tag}",
+            "{title}। গ্যাজেটপ্রেমী হিসেবে এটি সংরক্ষণ করছি। {tag}",
             "এটি দেখলাম: {title} — যত পড়ি তত আগ্রহ বাড়ে। {tag}",
             "{title}। প্রযুক্তির এই ঢেউ সত্যিই চমৎকার, শেয়ার করছি। {tag}",
         ],
         "বাজার পর্যবেক্ষক": [
-            "[সংকেত] {title}। বিনিয়োগের দৃষ্টিতে এখানে সুযোগ লুকিয়ে আছে। {tag}",
+            "{title}। বিনিয়োগের দৃষ্টিতে এখানে সুযোগ লুকিয়ে আছে। {tag}",
             "{title}। এই খাত অনুসরণ করলে দেখে নিন। {tag}",
-            "টুকে রাখুন | {title} — বাজার সাড়া দিতে পারে। {tag}",
+            "টুকে রাখুন: {title} — বাজার সাড়া দিতে পারে। {tag}",
         ],
         "মিডিয়া পর্যবেক্ষক": [
-            "আজকের প্রযুক্তি | {title}। এই প্রতিবেদন তথ্যবহুল — শেয়ার করছি। {tag}",
+            "{title}। এই প্রতিবেদন তথ্যবহুল — শেয়ার করছি। {tag}",
             "মূল কথা: {title} {tag}",
             "{title}। আজকের টেক শিরোনাম এক লাইনে। {tag}",
         ],
@@ -312,7 +313,7 @@ LANG_TEMPLATES = {
 }
 
 # 印尼语模板（与马来语类似但有本地化差异）
-# ★ 来源过滤：模板中不再包含 {site}/{via}，保持角色口吻原创感 ★
+# ★ 纯描述性第一人称，无新闻体裁前缀 ★
 LANG_TEMPLATES["id"] = {
     "Pakar Teknologi": [
         "{title} — dari sudut pandang industri, ini layak diperhatikan. {tag}",
@@ -320,17 +321,17 @@ LANG_TEMPLATES["id"] = {
         "{title}. Perkembangan yang berguna bagi kami yang membangun teknologi. {tag}",
     ],
     "Penggemar Teknologi": [
-        "Ringkasan teknologi | {title}. Sebagai penggemar gadget, saya simpan ini. {tag}",
+        "{title}. Sebagai penggemar gadget, saya simpan ini. {tag}",
         "Menemukan berita ini: {title} — semakin dibaca semakin menarik. {tag}",
         "{title}. Gelombang teknologi ini sangat menarik, berbagi di sini. {tag}",
     ],
     "Pengamat Pasar": [
-        "[Sinyal] {title}. Dari sudut investasi, ada peluang tersembunyi di sini. {tag}",
+        "{title}. Dari sudut investasi, ada peluang tersembunyi di sini. {tag}",
         "{title}. Patut diperhatikan jika Anda mengikuti bidang ini. {tag}",
-        "Catat ini | {title} — pasar mungkin akan bereaksi. {tag}",
+        "Catat ini: {title} — pasar mungkin akan bereaksi. {tag}",
     ],
     "Pengamat Media": [
-        "Teknologi hari ini | {title}. Liputan ini padat informasi — saya bagikan. {tag}",
+        "{title}. Liputan ini padat informasi — saya bagikan. {tag}",
         "Intisari: {title} {tag}",
         "{title}. Judul teknologi hari ini dalam satu baris. {tag}",
     ],
