@@ -61,15 +61,19 @@ except ImportError:
 
 
 def strip_source_attribution(text: str) -> str:
-    """从发帖文案中移除来源/出处标注，使内容更像原创分享。
+    """从发帖文案中移除所有来源/出处标注，完全消除广告宣传属性。
 
-    过滤规则：
+    设计原则：按发帖人角色发布时，文本中不应出现任何来源媒体信息，
+    使内容完全呈现为用户原创分享，避免广告宣传属性。
+
+    过滤规则（共 7 层）：
       1. 中文圆括号来源：（來源 XX）（來源：XX）
-      2. 英文圆括号来源：(via XX)(via: XX)(source: XX)(sumber: XX)(sumber XX)
+      2. 英文圆括号来源：(via XX)(source: XX)(sumber: XX)
       3. 中文方括号来源前缀：【XX快訊】【XX】（仅当 XX 是已知站名时）
-      4. 行内"via/來源/出典/sumber"+站名片段（句中或句尾）
-      5. 引述短语：摘自XX、reported by XX、dilaporkan oleh XX、——XX報導
-      6. 清理多余空白和残留标点
+      4. 英文方括号来源前缀：[TechCrunch] [BBC] 等（仅当内容是已知站名时）
+      5. 行内"via/來源/出典/sumber"+站名片段（句中或句尾）
+      6. 引述短语：摘自XX、reported by XX、XX報導、XX消息
+      7. 清理多余空白和残留标点
     """
     if not text:
         return text
@@ -93,7 +97,15 @@ def strip_source_attribution(text: str) -> str:
             '', text
         )
 
-    # --- 规则 4: 行内 via/來源/出典/sumber + 站名 ---
+    # --- 规则 4: 英文方括号来源前缀 ---
+    # [TechCrunch] [BBC] [Engadget] 等（仅匹配已知站名）
+    if _site_names_escaped:
+        text = _re.sub(
+            r'\[(?:' + _site_pattern + r')\]\s*',
+            '', text
+        )
+
+    # --- 规则 5: 行内 via/來源/出典/sumber + 站名 ---
     # "來源 36氪" "via TechCrunch" "出典 Gizmodo日本" 等（不在括号内的）
     if _site_names_escaped:
         text = _re.sub(
@@ -101,7 +113,7 @@ def strip_source_attribution(text: str) -> str:
             '', text
         )
 
-    # --- 规则 5: 引述短语 ---
+    # --- 规则 6: 引述短语及站名独立出现 ---
     # "摘自XX" "reported by XX" "dilaporkan (oleh) XX" "——XX報導/报道"
     if _site_names_escaped:
         text = _re.sub(r'摘自\s*(?:' + _site_pattern + r')', '', text)
@@ -114,18 +126,29 @@ def strip_source_attribution(text: str) -> str:
             r'[—\-]+\s*(?:' + _site_pattern + r')\s*(?:報導|报道|的報導|的报道|coverage)',
             '', text
         )
-        # "{site}報導" "{site}消息" "{site}的報導" 等独立出现
+        # "{site}報導" "{site}消息" "{site}的報導" 等独立出现（前面可能有标点）
         text = _re.sub(
             r'(?:' + _site_pattern + r')\s*(?:報導|报道|的報導|的报道|消息|lapor(?:an)?|reports?)',
             '', text
         )
+        # 句首 "站名：" / "站名 报道：" 前缀（如"36氪報導：XXX"）
+        text = _re.sub(
+            r'^(?:' + _site_pattern + r')\s*(?:報導|报道)?[:：]\s*',
+            '', text
+        )
+        # "据XX报道，" / "據XX報導，" （如"据IT之家报道，XXX"）
+        text = _re.sub(
+            r'[据據]\s*(?:' + _site_pattern + r')\s*(?:報導|报道|消息)?[,，、]?\s*',
+            '', text
+        )
 
-    # --- 规则 6: 清理残留 ---
+    # --- 规则 7: 清理残留 ---
     # 多余空格
     text = _re.sub(r'[ \t]{2,}', ' ', text)
-    # 残留的空括号 ()（）【】
+    # 残留的空括号 ()（）【】[]
     text = _re.sub(r'[（(]\s*[）)]', '', text)
     text = _re.sub(r'【\s*】', '', text)
+    text = _re.sub(r'\[\s*\]', '', text)
     # 残留的孤立标点组合：连续的 "——" "。。" "，，" 或句首标点
     text = _re.sub(r'(?:^|\s)[—\-]{2,}\s*', ' ', text)
     text = _re.sub(r'[，,]\s*[，,]', '，', text)
@@ -364,6 +387,10 @@ def _to_hant(s: str) -> str:
 def build_caption(item: dict, lang: str, persona: str, *, seen: set) -> str:
     """按语言 + 发帖人角色生成第一人称纯文本文案；与 seen 去重。
 
+    ★ 来源过滤原则：文本中完全不呈现来源信息，避免广告宣传属性 ★
+    - 标题本身先过滤来源标注（如标题带"36氪快讯"前缀）
+    - 最终文案再做一轮过滤（双保险）
+
     ★ 文案语言与 #标签语言保持一致规则 ★
     lang 参数决定：
       1. 正文文案使用的语言（从 LANG_TEMPLATES[lang] 选模板）
@@ -378,6 +405,10 @@ def build_caption(item: dict, lang: str, persona: str, *, seen: set) -> str:
     if lang == "zh_hant":
         title = _to_hant(title)
         site = _to_hant(site)
+
+    # ★ 第一层过滤：标题本身的来源标注（如 RSS 标题带"36氪快讯｜"前缀）
+    title = strip_source_attribution(title)
+
     lang_map = LANG_TEMPLATES.get(lang) or LANG_TEMPLATES["en"]
     templates = lang_map.get(persona) or next(iter(lang_map.values()))
 
@@ -385,7 +416,7 @@ def build_caption(item: dict, lang: str, persona: str, *, seen: set) -> str:
     random.shuffle(order)
     for ti in order:
         cap = templates[ti].format(title=title, site=site, tag=tag, via=via)
-        # ★ 来源过滤机制：按发帖者角色发布时，移除来源标注 ★
+        # ★ 第二层过滤：最终文案兜底过滤（防止任何残留来源泄漏）
         cap = strip_source_attribution(cap)
         cap = cap.replace("  ", " ").strip()
         if cap not in seen:
