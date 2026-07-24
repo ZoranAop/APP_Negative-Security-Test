@@ -15,6 +15,7 @@ import argparse
 import csv
 import io
 import random
+import re as _re
 import subprocess
 import sys
 import time
@@ -30,63 +31,86 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
 PY = [sys.executable]
 
-# 繁體中文台灣生活配文模板
-OPENERS = [
-    "剛看到這則，覺得很有意思 — ",
-    "今天的生活資訊收穫又+1。",
-    "這種內容就是要分享出來的！",
-    "滑手機看到的，忍不住按了收藏。",
-    "台灣的日常總是充滿驚喜。",
-    "生活中的小發現，記錄一下。",
-    "又學到新東西了，趕緊記下來。",
-    "這個話題最近蠻熱的，來聊聊。",
-    "看到這個忍不住想分享給大家。",
-    "每天都有新鮮事，今天的是這個。",
-    "身邊的朋友都在討論這件事。",
-    "覺得這個蠻實用的，先存起來。",
-]
+# ---------------------------------------------------------------------------
+# 来源过滤（与 run_tech.py strip_source_attribution 对齐）
+# ---------------------------------------------------------------------------
+_KNOWN_SITES = {"Yahoo奇摩", "自由時報", "聯合報", "yahoo_life", "ltn_life", "udn_life"}
 
-MIDDLES = [
-    "生活就是要多留意這些細節。",
-    "有些事情不看新聞還真不知道。",
-    "台灣真的什麼有趣的事都有。",
-    "這種資訊對日常生活很有幫助。",
-    "知道越多，生活品質越高。",
-    "有時候一則小新聞就能讓心情變好。",
-    "這就是台灣生活的魅力所在。",
-    "跟上時事才不會跟社會脫節。",
-    "簡單的事情往往最值得關注。",
-    "日常中的美好就藏在這些地方。",
-]
 
-CLOSERS = [
-    "繼續關注生活大小事 ✨", "又是充實的一天 📝",
-    "台灣加油 🇹🇼", "分享給需要的人 💫",
-    "生活處處是學問 🌟", "保持好奇心最重要 🌿",
-    "明天見 ☀️", "一起來討論吧 💬",
-]
+def strip_source_attribution(text: str) -> str:
+    """移除所有来源/出处标注，使文案呈现为用户原创分享。"""
+    if not text:
+        return text
+    # 1. 中文圆括号来源
+    text = _re.sub(r'[（(]\s*[來来]源\s*[:：]?\s*[^）)]+[）)]', '', text)
+    # 2. 英文圆括号 via/source
+    text = _re.sub(r'\(\s*(?:via|source|sumber)\s*[:：]?\s*[^)]+\)', '', text)
+    # 3. 中文方括号前缀
+    _escaped = [_re.escape(n) for n in _KNOWN_SITES if n]
+    if _escaped:
+        _pat = '|'.join(sorted(_escaped, key=len, reverse=True))
+        text = _re.sub(r'【(?:' + _pat + r')(?:快訊|快讯|消息)?】', '', text)
+        text = _re.sub(r'\[(?:' + _pat + r')\]\s*', '', text)
+        # 5. 行内 via/來源 + 站名
+        text = _re.sub(r'(?:來源|来源|via)\s*[:：]?\s*(?:' + _pat + r')', '', text)
+        # 6. 引述短语
+        text = _re.sub(r'摘自\s*(?:' + _pat + r')', '', text)
+        text = _re.sub(r'(?:' + _pat + r')\s*(?:報導|报道|消息)', '', text)
+        text = _re.sub(r'[据據]\s*(?:' + _pat + r')\s*(?:報導|报道|消息)?[,，]?\s*', '', text)
+    # 7. 清理残留
+    text = _re.sub(r'[ \t]{2,}', ' ', text)
+    text = _re.sub(r'[（(]\s*[）)]', '', text)
+    text = _re.sub(r'【\s*】', '', text)
+    text = _re.sub(r'\[\s*\]', '', text)
+    text = _re.sub(r'^\s*[，,。.、；;：:—\-]+\s*', '', text)
+    text = _re.sub(r' {2,}', ' ', text)
+    return text.strip()
 
-HASHTAGS = [
-    "#台灣 #生活 #日常", "#台灣生活 #資訊 #分享",
-    "#生活大小事 #台灣日常 #記錄", "#今日話題 #生活 #台灣",
-    "#日常生活 #實用 #台灣人", "#生活情報 #分享日常 #台灣",
-    "#台灣新聞 #生活資訊 #有趣", "#每日分享 #台灣 #生活記錄",
+
+# 語言標籤（與 run_tech.py LANG_TAG 對齊）
+LANG_TAG = "#台灣生活"
+
+# 繁體中文純描述第一人稱模板
+# ★ 格式：{title}，<感受> {tag} ★
+# ★ 禁止：「」【】via 來源 站名 等裝飾性/來源標記 ★
+TEMPLATES = [
+    "{title}，剛看到覺得很有意思 {tag}",
+    "{title}，今天的生活資訊收穫又多了一條 {tag}",
+    "{title}，這種內容就是要分享出來的 {tag}",
+    "{title}，滑手機看到忍不住存下來 {tag}",
+    "{title}，台灣的日常總是充滿驚喜 {tag}",
+    "{title}，生活中的小發現值得記錄 {tag}",
+    "{title}，又學到新東西了 {tag}",
+    "{title}，這話題最近蠻熱的 {tag}",
+    "{title}，看到忍不住想分享給大家 {tag}",
+    "{title}，每天都有新鮮事 {tag}",
+    "{title}，身邊朋友都在討論 {tag}",
+    "{title}，覺得蠻實用的先存起來 {tag}",
+    "{title}，生活就是要多留意這些細節 {tag}",
+    "{title}，有些事不看真不知道 {tag}",
+    "{title}，這對日常生活很有幫助 {tag}",
+    "{title}，知道越多生活品質越高 {tag}",
+    "{title}，簡單的事往往最值得關注 {tag}",
+    "{title}，日常中的美好就藏在這些地方 {tag}",
 ]
 
 
 def _caption(title: str, site_name: str, rng: random.Random, seen: set) -> str:
+    # 第一層過濾：標題本身的來源標註
+    title = strip_source_attribution(title)
     for _ in range(40):
-        opener = rng.choice(OPENERS)
-        middle = rng.choice(MIDDLES)
-        closer = rng.choice(CLOSERS)
-        hashtags = rng.choice(HASHTAGS)
-        cap = f"{opener}「{title[:35]}」\n{middle}\n{closer}\nvia {site_name} {hashtags}"
+        tpl = rng.choice(TEMPLATES)
+        cap = tpl.format(title=title[:40], tag=LANG_TAG)
+        # 第二層過濾：最終文案兜底
+        cap = strip_source_attribution(cap)
         if len(cap) > 280:
-            cap = f"{opener}「{title[:25]}…」\n{closer}\nvia {site_name} {hashtags}"
+            cap = tpl.format(title=title[:25], tag=LANG_TAG)
+            cap = strip_source_attribution(cap)
         if cap not in seen:
             seen.add(cap)
             return cap
-    return f"{rng.choice(OPENERS)}「{title[:30]}」\n{rng.choice(CLOSERS)}\n{rng.choice(HASHTAGS)}"
+    base = TEMPLATES[0].format(title=title[:30], tag=LANG_TAG)
+    return strip_source_attribution(base)
 
 
 def _run(cmd):

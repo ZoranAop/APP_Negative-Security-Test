@@ -12,6 +12,7 @@ import argparse
 import csv
 import io
 import random
+import re as _re
 import subprocess
 import sys
 import time
@@ -27,66 +28,82 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
 PY = [sys.executable]
 
-OPENERS = [
-    "This popped up in my feed and I couldn't scroll past — ",
-    "Love stumbling upon content like this. ",
-    "Adding this to my \"things to try\" list immediately. ",
-    "The internet delivered today. ",
-    "This is the kind of content that makes my day better. ",
-    "Bookmark-worthy stuff right here — ",
-    "Sharing because this genuinely made me smile. ",
-    "Okay this is too good not to share. ",
-    "My feed just got a whole lot more interesting. ",
-    "Lifestyle content done right — ",
-    "Found my new weekend inspo. ",
-    "This is exactly what I needed to see today. ",
-]
+# ---------------------------------------------------------------------------
+# 来源过滤（与 run_tech.py strip_source_attribution 对齐）
+# ---------------------------------------------------------------------------
+_KNOWN_SITES = {"BuzzFeed", "USA Today", "Martha Stewart", "buzzfeed", "usatoday", "marthastewart"}
 
-MIDDLES = [
-    "Sometimes the simplest ideas are the most brilliant. ",
-    "It's the little things that make life feel put together. ",
-    "Always on the lookout for content that's actually useful. ",
-    "The kind of thing you save and actually come back to later. ",
-    "Practical, beautiful, and well-timed — what more could you want? ",
-    "Life's too short not to enjoy the small pleasures. ",
-    "This is giving main character energy in the best way. ",
-    "Quality over quantity, always. ",
-    "The details here are everything. ",
-    "Genuinely inspired to try something new this weekend. ",
-]
 
-CLOSERS = [
-    "Living my best life, one bookmark at a time ✨",
-    "Good vibes only 🌿",
-    "Weekend mood activated 🏡",
-    "Saving this for later 📌",
-    "Life is in the details 💫",
-    "Inspired and ready to go 🌟",
-    "This is the content I signed up for 👏",
-    "Adding to the vision board 🎯",
-]
+def strip_source_attribution(text: str) -> str:
+    """Remove all source/attribution marks so the post looks user-original."""
+    if not text:
+        return text
+    # 1. Parenthesized source
+    text = _re.sub(r'[（(]\s*[來来]源\s*[:：]?\s*[^）)]+[）)]', '', text)
+    # 2. via/source in parens
+    text = _re.sub(r'\(\s*(?:via|source|sumber)\s*[:：]?\s*[^)]+\)', '', text)
+    # 3/4. Bracket prefixes with known sites
+    _escaped = [_re.escape(n) for n in _KNOWN_SITES if n]
+    if _escaped:
+        _pat = '|'.join(sorted(_escaped, key=len, reverse=True))
+        text = _re.sub(r'\[(?:' + _pat + r')\]\s*', '', text)
+        # 5. Inline via + site name
+        text = _re.sub(r'(?:via|source|from)\s*[:：]?\s*(?:' + _pat + r')', '', text, flags=_re.IGNORECASE)
+        # 6. reported by / courtesy of
+        text = _re.sub(r'(?:reported by|courtesy of)\s+(?:' + _pat + r')', '', text, flags=_re.IGNORECASE)
+    # 7. Cleanup
+    text = _re.sub(r'[ \t]{2,}', ' ', text)
+    text = _re.sub(r'[（(]\s*[）)]', '', text)
+    text = _re.sub(r'\[\s*\]', '', text)
+    text = _re.sub(r'^\s*[,.\-—;:]+\s*', '', text)
+    text = _re.sub(r' {2,}', ' ', text)
+    return text.strip()
 
-HASHTAGS = [
-    "#Lifestyle #Inspo #Daily", "#USLife #Trending #GoodVibes",
-    "#Wellness #Living #Aesthetic", "#HomeLife #Tips #MoodBoard",
-    "#AmericanLife #Culture #Trending", "#LifeHacks #Style #Weekend",
-    "#Inspiration #Content #Living", "#DailyLife #Discover #Vibes",
+
+# 语言标签（与 run_tech.py LANG_TAG 对齐）
+LANG_TAG = "#Lifestyle"
+
+# English pure-descriptive first-person templates
+# ★ Format: {title}, <reaction> {tag} ★
+# ★ Forbidden: "title", via, source names, decorative symbols ★
+TEMPLATES = [
+    "{title}, this popped up in my feed and I couldn't scroll past {tag}",
+    "{title}, love stumbling upon content like this {tag}",
+    "{title}, adding this to my things-to-try list {tag}",
+    "{title}, the internet delivered today {tag}",
+    "{title}, this made my day better {tag}",
+    "{title}, bookmark-worthy stuff right here {tag}",
+    "{title}, sharing because this genuinely made me smile {tag}",
+    "{title}, too good not to share {tag}",
+    "{title}, my feed just got more interesting {tag}",
+    "{title}, lifestyle content done right {tag}",
+    "{title}, found my new weekend inspo {tag}",
+    "{title}, exactly what I needed to see today {tag}",
+    "{title}, sometimes the simplest ideas are the most brilliant {tag}",
+    "{title}, the little things that make life feel put together {tag}",
+    "{title}, genuinely inspired to try something new {tag}",
+    "{title}, quality over quantity always {tag}",
+    "{title}, the details here are everything {tag}",
+    "{title}, saving this for later {tag}",
 ]
 
 
 def _caption(title: str, site_name: str, rng: random.Random, seen: set) -> str:
+    # Layer 1: strip source from title itself
+    title = strip_source_attribution(title)
     for _ in range(40):
-        opener = rng.choice(OPENERS)
-        middle = rng.choice(MIDDLES)
-        closer = rng.choice(CLOSERS)
-        hashtags = rng.choice(HASHTAGS)
-        cap = f"{opener}\"{title}\"\n{middle}{closer}\nvia {site_name} {hashtags}"
+        tpl = rng.choice(TEMPLATES)
+        cap = tpl.format(title=title[:60], tag=LANG_TAG)
+        # Layer 2: final caption cleanup
+        cap = strip_source_attribution(cap)
         if len(cap) > 300:
-            cap = f"{opener}\"{title[:50]}...\"\n{closer}\nvia {site_name} {hashtags}"
+            cap = tpl.format(title=title[:45], tag=LANG_TAG)
+            cap = strip_source_attribution(cap)
         if cap not in seen:
             seen.add(cap)
             return cap
-    return f"{rng.choice(OPENERS)}\"{title[:55]}\"\n{rng.choice(CLOSERS)}\n{rng.choice(HASHTAGS)}"
+    base = TEMPLATES[0].format(title=title[:50], tag=LANG_TAG)
+    return strip_source_attribution(base)
 
 
 def _run(cmd):

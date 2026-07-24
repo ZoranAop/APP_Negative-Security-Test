@@ -15,6 +15,7 @@ import argparse
 import csv
 import io
 import random
+import re as _re
 import subprocess
 import sys
 import time
@@ -30,63 +31,85 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
 PY = [sys.executable]
 
-# 日本語配文テンプレート（第一人称シェアスタイル）
-OPENERS = [
-    "これ気になって読んじゃった — ",
-    "今日見つけた中で一番テンション上がったやつ。",
-    "こういう記事大好きなんだよね。",
-    "ちょっとこれ見て！すごく良かった。",
-    "暮らしのヒントがまた一つ増えた気がする。",
-    "思わずブックマークしちゃった。",
-    "今週の「へぇ〜」ポイント。",
-    "誰かに教えたくなる系の情報。",
-    "こういうの知ると毎日がちょっと楽しくなる。",
-    "ネットサーフィンの成果がこちら。",
-    "読み物として純粋に面白かった。",
-    "日常が少し豊かになるTips。",
-]
+# ---------------------------------------------------------------------------
+# 来源过滤（与 run_tech.py strip_source_attribution 对齐）
+# ---------------------------------------------------------------------------
+_KNOWN_SITES = {"grape", "hint-pot", "Pouch", "macaroni", "TRILL",
+                "grapee", "hintpot", "youpouch", "trilltrill"}
 
-MIDDLES = [
-    "知らなかったことって意外と多いなって実感する。",
-    "細かいところにこだわるのって結局大事だよね。",
-    "こういう情報、もっと早く知りたかった。",
-    "実際にやってみたくなるクオリティ。",
-    "日本ならではの感性が詰まってる。",
-    "何気ない日常が特別になる瞬間。",
-    "丁寧に暮らすってこういうことかも。",
-    "季節を感じながら過ごす贅沢。",
-    "シンプルだけど、奥が深い。",
-    "こういうのを「いい情報」って言うんだろうな。",
-]
 
-CLOSERS = [
-    "暮らしのアップデート完了 ✨", "また一つ賢くなった気分 📝",
-    "週末やってみよう 🌿", "保存して後で読み返す 📌",
-    "生活の質、じわじわ上がってる 💫", "こういうの集めるの好き 🎯",
-    "明日からちょっと変わりそう 🌟", "いい一日のスタート ☀️",
-]
+def strip_source_attribution(text: str) -> str:
+    """来源/出処標記をすべて除去し、ユーザーオリジナル投稿に見せる。"""
+    if not text:
+        return text
+    # 1. 中文圆括号来源（万一标题带中文来源）
+    text = _re.sub(r'[（(]\s*[來来]源\s*[:：]?\s*[^）)]+[）)]', '', text)
+    # 2. 英文/日文圆括号 via/source/出典
+    text = _re.sub(r'\(\s*(?:via|source|出典)\s*[:：]?\s*[^)]+\)', '', text)
+    # 3/4. 方括号前缀
+    _escaped = [_re.escape(n) for n in _KNOWN_SITES if n]
+    if _escaped:
+        _pat = '|'.join(sorted(_escaped, key=len, reverse=True))
+        text = _re.sub(r'【(?:' + _pat + r')(?:速報|ニュース)?】', '', text)
+        text = _re.sub(r'\[(?:' + _pat + r')\]\s*', '', text)
+        # 5. 行内 via/出典 + 站名
+        text = _re.sub(r'(?:出典|via|來源|来源)\s*[:：]?\s*(?:' + _pat + r')', '', text)
+        # 6. 引述
+        text = _re.sub(r'(?:' + _pat + r')\s*(?:より|から|報道|レポート)', '', text)
+    # 7. 清理残留
+    text = _re.sub(r'[ \t]{2,}', ' ', text)
+    text = _re.sub(r'[（(]\s*[）)]', '', text)
+    text = _re.sub(r'【\s*】', '', text)
+    text = _re.sub(r'\[\s*\]', '', text)
+    text = _re.sub(r'^\s*[，,。.、；;：:—\-]+\s*', '', text)
+    text = _re.sub(r' {2,}', ' ', text)
+    return text.strip()
 
-HASHTAGS = [
-    "#暮らし #日常 #ライフスタイル", "#生活の知恵 #日本 #情報",
-    "#丁寧な暮らし #毎日 #発見", "#ライフハック #日常生活 #おすすめ",
-    "#暮らしを楽しむ #日本文化 #季節", "#生活 #インスピレーション #シェア",
-    "#今日の一品 #おうち時間 #リラックス", "#日本の暮らし #トレンド #気になる",
+
+# 語言標籤（與 run_tech.py LANG_TAG 對齊）
+LANG_TAG = "#暮らし"
+
+# 日本語純描述第一人称テンプレート
+# ★ 形式：{title}、<感想> {tag} ★
+# ★ 禁止：「」【】via 出典 サイト名 等の装飾/出典マーク ★
+TEMPLATES = [
+    "{title}、気になって読んじゃった {tag}",
+    "{title}、今日見つけた中で一番テンション上がった {tag}",
+    "{title}、こういう記事大好き {tag}",
+    "{title}、すごく良かったので共有 {tag}",
+    "{title}、暮らしのヒントがまた増えた {tag}",
+    "{title}、思わずブックマークした {tag}",
+    "{title}、今週のへぇポイント {tag}",
+    "{title}、誰かに教えたくなる情報 {tag}",
+    "{title}、知ると毎日がちょっと楽しくなる {tag}",
+    "{title}、ネットサーフィンの成果 {tag}",
+    "{title}、読み物として純粋に面白い {tag}",
+    "{title}、日常が少し豊かになるヒント {tag}",
+    "{title}、知らなかったことって意外と多い {tag}",
+    "{title}、実際にやってみたくなる {tag}",
+    "{title}、日本ならではの感性が詰まってる {tag}",
+    "{title}、何気ない日常が特別になる瞬間 {tag}",
+    "{title}、丁寧に暮らすってこういうことかも {tag}",
+    "{title}、シンプルだけど奥が深い {tag}",
 ]
 
 
 def _caption(title: str, site_name: str, rng: random.Random, seen: set) -> str:
+    # 第1層：タイトル自体の出典除去
+    title = strip_source_attribution(title)
     for _ in range(40):
-        opener = rng.choice(OPENERS)
-        middle = rng.choice(MIDDLES)
-        closer = rng.choice(CLOSERS)
-        hashtags = rng.choice(HASHTAGS)
-        cap = f"{opener}「{title[:40]}」\n{middle}\n{closer}\nvia {site_name} {hashtags}"
+        tpl = rng.choice(TEMPLATES)
+        cap = tpl.format(title=title[:40], tag=LANG_TAG)
+        # 第2層：最終キャプション兜底フィルタ
+        cap = strip_source_attribution(cap)
         if len(cap) > 280:
-            cap = f"{opener}「{title[:25]}…」\n{closer}\nvia {site_name} {hashtags}"
+            cap = tpl.format(title=title[:25], tag=LANG_TAG)
+            cap = strip_source_attribution(cap)
         if cap not in seen:
             seen.add(cap)
             return cap
-    return f"{rng.choice(OPENERS)}「{title[:30]}」\n{rng.choice(CLOSERS)}\n{rng.choice(HASHTAGS)}"
+    base = TEMPLATES[0].format(title=title[:30], tag=LANG_TAG)
+    return strip_source_attribution(base)
 
 
 def _run(cmd):
