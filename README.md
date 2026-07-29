@@ -3,18 +3,13 @@
 > 通过 HTTP 接口方式向 XXAI 广场（朋友圈/动态）批量发布图文 / 视频内容。
 > 本仓库基于 `tester/auto-poster` 的工作流沉淀而成，并附带 **MCP Server**，可被大模型 / Agent 直接调用。
 
-最近更新：2026-07-13
+最近更新：2026-07-29
 
-- 加入 **混合交错发帖**（拟真 / 去规则化）：每用户随机帖数 + 文本/图文/问题（T/I/Q）交错 +
-  单语分配 + 两级去重，一键脚本 `run_mixed.py`，发布层新增登录自适应/节奏打散/失败重试/
-  回写去重档（见 [`docs/25-mixed-posting.md`](docs/25-mixed-posting.md)）
-- 加入 **多源采集**（opennana / open-prompts / lovimg）+ **广告过滤**
-- 加入 **多语言主体视角文案**（EN / 繁中 / 简中 / 日）
-- 加入 **两阶段发布**（避开并发登录 429），支持 token 复用
-- 加入 **地区/站点内容线**：马来西亚 / 印尼 / 台湾（`run_malaysia.py` / `run_indonesia.py` / `run_taiwan.py`），
-  以及 **刺猬社区 cizucu.com 摄影图片线**（`run_cizucu.py`，见 [`docs/23-cizucu.md`](docs/23-cizucu.md)）
-- 加入 **Web3 资讯多源线**：9 个 Web3 媒体（TechFlow / Web3BBS / ForesightNews / ME News / Web3Caff /
-  PANews / BingX / BlockWeeks / 吴说）统一 `web3` 标签，纯文本发布（`run_web3.py`，见 [`docs/24-web3-sources.md`](docs/24-web3-sources.md)）
+- **Pre 全面测试报告**：基于 `test/regression-suite-v2` 分支完成 7 套件自动化 + 发帖实战 + 模拟器UI + 防盗链专项验证（详见 [`testcases/automation/docs/findings_history.md`](testcases/automation/docs/findings_history.md)）
+  - 280 用例 247 通过 (88.2%)，发现 9 HIGH + 8 MEDIUM + 3 LOW
+  - 新增 `s07_publish_depth` 套件：并发 429 行为 + 私密帖 + 图片质量边界 + Token 复用 + 去重验证
+  - 发帖管线对比结论：`publish_from_tokens.py` 在防 429、图片质量、Token 复用方面全面优于 `post_moments.py`，推荐生产统一使用
+- 更新 Pre 用户表：`pre_企管用户2000.csv` → 拆分为 `pre_企管用户_1720.csv`（普通企管用户 1720 人）和 `pre_企管用户_街拍摄影师.csv`（街拍摄影师标签用户 80 人），移除原作废的 2000 人表
 
 ---
 
@@ -48,7 +43,7 @@ xxai-square-publisher/
 │       └── run-video-post.md
 ├── scripts/                        # 可运行 Python 工具
 │   ├── post_moments.py             # 图文 / 文本批量发帖（登录并发，≤10 账号最方便）
-│   ├── publish_from_tokens.py      # 两阶段发帖：顺序登录 → 并发发布（≥15 账号）
+│   ├── publish_from_tokens.py      # 三阶段发帖：顺序登录 → S3上传 → 并发发布（推荐生产使用）
 │   ├── post_single_moment_vision.py# 单条带 Vision LLM 的发帖
 │   ├── post_video.py               # 视频发帖
 │   ├── opennana_fetch.py           # 从 OpenNana 拉图/视频（含 --exclude-ads / --theme / --dedupe-file，输出 _slug 列）
@@ -71,6 +66,14 @@ xxai-square-publisher/
 ├── templates/                      # CSV 模板
 │   ├── accounts.example.csv        # 账号 CSV 模板（不含真实账号）
 │   └── moments.example.csv         # 素材 CSV 模板
+├── testcases/                      # 自动化 + 手工测试套件
+│   ├── automation/                 # Python 自动化测试（7 套件）
+│   │   ├── run_all.py              # 统一入口 (--suite --env)
+│   │   ├── suites/                 # s99-s07 套件实现
+│   │   ├── config/                 # endpoints.json + env_*.json
+│   │   ├── lib/                    # HTTPClient + Reporter
+│   │   └── docs/                   # test_design + findings_history + manual_ui_checklist
+│   └── manual/                     # M01-M17 手工测试用例（227 条）
 ├── mcp/                            # 可被模型调用的 MCP Server（Node + TypeScript）
 │   ├── src/index.ts                # 入口
 │   ├── src/tools.ts                # 所有工具实现
@@ -163,6 +166,15 @@ py -3 scripts/post_moments.py --accounts-csv accounts_10.csv --csv moments.csv \
 
 本仓库继承并取代了 [`tester/auto-poster`](http://100.64.0.45:8999/tester/auto-poster) 的发布工具链，
 详见 [`docs/10-auto-poster-merge.md`](docs/10-auto-poster-merge.md)。
+
+近期改动摘要（v0.3）：
+
+- **Pre 全面测试 (2026-07-29)**：7 套件自动化 + 发帖实战 + 模拟器UI 全量回归 280 用例 247 通过 (88.2%)
+- 新增 `s07_publish_depth` 测试套件：覆盖并发 429、私密帖、图片质量边界、Token 复用、去重机制
+- 发帖管线对比验证：`publish_from_tokens.py` 在防 429、图片质量 7 步管线、Token 复用方面全面优于 `post_moments.py`
+- 防盗链专项：CloudFront Function 确认运行，发现 Referer indexOf 子串绕过 + OPTIONS 预检绕过 2 个高危，建议改用精确匹配
+- 模拟器 UI：逍遥模拟器 1.3.0 (versionCode=2540) 基础验证通过，发现钱包 Tab 未按计划移除
+- 测试报告详见 [`testcases/automation/docs/findings_history.md`](testcases/automation/docs/findings_history.md)
 
 近期改动摘要（v0.2）：
 
