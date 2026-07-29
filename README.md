@@ -2,14 +2,17 @@
 
 > 通过 HTTP 接口方式向 XXAI 广场（朋友圈/动态）批量发布图文 / 视频内容。
 > 本仓库基于 `tester/auto-poster` 的工作流沉淀而成，并附带 **MCP Server**，可被大模型 / Agent 直接调用。
+>
+> **双分支**: `main`（发布工具链）← 与 → `test/regression-suite-v2`（测试套件，独立分支）
 
 最近更新：2026-07-29
 
-- **Pre 全面测试报告**：基于 `test/regression-suite-v2` 分支完成 7 套件自动化 + 发帖实战 + 模拟器UI + 防盗链专项验证（详见 [`testcases/automation/docs/findings_history.md`](testcases/automation/docs/findings_history.md)）
-  - 280 用例 247 通过 (88.2%)，发现 9 HIGH + 8 MEDIUM + 3 LOW
-  - 新增 `s07_publish_depth` 套件：并发 429 行为 + 私密帖 + 图片质量边界 + Token 复用 + 去重验证
-  - 发帖管线对比结论：`publish_from_tokens.py` 在防 429、图片质量、Token 复用方面全面优于 `post_moments.py`，推荐生产统一使用
 - 更新 Pre 用户表：`pre_企管用户2000.csv` → 拆分为 `pre_企管用户_1720.csv`（普通企管用户 1720 人）和 `pre_企管用户_街拍摄影师.csv`（街拍摄影师标签用户 80 人），移除原作废的 2000 人表
+- 新增 `publish_from_tokens.py` 三阶段流水线（顺序登录 → S3上传 → 并发发布），全面优于 `post_moments.py` 并发模式
+- 加入 **混合交错发帖**（拟真 / 去规则化）：每用户随机帖数 + 文本/图文/问题（T/I/Q）交错 + 单语分配 + 两级去重，一键脚本 `run_mixed.py`（见 [`docs/25-mixed-posting.md`](docs/25-mixed-posting.md)）
+- 加入 **多源采集**（opennana / open-prompts / lovimg）+ **广告过滤**
+- 加入 **多语言主体视角文案**（EN / 繁中 / 简中 / 日）
+- 加入 **地区/站点内容线**：马来西亚 / 印尼 / 台湾 / 新加坡 / 越南 / 日本 / 欧洲 / 美国 / Web3 等 28 条管线
 
 ---
 
@@ -25,91 +28,71 @@ xxai-square-publisher/
 │   ├── 03-post-moments.md          # post_moments.py / publish_from_tokens.py 用法
 │   ├── 04-content-pipeline.md      # 素材采集 + 文案改写规范
 │   ├── 05-batch-records.md         # 已执行批次记录与样本账号
-│   ├── 06-post-video.md            # 视频发布流程（重点）与 media_info 格式
+│   ├── 06-post-video.md            # 视频发布流程与 media_info 格式
 │   ├── 07-artifacts.md             # 产物文件清单
 │   ├── 08-quick-replay.md          # 复用步骤速查
 │   ├── 09-security.md              # 凭证与脱敏约定
 │   ├── 10-auto-poster-merge.md     # 与 tester/auto-poster 的合并说明
 │   ├── 11-anti-ad-filtering.md     # 广告 / 商业素材过滤规则
-│   ├── 12-multi-source.md          # 多源素材采集（opennana / openprompts / lovimg）
+│   ├── 12-multi-source.md          # 多源素材采集
 │   ├── 13-multilang-captions.md    # 多语言主体视角文案改写
-│   ├── 14-room-moments.md          # 群组 / 房间发帖（room_id）接口与用法
-│   ├── 23-cizucu.md                # 刺猬社区 cizucu.com 摄影图片采集与发布（Playwright + 摄影师口吻）
-│   ├── 24-web3-sources.md          # Web3 资讯多源采集与发布（9 个媒体，web3 标签，纯文本）
-│   ├── 25-mixed-posting.md         # 混合交错发帖（随机帖数 + 文本/图文/问题交错 + 发布层优化）
+│   ├── 14-room-moments.md          # 群组 / 房间发帖
+│   ├── 15-image-hd-sources.md      # yituyu/tuzi 高清图源
+│   ├── 16-xiaohongshu-square.md    # 小红书广场
+│   ├── 20-dedupe.md                # 跨批次去重
+│   ├── 23-cizucu.md                # cizucu 摄影社区
+│   ├── 24-web3-sources.md          # Web3 资讯多源
+│   ├── 25-mixed-posting.md         # 混合交错发帖
+│   ├── 28-source-attribution-filter.md # 来源过滤
 │   └── runbooks/                   # 可直接照抄的 runbook
-│       ├── run-image-post.md
-│       ├── run-room-post.md
-│       └── run-video-post.md
 ├── scripts/                        # 可运行 Python 工具
-│   ├── post_moments.py             # 图文 / 文本批量发帖（登录并发，≤10 账号最方便）
-│   ├── publish_from_tokens.py      # 三阶段发帖：顺序登录 → S3上传 → 并发发布（推荐生产使用）
-│   ├── post_single_moment_vision.py# 单条带 Vision LLM 的发帖
+│   ├── post_moments.py             # 图文/文本批量发帖（≤10 账号）
+│   ├── publish_from_tokens.py      # 三阶段发帖：顺序登录 → S3 → 并发发布（✨推荐生产）
 │   ├── post_video.py               # 视频发帖
-│   ├── opennana_fetch.py           # 从 OpenNana 拉图/视频（含 --exclude-ads / --theme / --dedupe-file，输出 _slug 列）
-│   ├── fetch_openprompts.py        # 从 open-prompts.com 拉图
-│   ├── fetch_lovimg.py             # 从 lovimg.com 拉图（SSR 反解）
-│   ├── multi_source_fetch.py       # 多源统一入口（默认过滤广告 + 主题过滤 + 跨源去重）
-│   ├── caption_multilang.py        # 三语言/四语言主体视角文案改写
-│   ├── record_sent_slugs.py        # 发完回写已发 slug 到 used_slugs.json（下次拉图自动排除）
-│   ├── fetch_cizucu.py             # 从 cizucu.com（刺猬摄影社区）主题模块采集图片（Playwright，见 docs/23）
-│   ├── run_cizucu.py               # cizucu 一键发布（采集 → 主体视角文案 → 发布，摄影师口吻）
-│   ├── fetch_web3.py               # 从 9 个 Web3 媒体统一采集资讯，web3 标签，纯文本（见 docs/24）
-│   ├── run_web3.py                 # Web3 资讯一键发布（多源采集 → 繁体/主体视角文案 → 纯文本发布）
-│   ├── assemble_mixed.py           # 混合交错组装：每人随机帖数 + T/I/Q 交错 + 单语分配 + 配文去重（见 docs/25）
-│   ├── web3_caption_by_role.py     # web3 资讯专用文案：按新闻意图 + 发帖者角色语言改写第一人称点评
-│   ├── run_mixed.py                # 混合交错一键发布（采集 → 组装 → 发布层优化 + 回写去重，见 docs/25）
-│   ├── run_xhs_video.py            # 小红书视频一键发布（采集 explore 视频 → S3 上传 → 批量发布，见 docs/16 §16.8）
-│   ├── gitlab_pull.py              # 从 GitLab 拉取真实账号 CSV
+│   ├── opennana_fetch.py           # OpenNana 拉图/视频
+│   ├── multi_source_fetch.py       # 多源统一采集入口
+│   ├── caption_multilang.py        # 多语言文案改写
+│   ├── assemble_mixed.py           # 混合交错组装
+│   ├── run_mixed.py                # 混合交错一键发布
+│   ├── record_sent_slugs.py        # 去重回写
+│   ├── gitlab_pull.py              # 从 GitLab 拉账号
+│   ├── export_users.py             # 导出企管用户
+│   ├── image_quality.py            # 图片质量评估
 │   ├── config.py utils.py retry.py validation.py
+│   ├── run_*.py                    # 28 条地区/内容线
+│   │   ├── run_malaysia.py        马来西亚    ├── run_indonesia.py      印尼
+│   │   ├── run_taiwan.py          台湾        ├── run_singapore.py      新加坡
+│   │   ├── run_vietnam.py         越南        ├── run_jp_life.py        日本生活
+│   │   ├── run_europe.py          欧洲多语    ├── run_europe_en.py      欧洲英语
+│   │   ├── run_us_life.py         美国生活    ├── run_us_tech_ai.py     美国科技AI
+│   │   ├── run_tech.py            科技资讯    ├── run_web3.py           Web3 资讯
+│   │   ├── run_cizucu.py          摄影社区    ├── run_xhs_video.py      小红书视频
+│   │   └── run_africa/arab/gulf/south_america... 非洲/阿拉伯/南美等
 │   └── legacy/README.md            # 历史脚本说明
 ├── templates/                      # CSV 模板
-│   ├── accounts.example.csv        # 账号 CSV 模板（不含真实账号）
+│   ├── accounts.example.csv        # 账号 CSV 模板
 │   └── moments.example.csv         # 素材 CSV 模板
-├── testcases/                      # 自动化 + 手工测试套件
-│   ├── automation/                 # Python 自动化测试（7 套件）
-│   │   ├── run_all.py              # 统一入口 (--suite --env)
-│   │   ├── suites/                 # s99-s07 套件实现
-│   │   ├── config/                 # endpoints.json + env_*.json
-│   │   ├── lib/                    # HTTPClient + Reporter
-│   │   └── docs/                   # test_design + findings_history + manual_ui_checklist
-│   └── manual/                     # M01-M17 手工测试用例（227 条）
-├── mcp/                            # 可被模型调用的 MCP Server（Node + TypeScript）
-│   ├── src/index.ts                # 入口
-│   ├── src/tools.ts                # 所有工具实现
-│   ├── package.json
-│   ├── tsconfig.json
-│   └── README.md
+├── data/                           # 去重文件
+│   └── used_slugs.json             # 跨批次图片去重记录
+├── result/                         # 发布结果 & token 缓存
+├── mcp/                            # MCP Server（Node + TypeScript，25 工具）
 └── .gitlab/CODEOWNERS
 ```
 
-## 快速开始（人工执行 — 推荐流程）
+> **测试套件**位于独立分支 `test/regression-suite-v2`，包含 8 套自动化套件（259 用例）+ 17 模块手工用例（227 条），
+> 详见 [测试分支 README](http://100.64.0.45:8999/chenzhuo/xxai-square-publisher/-/tree/test/regression-suite-v2)。
+
+---
+
+## 快速开始
+
+### 推荐流程（三阶段发布）
 
 ```powershell
-# 1. 准备环境
 py -3 -m pip install -r scripts/requirements.txt
+Copy-Item .env.example .env   # 编辑填写 LOGIN_URL / MOMENTS_API_URL 等
 
-# 2. 复制 .env 模板并填写凭证
-Copy-Item .env.example .env
-# 编辑 .env，填好 LOGIN_URL / MOMENTS_API_URL / 账号 CSV 路径 等
-
-# 3. 多源采集（自动过滤广告）
-py -3 scripts/multi_source_fetch.py `
-    --sources opennana,openprompts,lovimg `
-    --theme beauty `
-    --exclude-ads `
-    --limit 100 `
-    --dedupe-file data/used_slugs.json `
-    --output moments_raw.csv `
-    --shuffle
-
-# 4. 多语言主体视角文案改写
-py -3 scripts/caption_multilang.py `
-    --input moments_raw.csv `
-    --output moments.csv `
-    --langs en,zh_hant,ja
-
-# 5. 两阶段发布（避开并发登录 429）
+# 三阶段发布：顺序登录防429 + 图片质量过滤 + Token复用
 py -3 scripts/publish_from_tokens.py `
     --accounts-csv accounts_20.csv `
     --csv moments.csv `
@@ -117,20 +100,38 @@ py -3 scripts/publish_from_tokens.py `
     --login-spacing 2.5 `
     --tokens-out result/tokens.json
 
-# 6. 视频（单独走这条）
-py -3 scripts/post_video.py --account <email> --video <mp4_url_or_path> `
-    --cover <png_url_or_path> --caption "文案内容"
+# Token 复用（跳过登录阶段）
+py -3 scripts/publish_from_tokens.py `
+    --accounts-csv accounts_20.csv `
+    --csv moments.csv `
+    --tokens-in result/tokens.json
 ```
 
-如果只有 ≤10 个账号 / 不需要多语言 / 不介意广告，可以走简易流程：
+### 简易流程（≤10 账号）
 
 ```powershell
 py -3 scripts/opennana_fetch.py --media-type image --page 1 --output moments.csv
-py -3 scripts/post_moments.py --accounts-csv accounts_10.csv --csv moments.csv \
+py -3 scripts/post_moments.py --accounts-csv accounts_10.csv --csv moments.csv `
     --num-accounts 0 --num-posts 0 --concurrency 1 --delay 2.0
 ```
 
 详见 [`docs/08-quick-replay.md`](docs/08-quick-replay.md)。
+
+---
+
+## 发帖管线对比
+
+| 特性 | post_moments.py | publish_from_tokens.py |
+|------|:---:|:---:|
+| 429 防护 | ❌ 并发时触发限流 | ✅ 顺序登录 + deburst + 重试 |
+| 图片质量门 | 基础尺寸 | ✅ 7 步完整管线 |
+| Token 复用 | ❌ | ✅ JSON 持久化 + --tokens-in |
+| 中断恢复 | ❌ | ✅ 复用 tokens 续传 |
+| 文本降级 | ❌ 直接失败 | ✅ 自动纯文本兜底 |
+
+> **建议: 生产环境统一使用 `publish_from_tokens.py`。**
+
+---
 
 ## 模型 / Agent 接入（MCP）
 
@@ -144,8 +145,8 @@ py -3 scripts/post_moments.py --accounts-csv accounts_10.csv --csv moments.csv \
 | `list_scripts`                | 列出可调用的 Python 脚本及其用途                     |
 | `read_script`                 | 读取脚本源码（让模型理解后再决定如何调用）           |
 | `run_post_moments`            | 调用 `post_moments.py` 批量发图文                    |
-| `run_publish_from_tokens`     | 调用 `publish_from_tokens.py`（两阶段发布，避 429）  |
-| `run_mixed`                   | 调用 `run_mixed.py`（混合交错一键发布：随机帖数+T/I/Q交错+去重+发布层优化）|
+| `run_publish_from_tokens`     | 调用 `publish_from_tokens.py`（三阶段发布，避 429）  |
+| `run_mixed`                   | 调用 `run_mixed.py`（混合交错一键发布）              |
 | `run_post_video`              | 调用 `post_video.py` 发视频                          |
 | `fetch_opennana`              | 从 OpenNana 拉素材（图片 / 视频 + 提示词）           |
 | `fetch_openprompts`           | 从 open-prompts.com 拉素材                            |
@@ -156,11 +157,15 @@ py -3 scripts/post_moments.py --accounts-csv accounts_10.csv --csv moments.csv \
 
 详细参数与启动方式见 [`mcp/README.md`](mcp/README.md)。
 
+---
+
 ## 安全提示
 
 - **不要把 `.env`、真实账号 CSV、token 提交到本仓库**，`.gitignore` 已默认拦截。
 - 仓库内提及的所有账号/密码/URL，参考 `docs/09-security.md` 与 `.env.example`，**全部通过环境变量注入**。
 - 任务执行后建议轮换凭证。
+
+---
 
 ## 仓库演变
 
@@ -169,17 +174,12 @@ py -3 scripts/post_moments.py --accounts-csv accounts_10.csv --csv moments.csv \
 
 近期改动摘要（v0.3）：
 
-- **Pre 全面测试 (2026-07-29)**：7 套件自动化 + 发帖实战 + 模拟器UI 全量回归 280 用例 247 通过 (88.2%)
-- 新增 `s07_publish_depth` 测试套件：覆盖并发 429、私密帖、图片质量边界、Token 复用、去重机制
-- 发帖管线对比验证：`publish_from_tokens.py` 在防 429、图片质量 7 步管线、Token 复用方面全面优于 `post_moments.py`
-- 防盗链专项：CloudFront Function 确认运行，发现 Referer indexOf 子串绕过 + OPTIONS 预检绕过 2 个高危，建议改用精确匹配
-- 模拟器 UI：逍遥模拟器 1.3.0 (versionCode=2540) 基础验证通过，发现钱包 Tab 未按计划移除
-- 测试报告详见 [`testcases/automation/docs/findings_history.md`](testcases/automation/docs/findings_history.md)
+- 更新 Pre 用户表（2000 → 1720 普通 + 80 街拍）
+- `publish_from_tokens.py` 三阶段流水线正式推荐为生产方案
+- 28 条地区/内容发布管线完整覆盖
+- 测试分支 `test/regression-suite-v2` 独立维护（8 套件 259 用例 + 17 模块 227 手工用例）
 
 近期改动摘要（v0.2）：
 
-- 多源采集：加入 `fetch_openprompts.py` / `fetch_lovimg.py` / `multi_source_fetch.py`
-- 广告过滤：统一三层规则（category / tags / 关键词），默认开启
-- 多语言文案：`caption_multilang.py` 内建 EN / 简中 / 繁中 / 日 模板池
-- 两阶段发布：`publish_from_tokens.py` 顺序登录 + 429 退避 + token 复用
+- 多源采集 + 广告过滤 + 多语言文案 + 两阶段发布
 - 三批实战验证：300/300 帖全部成功（详见 `docs/05-batch-records.md`）
