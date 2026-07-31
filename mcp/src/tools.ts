@@ -570,6 +570,55 @@ export const tools = [
     },
   },
   {
+    name: "fetch_eu_life_topics",
+    description:
+      "Call scripts/fetch_eu_life_topics.py to pull image+text content from European/Western " +
+      "lifestyle media across 4 topics: Life (Refinery29, The Everygirl, BuzzFeed), " +
+      "Art (ArtNews, Hyperallergic, Designboom), Travel (Condé Nast Traveler, Outside), " +
+      "Cars (Carscoops, Roadshow). RSS/Atom feeds with detail-page og:image extraction. " +
+      "English-only (CJK titles auto-filtered). Cross-batch dedupe via --dedupe-file.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        topics: {
+          type: "string",
+          default: "life,art,travel,cars",
+          description: "comma-separated: life / art / travel / cars",
+        },
+        per_site: { type: "integer", default: 3, minimum: 1, maximum: 20 },
+        dedupe_file: { type: "string", description: "JSON of already-used titles (cross-batch dedupe)" },
+        output: { type: "string" },
+      },
+      required: ["output"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "run_eu_life_topics",
+    description:
+      "Invoke scripts/run_eu_life_topics.py: one-command publisher for European/Western lifestyle " +
+      "content (Life/Art/Travel/Cars). Fetches RSS content, generates English first-person captions " +
+      "with topic-specific hashtags, randomizes single/multi-image per post, then publishes via " +
+      "publish_from_tokens.py with configurable random delays between posts.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        accounts_csv: { type: "string", description: "Path to accounts CSV" },
+        topics: { type: "string", default: "life,art,travel,cars" },
+        per_site: { type: "integer", default: 3, minimum: 1, maximum: 20 },
+        concurrency: { type: "integer", default: 1, minimum: 1, maximum: 16 },
+        delay_min: { type: "number", default: 30, minimum: 0, description: "min random delay between posts (s)" },
+        delay_max: { type: "number", default: 150, minimum: 0, description: "max random delay between posts (s)" },
+        tokens: { type: "string", default: "result/tokens_eu_life.json" },
+        skip_fetch: { type: "boolean", default: false, description: "reuse existing raw CSV" },
+        skip_publish: { type: "boolean", default: false, description: "only produce material, do not publish" },
+        yes: { type: "boolean", default: false, description: "skip interactive confirm" },
+      },
+      required: ["accounts_csv"],
+      additionalProperties: false,
+    },
+  },
+  {
     name: "rewrite_caption",
     description:
       "Rewrite an English prompt / raw description into a first-person Chinese share-style caption, " +
@@ -882,6 +931,34 @@ export async function callTool(name: string, args: Record<string, unknown>): Pro
         if (a.skip_publish) flags.push("--skip-publish");
         if (a.yes) flags.push("--yes");
         return runPython("run_mixed.py", flags, 20 * 60 * 1000);
+      }
+
+      case "fetch_eu_life_topics": {
+        const a = args as Record<string, any>;
+        const flags = [
+          "--topics", String(a.topics ?? "life,art,travel,cars"),
+          "--per-site", String(a.per_site ?? 3),
+          "--output", String(a.output),
+        ];
+        if (a.dedupe_file) flags.push("--dedupe-file", String(a.dedupe_file));
+        return runPython("fetch_eu_life_topics.py", flags, 10 * 60 * 1000);
+      }
+
+      case "run_eu_life_topics": {
+        const a = args as Record<string, any>;
+        const flags = [
+          "--accounts-csv", String(a.accounts_csv),
+          "--topics", String(a.topics ?? "life,art,travel,cars"),
+          "--per-site", String(a.per_site ?? 3),
+          "--concurrency", String(a.concurrency ?? 1),
+          "--delay-min", String(a.delay_min ?? 30),
+          "--delay-max", String(a.delay_max ?? 150),
+          "--tokens", String(a.tokens ?? "result/tokens_eu_life.json"),
+        ];
+        if (a.skip_fetch) flags.push("--skip-fetch");
+        if (a.skip_publish) flags.push("--skip-publish");
+        if (a.yes) flags.push("--yes");
+        return runPython("run_eu_life_topics.py", flags, 30 * 60 * 1000);
       }
 
       case "rewrite_caption": {

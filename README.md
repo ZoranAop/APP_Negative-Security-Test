@@ -58,6 +58,8 @@ xxai-square-publisher/
 │   ├── gitlab_pull.py              # 从 GitLab 拉账号
 │   ├── export_users.py             # 导出企管用户
 │   ├── image_quality.py            # 图片质量评估
+│   ├── run_eu_life_topics.py       # 欧美生活话题（Life/Art/Travel/Cars）
+│   ├── fetch_eu_life_topics.py     # 欧美生活四话题RSS采集器
 │   ├── config.py utils.py retry.py validation.py
 │   ├── run_*.py                    # 28 条地区/内容线
 │   │   ├── run_malaysia.py        马来西亚    ├── run_indonesia.py      印尼
@@ -152,8 +154,10 @@ py -3 scripts/post_moments.py --accounts-csv accounts_10.csv --csv moments.csv `
 | `fetch_openprompts`           | 从 open-prompts.com 拉素材                            |
 | `fetch_lovimg`                | 从 lovimg.com 拉素材                                  |
 | `fetch_multi_source`          | 多源统一采集（默认过滤广告 + 跨源去重）              |
+| `fetch_eu_life_topics`        | 欧美生活四话题采集（Life/Art/Travel/Cars）           |
 | `generate_multilang_captions` | 多语言主体视角文案改写                                |
 | `rewrite_caption`             | 返回「英文提示词 → 中文用户口吻文案」的改写指令      |
+| `run_eu_life_topics`          | 欧美生活话题一键发布（采集→英文文案→发布）           |
 
 详细参数与启动方式见 [`mcp/README.md`](mcp/README.md)。
 
