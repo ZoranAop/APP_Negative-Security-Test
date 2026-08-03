@@ -70,6 +70,7 @@ xxai-square-publisher/
 │   │   ├── run_tech.py            科技资讯    ├── run_web3.py           Web3 资讯
 │   │   ├── run_cizucu.py          摄影社区    ├── run_xhs_video.py      小红书视频
 │   │   └── run_africa/arab/gulf/south_america... 非洲/阿拉伯/南美等
+│   ├── post_comments.py             # 自然口吻评论发布（消除AI感/Token复用）
 │   └── legacy/README.md            # 历史脚本说明
 ├── templates/                      # CSV 模板
 │   ├── accounts.example.csv        # 账号 CSV 模板
@@ -81,8 +82,8 @@ xxai-square-publisher/
 └── .gitlab/CODEOWNERS
 ```
 
-> **测试套件**位于独立分支 `test/regression-suite-v2`，包含 8 套自动化套件（259 用例）+ 17 模块手工用例（227 条），
-> 详见 [测试分支 README](http://100.64.0.45:8999/chenzhuo/xxai-square-publisher/-/tree/test/regression-suite-v2)。
+> **测试套件**位于独立分支 `test/regression-suite-v3`，包含 12 套自动化套件（347 用例）+ 17 模块手工用例（227 条），
+> 详见 [测试分支 README](http://100.64.0.45:8999/chenzhuo/xxai-square-publisher/-/tree/test/regression-suite-v3)。
 
 ---
 
@@ -132,6 +133,50 @@ py -3 scripts/post_moments.py --accounts-csv accounts_10.csv --csv moments.csv `
 | 文本降级 | ❌ 直接失败 | ✅ 自动纯文本兜底 |
 
 > **建议: 生产环境统一使用 `publish_from_tokens.py`。**
+
+---
+
+## 评论发布（post_comments.py）
+
+在已有帖子下用不同用户发表自然评论，消除 AI 感。
+
+### 单帖模式
+
+```powershell
+py -3 scripts/post_comments.py `
+    --post-id 739388370119036928 `
+    --tokens result/tokens.json `
+    --commenters accounts.csv `
+    --topic tech_ai `
+    --count 3
+```
+
+### 批量模式
+
+```powershell
+py -3 scripts/post_comments.py `
+    --batch comments_batch.csv `
+    --tokens result/tokens.json
+```
+
+批量 CSV 格式（`comments_batch.csv`）：
+
+| post_id | email | topic | text |
+|---------|-------|-------|------|
+| 739388370119036928 | u_xxx@xxai.com | tech_ai | 留空则随机生成 |
+
+### 话题语料库
+
+| 话题 | 示例 |
+|------|------|
+| `tech_ai` | "真的吗？我还在用老方法……求推荐工具 😂" |
+| `finance` | "已经亏了20%了，心态很稳（装的）" |
+| `entertainment` | "我也刚看完！！第二季真的比第一季好看太多了" |
+| `tech_device` | "折叠屏太重了吧，单手操作方便吗" |
+| `lifestyle` | "好巧，我也刚搬完家，累死了" |
+| `general` | "今天的心情跟你这个帖子很搭" |
+
+特点：Token 复用免登录、随机选评论消除模式感、延时防 429、支持中文简体/繁体/英文。
 
 ---
 
