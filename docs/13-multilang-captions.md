@@ -9,12 +9,24 @@
 
 ## 13.2 支持的语言
 
-| 代码       | 语言       |
-| ---------- | ---------- |
-| `en`       | English    |
-| `zh`       | 简体中文   |
-| `zh_hant`  | 繁体中文   |
-| `ja`       | 日本語     |
+| 代码       | 语言       | 备注 |
+| ---------- | ---------- | ---- |
+| `en`       | English    |      |
+| `zh`       | 简体中文   |      |
+| `zh_hant`  | 繁体中文   | 模板已去地域化，适用于所有地区 |
+| `ja`       | 日本語     |      |
+| `ko`       | 한국어     |      |
+| `ms`       | Bahasa Melayu | 马来语     |
+| `id`       | Bahasa Indonesia | 印尼语 |
+| `de`       | Deutsch    |      |
+| `fr`       | Français   |      |
+| `it`       | Italiano   |      |
+| `es`       | Español    |      |
+| `pt`       | Português  |      |
+| `nl`       | Nederlands |      |
+| `ar`       | العربية    |      |
+
+> 注意：东南亚国家语言（th/vi/ph/km/lo/my/tl）暂无模板支持，将回退到英文。
 
 ## 13.3 输入 / 输出
 

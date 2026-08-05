@@ -47,6 +47,7 @@ import io
 import json
 import os
 import sys
+import threading
 import time
 from pathlib import Path
 from typing import Any
@@ -369,7 +370,8 @@ def send_moment(
     """Publish one moment with per-post retry + exponential backoff.
 
     Retries on network errors, HTTP 429/5xx, so a transient failure does not
-    permanently drop a post. Business-level failures (code!=0) are not retried."""
+    permanently drop a post. Business-level failures (code!=0) are not retried,
+    except token expiry which returns a recognizable error string."""
     payload: dict[str, Any] = {"content": content, "visibility": 0}
     if image_urls:
         payload["media_info"] = {"type": "image", "images": image_urls}
@@ -390,6 +392,9 @@ def send_moment(
             j = r.json()
             if j.get("code") == 0:
                 return True, str(j.get("data", {}).get("moment_id", ""))
+            msg = j.get("msg", "")
+            if "token_invalid" in msg or "expired" in msg.lower() or "session has expired" in msg.lower():
+                return False, f"TOKEN_EXPIRED: {msg[:80]}"
             return False, f"biz-fail: {j}"  # 业务失败不重试
         if r.status_code == 429 or 500 <= r.status_code < 600:
             last = f"HTTP {r.status_code}: {r.text[:120]}"
@@ -819,14 +824,33 @@ def main() -> int:
                  f"(watermarked/failed images skipped, using content description)")
     log_info(f"[Phase 3] publishing {len(tasks)} with concurrency={args.concurrency}")
 
+    # Build password map for token refresh
+    pwd_map: dict[str, str] = {e: p for (e, p, _) in accts}
+    tok_lock = threading.Lock()
+    refresh_stats: dict[str, int] = {"count": 0}
+
     def worker(t):
+        email = t["email"]
         # de-burst: small random pre-post delay so posts don't fire in a rigid burst
         if args.post_delay_max > 0:
             import random as _r
             time.sleep(_r.uniform(args.post_delay_min, args.post_delay_max))
-        ok, info = send_moment(tokens[t["email"]], t["content"], t["s3_images"],
-                               api_url=args.api_url, timeout=args.timeout,
-                               max_retries=args.post_retries)
+        ok, info = send_moment(tokens[email], t["content"], t["s3_images"],
+                                api_url=args.api_url, timeout=args.timeout,
+                                max_retries=args.post_retries)
+        # Token expired: re-login and retry once
+        if not ok and info.startswith("TOKEN_EXPIRED") and email in pwd_map:
+            new_tok = _login_once(email, pwd_map[email],
+                                  login_url=args.login_url, timeout=args.timeout)
+            if new_tok and new_tok != "__429__":
+                with tok_lock:
+                    tokens[email] = new_tok
+                    refresh_stats["count"] += 1
+                ok, info = send_moment(new_tok, t["content"], t["s3_images"],
+                                        api_url=args.api_url, timeout=args.timeout,
+                                        max_retries=1)
+                if ok:
+                    info = f"{info} (token-refreshed)"
         return {**t, "success": ok, "info": info}
 
     results: list[dict] = []
@@ -847,6 +871,14 @@ def main() -> int:
 
     ok = sum(1 for r in results if r["success"])
     log_success(f"[Done] {ok}/{len(results)}")
+
+    if refresh_stats["count"]:
+        log_info(f"[Token] refreshed {refresh_stats['count']} expired token(s) during publish")
+        if not args.no_persist_tokens:
+            out_path = Path(args.tokens_out)
+            out_path.parent.mkdir(parents=True, exist_ok=True)
+            out_path.write_text(json.dumps(tokens, ensure_ascii=False, indent=2), encoding="utf-8")
+            log_info(f"[Token] updated tokens persisted → {out_path}")
 
     out_path = Path(args.output_csv or f"result/publish_{time.strftime('%Y%m%d_%H%M%S')}.csv")
     out_path.parent.mkdir(parents=True, exist_ok=True)

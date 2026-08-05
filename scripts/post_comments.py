@@ -185,6 +185,15 @@ def _try_post_with_refresh(email: str, password: str | None, token: str | None,
     返回 (成功, 状态描述, 新token或None)。
     """
     if not token:
+        if password:
+            new_token = _login(email, password, login_url)
+            if new_token:
+                ok2, reason2 = post_comment(
+                    new_token, post_id, content, feed_api)
+                if ok2:
+                    return True, "OK(new_login)", new_token
+                return False, f"login_ok_but_post_fail: {reason2}", None
+            return False, "login_fail", None
         return False, "no_token", None
     ok, reason = post_comment(token, post_id, content, feed_api)
     if ok:

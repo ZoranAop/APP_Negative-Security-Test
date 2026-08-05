@@ -5,14 +5,14 @@
 >
 > **双分支**: `main`（发布工具链）← 与 → `test/regression-suite-v2`（测试套件，独立分支）
 
-最近更新：2026-07-29
+最近更新：2026-08-05
 
-- 更新 Pre 用户表：`pre_企管用户2000.csv` → 拆分为 `pre_企管用户_1720.csv`（普通企管用户 1720 人）和 `pre_企管用户_街拍摄影师.csv`（街拍摄影师标签用户 80 人），移除原作废的 2000 人表
-- 新增 `publish_from_tokens.py` 三阶段流水线（顺序登录 → S3上传 → 并发发布），全面优于 `post_moments.py` 并发模式
-- 加入 **混合交错发帖**（拟真 / 去规则化）：每用户随机帖数 + 文本/图文/问题（T/I/Q）交错 + 单语分配 + 两级去重，一键脚本 `run_mixed.py`（见 [`docs/25-mixed-posting.md`](docs/25-mixed-posting.md)）
-- 加入 **多源采集**（opennana / open-prompts / lovimg）+ **广告过滤**
-- 加入 **多语言主体视角文案**（EN / 繁中 / 简中 / 日）
-- 加入 **地区/站点内容线**：马来西亚 / 印尼 / 台湾 / 新加坡 / 越南 / 日本 / 欧洲 / 美国 / Web3 等 28 条管线
+- **架构优化 v0.4**：提取公共工具函数到 `utils.py`（`ensure_utf8_stdout`、`run_cmd`、`strip_source_attribution`），消除 20+ 处重复代码
+- **`caption_multilang.py`**：`zh_hant` 繁体中文模板去台湾地名化，改为通用场景描述，避免非台湾图片输出地域错误文案
+- **`publish_from_tokens.py`**：新增 token 过期自动刷新（发布阶段检测 `TOKEN_EXPIRED` → 重新登录 → 重试），减少静默失败
+- **`post_comments.py`**：新增 `--accounts` / `--login-url` / `--tokens-out` 参数，token 过期或无 token 时自动从账号 CSV 重新登录并重试
+- **`post_laos_mm_v2.py`**：废弃硬编码密码，改为 `--accounts-csv` 参数读取账号
+- **文档同步**：`docs/13-multilang-captions.md` 更新完整 14 种语言支持表；注明东南亚语言回退策略
 
 ---
 
@@ -129,6 +129,7 @@ py -3 scripts/post_moments.py --accounts-csv accounts_10.csv --csv moments.csv `
 | 429 防护 | ❌ 并发时触发限流 | ✅ 顺序登录 + deburst + 重试 |
 | 图片质量门 | 基础尺寸 | ✅ 7 步完整管线 |
 | Token 复用 | ❌ | ✅ JSON 持久化 + --tokens-in |
+| Token 过期刷新 | ❌ | ✅ 发布阶段自动重新登录重试 |
 | 中断恢复 | ❌ | ✅ 复用 tokens 续传 |
 | 文本降级 | ❌ 直接失败 | ✅ 自动纯文本兜底 |
 
@@ -151,32 +152,16 @@ py -3 scripts/post_comments.py `
     --count 3
 ```
 
-### 批量模式
+### 批量模式（带 token 自动刷新）
 
 ```powershell
 py -3 scripts/post_comments.py `
     --batch comments_batch.csv `
-    --tokens result/tokens.json
+    --tokens result/tokens.json `
+    --accounts accounts.csv
 ```
 
-批量 CSV 格式（`comments_batch.csv`）：
-
-| post_id | email | topic | text |
-|---------|-------|-------|------|
-| 739388370119036928 | u_xxx@xxai.com | tech_ai | 留空则随机生成 |
-
-### 话题语料库
-
-| 话题 | 示例 |
-|------|------|
-| `tech_ai` | "真的吗？我还在用老方法……求推荐工具 😂" |
-| `finance` | "已经亏了20%了，心态很稳（装的）" |
-| `entertainment` | "我也刚看完！！第二季真的比第一季好看太多了" |
-| `tech_device` | "折叠屏太重了吧，单手操作方便吗" |
-| `lifestyle` | "好巧，我也刚搬完家，累死了" |
-| `general` | "今天的心情跟你这个帖子很搭" |
-
-特点：Token 复用免登录、随机选评论消除模式感、延时防 429、支持中文简体/繁体/英文。
+特点：Token 复用免登录、token 过期自动从账号 CSV 重新登录并重试、随机选评论消除模式感、延时防 429、支持中文简体/繁体/英文。
 
 ---
 
