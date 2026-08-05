@@ -3,6 +3,7 @@
 post_comments.py — 自然口吻评论发布工具
 
 在指定帖子下用不同用户发表评论，消除 AI 感。
+支持 token 过期自动重新登录刷新。
 
 用法：
     py -3 scripts/post_comments.py \
@@ -14,12 +15,19 @@ post_comments.py — 自然口吻评论发布工具
     py -3 scripts/post_comments.py \
         --batch comments_batch.csv \
         --tokens result/tokens.json
+
+    # 带自动 token 刷新（token 过期时用账号密码重新登录）
+    py -3 scripts/post_comments.py \
+        --batch comments_batch.csv \
+        --tokens result/tokens.json \
+        --accounts accounts.csv
 """
 from __future__ import annotations
 
 import argparse
 import csv
 import json
+import os
 import random
 import sys
 import time
@@ -106,45 +114,124 @@ def load_accounts(path: str) -> list[dict]:
         return list(csv.DictReader(f))
 
 
+def _build_account_map(accounts_csv: str | None) -> dict[str, str]:
+    """从账号 CSV 构建 {email: password} 映射。"""
+    if not accounts_csv or not Path(accounts_csv).exists():
+        return {}
+    mapping: dict[str, str] = {}
+    with open(accounts_csv, encoding="utf-8-sig") as f:
+        for row in csv.DictReader(f):
+            email = (row.get("邮箱") or row.get("email") or "").strip()
+            pwd = (row.get("密码") or row.get("password") or "").strip()
+            if email and pwd:
+                mapping[email] = pwd
+    return mapping
+
+
+def _login(email: str, password: str, login_url: str, timeout: int = 15) -> str | None:
+    """登录获取新 token，失败返回 None。"""
+    device_id = os.getenv("POST_DEVICE_ID", "auto_poster")
+    device_name = os.getenv("POST_DEVICE_NAME", "auto_poster_client")
+    try:
+        r = requests.post(login_url,
+            json={"email": email, "password": password,
+                  "device_id": device_id, "device_name": device_name},
+            headers={"Content-Type": "application/json"}, timeout=timeout)
+        if r.status_code == 200 and r.json().get("code") == 0:
+            return r.json()["data"]["token"]
+    except Exception:
+        pass
+    return None
+
+
+def _save_tokens(tokens: dict[str, str], path: str) -> None:
+    """保存 token 映射到 JSON 文件。"""
+    Path(path).parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(tokens, f, ensure_ascii=False, indent=2)
+
+
 def pick_comment(topic: str) -> str:
     """从语料库随机选一条自然评论。"""
     bank = COMMENT_BANKS.get(topic, COMMENT_BANKS["general"])
     return random.choice(bank)
 
 
-def post_comment(token: str, post_id: int, content: str, feed_api: str) -> bool:
-    """在指定帖子下发表评论。"""
+def post_comment(token: str, post_id: int, content: str, feed_api: str) -> tuple[bool, str]:
+    """在指定帖子下发表评论。返回 (成功与否, 失败原因)。"""
     base = feed_api.replace("/api/v1/moments/", "").replace("/api/v1/moments", "")
     url = f"{base}/api/v1/comments"
-    r = requests.post(url,
-        json={"moment_id": post_id, "content": content},
-        headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
-        timeout=15)
-    return r.status_code in (200, 201) and r.json().get("code") == 0
+    try:
+        r = requests.post(url,
+            json={"moment_id": post_id, "content": content},
+            headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+            timeout=15)
+    except Exception as e:
+        return False, str(e)
+    if r.status_code in (200, 201) and r.json().get("code") == 0:
+        return True, ""
+    reason = r.json().get("msg", "") or r.text[:100]
+    return False, reason
 
 
 # ============================================================
 # 命令行入口
 # ============================================================
 
+def _try_post_with_refresh(email: str, password: str | None, token: str | None,
+                           post_id: int, content: str, feed_api: str,
+                           login_url: str) -> tuple[bool, str, str | None]:
+    """尝试发评论；token 过期时若提供密码则自动重新登录后重试。
+    返回 (成功, 状态描述, 新token或None)。
+    """
+    if not token:
+        return False, "no_token", None
+    ok, reason = post_comment(token, post_id, content, feed_api)
+    if ok:
+        return True, "OK", None
+    if ("token_invalid" in reason or "expired" in reason.lower()
+            or "session has expired" in reason.lower()):
+        if password:
+            new_token = _login(email, password, login_url)
+            if new_token:
+                ok2, reason2 = post_comment(
+                    new_token, post_id, content, feed_api)
+                if ok2:
+                    return True, "OK(refreshed)", new_token
+                return False, f"retry_fail: {reason2}", None
+            return False, "login_fail", None
+        return False, f"token_expired: {reason[:60]}", None
+    return False, reason[:60], None
+
+
 def main():
-    ap = argparse.ArgumentParser(description="自然口吻评论发布工具")
+    ap = argparse.ArgumentParser(description="自然口吻评论发布工具（支持 token 过期自动刷新）")
     ap.add_argument("--post-id", type=int, help="目标帖子 ID（单帖模式）")
     ap.add_argument("--commenters", default="accounts.csv", help="评论者账号 CSV")
     ap.add_argument("--tokens", default="result/tokens.json", help="已保存的 token JSON")
     ap.add_argument("--count", type=int, default=2, help="评论条数（单帖模式）")
-    ap.add_argument("--topic", default="general", help="话题类型: tech_ai/finance/entertainment/tech_device/lifestyle/general")
+    ap.add_argument("--topic", default="general",
+                    help="话题: tech_ai/finance/entertainment/tech_device/lifestyle/general")
     ap.add_argument("--text", help="手动指定评论内容（覆盖随机生成）")
     ap.add_argument("--batch", help="批量评论 CSV（post_id,email,topic,text）")
     ap.add_argument("--delay", type=float, default=5.0, help="评论间隔秒数")
     ap.add_argument("--feed-api", default="https://feed-api.xxai.com/api/v1/moments/")
+    ap.add_argument("--login-url", default=os.getenv("LOGIN_URL", "https://api.xxai.com/login"),
+                    help="登录接口（token 过期时用于自动刷新）")
+    ap.add_argument("--accounts",
+                    help="账号 CSV（含邮箱+密码，token 过期时自动重新登录）；"
+                         "未提供则过期直接失败")
+    ap.add_argument("--tokens-out",
+                    help="刷新后的 token 输出路径（默认覆盖 --tokens）")
     args = ap.parse_args()
 
     tokens = load_tokens(args.tokens)
     print(f"[Token] 加载 {len(tokens)} 个 token")
+    tokens_out = args.tokens_out or args.tokens
+    account_map = _build_account_map(args.accounts)
+    changes = 0
 
     if args.batch:
-        # 批量模式
         with open(args.batch, encoding="utf-8-sig") as f:
             tasks = list(csv.DictReader(f))
         print(f"[Batch] {len(tasks)} 条评论任务")
@@ -152,21 +239,26 @@ def main():
         for i, t in enumerate(tasks):
             email = t.get("email", "").strip()
             token = tokens.get(email)
-            if not token:
-                print(f"  [{i+1}] {email} — 无token，跳过")
-                continue
+            pwd = account_map.get(email)
             text = (t.get("text") or t.get("content") or "").strip()
             if not text:
                 topic = t.get("topic", "general").strip()
                 text = pick_comment(topic)
             pid = int(t.get("post_id", 0))
-            ok = post_comment(token, pid, text, args.feed_api)
-            status = "OK" if ok else "FAIL"
-            print(f"  [{i+1}] {t.get('nickname',email)} → {pid} {status}")
+            ok, status, new_token = _try_post_with_refresh(
+                email, pwd, token, pid, text, args.feed_api, args.login_url)
+            if new_token:
+                tokens[email] = new_token
+                changes += 1
+            label = t.get("nickname", email)
+            print(f"  [{i+1}] {label} → {pid} {status}")
             if ok:
                 success += 1
             if i < len(tasks) - 1:
                 time.sleep(args.delay)
+        if changes:
+            _save_tokens(tokens, tokens_out)
+            print(f"[Token] 刷新了 {changes} 个 token → {tokens_out}")
         print(f"\n[Result] {success}/{len(tasks)}")
         return 0 if success > 0 else 1
 
@@ -184,17 +276,22 @@ def main():
     for i, c in enumerate(selected):
         email = (c.get("邮箱") or c.get("email") or "").strip()
         token = tokens.get(email)
-        if not token:
-            print(f"  [{i+1}] {c.get('昵称','?')} — 无token，跳过")
-            continue
+        pwd = (c.get("密码") or c.get("password") or "").strip()
         text = args.text if args.text else pick_comment(args.topic)
-        ok = post_comment(token, args.post_id, text, args.feed_api)
-        status = "OK" if ok else "FAIL"
-        print(f"  [{i+1}] {c.get('昵称',email)}: \"{text[:40]}...\" {status}")
+        ok, status, new_token = _try_post_with_refresh(
+            email, pwd, token, args.post_id, text, args.feed_api, args.login_url)
+        if new_token:
+            tokens[email] = new_token
+            changes += 1
+        label = c.get("昵称", email)
+        print(f"  [{i+1}] {label}: \"{text[:40]}...\" {status}")
         if ok:
             success += 1
         if i < len(selected) - 1:
             time.sleep(args.delay)
+    if changes:
+        _save_tokens(tokens, tokens_out)
+        print(f"[Token] 刷新了 {changes} 个 token → {tokens_out}")
     print(f"\n[Result] {success}/{len(selected)}")
     return 0 if success > 0 else 1
 
