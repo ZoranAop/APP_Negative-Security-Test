@@ -23,7 +23,7 @@
           "site": "turismo",
           "type": "turismo",
           "base": "https://www.turismo.cc",
-          "columns": ["xiuren", "cosplay", "rosi", "youmi", "mygirl", "tuigirl"],
+          "columns": ["cosplay"],
           "imgs_per_post": 4,
           "referer": "https://www.turismo.cc/"
         },
