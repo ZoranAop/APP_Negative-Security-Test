@@ -43,7 +43,6 @@ import argparse
 import concurrent.futures
 import csv
 import hashlib
-import io
 import json
 import os
 import sys
@@ -57,7 +56,7 @@ import requests
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from config import config  # noqa: E402
-from utils import log_info, log_success, log_warn, log_error  # noqa: E402
+from utils import log_info, log_success, log_warn, log_error, ensure_utf8_stdout  # noqa: E402
 from validation import validate_account_csv  # noqa: E402
 
 try:
@@ -71,11 +70,7 @@ except ImportError:  # pragma: no cover
 # ---------------------------------------------------------------------------
 
 def _ensure_utf8_stdout():
-    try:
-        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", write_through=True)
-        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", write_through=True)
-    except Exception:
-        pass
+    ensure_utf8_stdout()
 
 
 # ---------------------------------------------------------------------------
@@ -553,32 +548,55 @@ def main() -> int:
                      f"(hosts: {','.join(sorted(set((urlsplit(u).hostname or '') for u in watermark_skipped)))})")
 
     upload_urls = [u for u in all_urls if u not in watermark_skipped]
-    log_info(f"[Phase 2] uploading {len(upload_urls)} unique urls")
+    log_info(f"[Phase 2] uploading {len(upload_urls)} unique urls "
+             f"(concurrency={args.concurrency})")
     cache: dict[str, str] = {}
     img_dimensions: dict[str, tuple[int, int]] = {}  # url -> (width, height)
-    for i, u in enumerate(upload_urls, 1):
-        try:
-            upload_url_to_s3(u, creds, cache, images_dir=Path("images"))
-            # Record dimensions for consistency filtering
-            if u in cache:
-                url_hash = hashlib.md5(u.encode()).hexdigest()[:12]
-                ext = ".jpg"
-                for e in (".png", ".webp", ".gif"):
-                    if e in u.lower():
-                        ext = e
-                        break
-                local = Path("images") / f"downloaded_{url_hash}{ext}"
-                if local.exists():
-                    try:
-                        from PIL import Image as _DimImg
-                        with _DimImg.open(local) as _dim:
+    _cache_lock = threading.Lock()
+    _dim_lock = threading.Lock()
+
+    def _upload_one(u: str) -> None:
+        upload_url_to_s3(u, creds, cache, images_dir=Path("images"))
+        if u in cache:
+            with _cache_lock:
+                s3_url = cache[u]
+            url_hash = hashlib.md5(u.encode()).hexdigest()[:12]
+            ext = ".jpg"
+            for e in (".png", ".webp", ".gif"):
+                if e in u.lower():
+                    ext = e
+                    break
+            local = Path("images") / f"downloaded_{url_hash}{ext}"
+            if local.exists():
+                try:
+                    from PIL import Image as _DimImg
+                    with _DimImg.open(local) as _dim:
+                        with _dim_lock:
                             img_dimensions[u] = _dim.size
-                    except Exception:
-                        pass
-            if i % 20 == 0:
-                log_info(f"  uploaded {i}/{len(upload_urls)}")
-        except Exception as e:  # noqa: BLE001
-            log_error(f"  ✗ upload {u[:70]}: {e}")
+                except Exception:
+                    pass
+
+    if len(upload_urls) <= 1:
+        for u in upload_urls:
+            try:
+                _upload_one(u)
+            except Exception as e:
+                log_error(f"  ✗ upload {u[:70]}: {e}")
+    else:
+        done = 0
+        with concurrent.futures.ThreadPoolExecutor(
+            max_workers=min(args.concurrency, len(upload_urls))
+        ) as _pool:
+            _futures = {_pool.submit(_upload_one, u): u for u in upload_urls}
+            for _f in concurrent.futures.as_completed(_futures):
+                u = _futures[_f]
+                try:
+                    _f.result()
+                except Exception as e:
+                    log_error(f"  ✗ upload {u[:70]}: {e}")
+                done += 1
+                if done % 20 == 0:
+                    log_info(f"  uploaded ~{done}/{len(upload_urls)}")
     log_success(f"[Phase 2] cached {len(cache)}/{len(upload_urls)}")
 
     # ---- Phase 3: publish ----
@@ -628,12 +646,13 @@ def main() -> int:
         """Select best images for a post following media content rules.
 
         Pipeline:
-        1. Filter to only successfully uploaded images (in cache)
-        2. Aspect ratio consistency: group by orientation, keep same type
-        3. Resolution consistency: remove outliers (>2x median resolution diff)
-        4. Grid-friendly count adjustment (trim to nearest clean grid number)
-        5. Sort: largest image first (hero/cover image)
-        6. Cap at POST_MAX_IMAGES (default 9)
+         1. Filter to only successfully uploaded images (in cache)
+         2. Aspect ratio consistency: group by orientation, keep same type
+         3. Resolution consistency: remove outliers (>2x median resolution diff)
+         4. Orientation-aware cap
+         5. Sort: largest image first (hero/cover image)
+         6. Grid-friendly count adjustment (trim to nearest clean grid number)
+         7. Cap at POST_MAX_IMAGES (default 9)
 
         Returns S3 URLs ready for publishing."""
         # Step 1: get eligible URLs (uploaded successfully)
@@ -654,12 +673,12 @@ def main() -> int:
         if len(eligible) > 1:
             eligible = _cap_by_orientation(eligible)
 
-        # Step 5: grid-friendly count
+        # Step 5: sort by resolution descending (hero image first)
+        eligible = _sort_by_quality(eligible)
+
+        # Step 6: grid-friendly count
         if _grid_enabled and len(eligible) > 1:
             eligible = _adjust_to_grid(eligible)
-
-        # Step 6: sort by resolution descending (hero image first)
-        eligible = _sort_by_quality(eligible)
 
         # Step 7: cap to max images
         eligible = eligible[:_max_images]
@@ -846,6 +865,14 @@ def main() -> int:
                 with tok_lock:
                     tokens[email] = new_tok
                     refresh_stats["count"] += 1
+                    if not args.no_persist_tokens:
+                        try:
+                            Path(args.tokens_out).parent.mkdir(parents=True, exist_ok=True)
+                            Path(args.tokens_out).write_text(
+                                json.dumps(tokens, ensure_ascii=False, indent=2),
+                                encoding="utf-8")
+                        except Exception:
+                            pass
                 ok, info = send_moment(new_tok, t["content"], t["s3_images"],
                                         api_url=args.api_url, timeout=args.timeout,
                                         max_retries=1)
@@ -925,6 +952,7 @@ def _record_dedupe(success_rows: list[dict], *, web3_file: str, img_file: str) -
     def _merge(path_str: str, new_keys: set, wrapper_key: str | None = None):
         if not new_keys:
             return
+        import tempfile as _tmp
         p = Path(path_str)
         p.parent.mkdir(parents=True, exist_ok=True)
         existing: list = []
@@ -936,7 +964,18 @@ def _record_dedupe(success_rows: list[dict], *, web3_file: str, img_file: str) -
                 existing = []
         merged = sorted(set(existing) | new_keys)
         out = {wrapper_key: merged} if wrapper_key else merged
-        p.write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
+        # Atomic write: temp file + rename to avoid corruption on crash
+        fd, tmp_path = _tmp.mkstemp(suffix=".json", dir=str(p.parent), prefix=".dedupe_")
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as _f:
+                json.dump(out, _f, ensure_ascii=False, indent=2)
+            os.replace(tmp_path, str(p))
+        except Exception:
+            try:
+                Path(tmp_path).unlink(missing_ok=True)
+            except Exception:
+                pass
+            raise
         log_success(f"[dedupe] +{len(new_keys)} keys → {p} (total {len(merged)})")
 
     _merge(web3_file, web3_keys)

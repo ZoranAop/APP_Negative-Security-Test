@@ -100,6 +100,27 @@ def parse_args():
     return parser.parse_args()
 
 
+# ---- image referer helpers (shared with publish_from_tokens.py) ----
+
+_REFERER_MAP: dict[str, str] = {
+    "xhscdn.com": "https://www.xiaohongshu.com/",
+    "xiaohongshu.com": "https://www.xiaohongshu.com/",
+    "opennana.com": "https://opennana.com/",
+    "yituyu.com": "https://www.yituyu.com/",
+    "tuziyouwang.com": "http://tuziyouwang.com",
+    "aituitu.com": "https://img.aituitu.com",
+    "bbkz.net": "https://www.backpackers.com.tw/",
+    "erv-nsa.gov.tw": "https://www.erv-nsa.gov.tw/",
+}
+
+
+def resolve_image_referer(image_url: str) -> str:
+    for host_substr, referer in _REFERER_MAP.items():
+        if host_substr in image_url:
+            return referer
+    return ""
+
+
 def build_payload(row: Dict[str, str]) -> Dict[str, Any]:
     """根据 CSV 的行数据构造 PostMomentReq 负载"""
     content = row.get("content", "").strip()
@@ -318,7 +339,11 @@ def download_external_image(url: str, save_dir: str = "images", timeout: int = 1
     """将外部网络图片下载并备份到本地，返回本地路径，失败返回空"""
     try:
         ensure_dir(save_dir)
-        response = robust_request("GET", url, timeout=timeout, max_attempts=2)
+        referer = resolve_image_referer(url)
+        response = robust_request("GET", url, timeout=timeout, max_attempts=3,
+                                  headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                                          "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+                                           "Referer": referer})
         if response.status_code == 200:
             import hashlib
             url_hash = hashlib.md5(url.encode()).hexdigest()[:12]
@@ -403,43 +428,6 @@ def generate_video_thumbnail(video_path: str, save_dir: str = "images") -> str:
     except Exception as e:
         log_error(f"生成视频缩略图异常: {e}")
         return ""
-        ensure_dir(save_dir)
-        # 去除 url 里的后缀及 query 参数
-        clean_url = url.split('!')[0].split('?')[0]
-        parts = clean_url.split('/')
-        filename = parts[-1] if parts else ""
-        if not filename:
-            # 兜底生成一个 MD5 文件名
-            import hashlib
-            filename = hashlib.md5(url.encode('utf-8')).hexdigest() + ".jpg"
-        
-        # 确保文件名有后缀
-        if "." not in filename:
-            filename += ".jpg"
-            
-        filepath = os.path.join(save_dir, filename)
-        
-        # 如果文件已存在，直接返回
-        if os.path.exists(filepath):
-            return filepath
-            
-        log_info(f"正在下载外部图片: {url} ...")
-        # 伪造 Headers 绕过防盗链限制
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            "Referer": "https://www.xiaohongshu.com/"
-        }
-        r = requests.get(url, headers=headers, timeout=timeout)
-        if r.status_code == 200:
-            with open(filepath, 'wb') as f:
-                f.write(r.content)
-            log_success(f"外部图片下载成功，保存至: {filepath}")
-            return filepath
-        else:
-            log_error(f"下载外部图片失败: HTTP {r.status_code}")
-    except Exception as e:
-        log_error(f"下载外部图片异常: {e}")
-    return ""
 
 
 def login_account(email: str, password: str, timeout: int) -> str:

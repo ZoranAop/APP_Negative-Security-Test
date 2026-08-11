@@ -5,6 +5,7 @@
 """
 
 import time
+import random
 import requests
 from typing import Callable, Optional, Any, Dict
 from functools import wraps
@@ -62,8 +63,8 @@ def exponential_backoff_retry(
             if attempt >= max_attempts:
                 break
 
-            # 计算下次延迟
-            current_delay = min(delay, max_delay)
+            # 计算下次延迟（含 jitter 避免惊群效应）
+            current_delay = min(delay * (0.5 + random.random()), max_delay)
 
             # 调用回调
             if on_retry:
@@ -149,8 +150,8 @@ def robust_request(
             timeout=timeout,
             **kwargs
         )
-        # 检查 HTTP 状态码，5xx 错误应该重试
-        if 500 <= response.status_code < 600:
+        # 检查 HTTP 状态码，429/5xx 错误应该重试
+        if response.status_code == 429 or 500 <= response.status_code < 600:
             raise requests.exceptions.HTTPError(
                 f"Server error: {response.status_code}"
             )
@@ -190,6 +191,7 @@ def safe_request(
         Response 对象或默认值
     """
     try:
+        kwargs.setdefault("timeout", config.POST_REQUEST_TIMEOUT)
         return requests.request(method=method, url=url, **kwargs)
     except Exception as e:
         if log_errors:
