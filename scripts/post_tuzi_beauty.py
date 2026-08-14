@@ -24,6 +24,10 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
+sys.path.insert(0, str(HERE))
+
+from sources import collect_category  # noqa: E402
+
 BASE = "http://tuziyouwang.com"
 COLUMNS = ["meitui", "fengtun", "gengduo", "xiaoneinei", "xiongqi"]
 DEDUPE_FILE_VAR = ROOT / "data" / "tuzi_used.json"
@@ -100,7 +104,8 @@ def fetch_images(want: int, used: set):
                 seen_id.add(aid)
                 try:
                     detail = _get(f"{BASE}/{col}/{aid}.html", f"{BASE}/{col}/")
-                    imgs = re.findall(r'<img[^>]+src="([^"]+)"[^>]*>', detail)
+                    # 同时匹配 src / data-original / data-src（懒加载），进入二级详情页取全部图
+                    imgs = re.findall(r'<img[^>]+(?:src|data-original|data-src)="([^"]+)"[^>]*>', detail)
                     for img in imgs:
                         if not img.lower().endswith(('.jpg', '.jpeg', '.png')):
                             continue
@@ -111,7 +116,6 @@ def fetch_images(want: int, used: set):
                             continue
                         images.append(full)
                         used.add(full)
-                        break
                 except Exception:
                     continue
                 if len(images) >= want:
@@ -120,6 +124,18 @@ def fetch_images(want: int, used: set):
                 break
         if len(images) >= want:
             break
+    # 深页 tuziyouwang 取不足时，用「美女」类别下其他站点（yituyu / turismo 等）补充
+    if len(images) < want:
+        try:
+            recs = collect_category("美女", want - len(images),
+                                    has_id=lambda _id: False,
+                                    has_url=lambda u: u in used)
+            for r in recs:
+                if r["url"] not in used and len(images) < want:
+                    images.append(r["url"])
+                    used.add(r["url"])
+        except Exception as e:  # noqa: BLE001
+            print(f"[fetch] 其他站点补充失败: {e}", file=sys.stderr)
     return images
 
 

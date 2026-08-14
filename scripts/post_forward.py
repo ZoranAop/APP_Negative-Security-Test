@@ -68,14 +68,18 @@ def _build_account_map(accounts_csv: str | None) -> dict[str, str]:
 
 
 def _login(email: str, password: str, login_url: str, timeout: int = 15) -> str | None:
+    device_id = os.getenv("POST_DEVICE_ID", "auto_poster")
+    device_name = os.getenv("POST_DEVICE_NAME", "auto_poster_client")
     try:
-        r = requests.post(login_url, json={"email": email, "password": password},
-                          timeout=timeout)
-        j = r.json()
-        tok = (j.get("data") or {}).get("token") if isinstance(j.get("data"), dict) else j.get("token")
-        return tok or None
+        r = requests.post(login_url,
+                          json={"email": email, "password": password,
+                                "device_id": device_id, "device_name": device_name},
+                          headers={"Content-Type": "application/json"}, timeout=timeout)
+        if r.status_code == 200 and r.json().get("code") == 0:
+            return r.json()["data"]["token"]
     except Exception:
-        return None
+        pass
+    return None
 
 
 def _base(feed_api: str) -> str:
