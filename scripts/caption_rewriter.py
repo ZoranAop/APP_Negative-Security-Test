@@ -395,11 +395,12 @@ HASHTAG_POOLS = {
 class CaptionRewriter:
     """基于种子文本生成N条不重复变体的改写引擎"""
 
-    def __init__(self, lang: str = "en", scene: str = "travel"):
+    def __init__(self, lang: str = "en", scene: str = "travel", persistent_used: set | None = None):
         self.lang = lang if lang in REWRITE_TEMPLATES else "en"
         self.scene = scene
         self.templates = REWRITE_TEMPLATES.get(self.lang, REWRITE_TEMPLATES["en"]).get(scene, REWRITE_TEMPLATES["en"]["travel"])
         self.used_hashes: set[str] = set()
+        self.persistent_used = persistent_used  # 跨批次已用文案（字符串集合，可选）
 
     def generate(self, seed: str = "", count: int = 20) -> list[str]:
         """生成 count 条不重复的文案变体"""
@@ -410,11 +411,16 @@ class CaptionRewriter:
         while len(results) < count and attempts < max_attempts:
             attempts += 1
             caption = self._make_one(len(results) + attempts)
-            # 去重检查（基于hash）
+            # 去重检查（本次运行 hash + 跨批次已用文案）
             h = hashlib.md5(caption.encode()).hexdigest()
-            if h not in self.used_hashes:
-                self.used_hashes.add(h)
-                results.append(caption)
+            if h in self.used_hashes:
+                continue
+            if self.persistent_used is not None and caption in self.persistent_used:
+                continue
+            self.used_hashes.add(h)
+            if self.persistent_used is not None:
+                self.persistent_used.add(caption)
+            results.append(caption)
 
         return results
 

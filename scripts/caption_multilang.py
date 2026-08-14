@@ -33,6 +33,8 @@ import sys
 from pathlib import Path
 from typing import Iterable
 
+from caption_dedupe import load_used_captions, save_used_captions, pick_caption
+
 # ---------------------------------------------------------------------------
 # scene detection (from title text)
 # ---------------------------------------------------------------------------
@@ -487,14 +489,25 @@ SUPPORTED_LANGS = tuple(TEMPLATES.keys())
 # picker
 # ---------------------------------------------------------------------------
 
-def pick_template(scene: str, lang: str, used: dict[tuple[str, str], int]) -> str:
-    pool = TEMPLATES.get(lang, {}).get(scene) or TEMPLATES[lang]["portrait"]
+def pick_template(scene: str, lang: str, used: dict[tuple[str, str], int],
+                  *, persistent_used: set | None = None) -> str:
+    full = TEMPLATES.get(lang, {}).get(scene) or TEMPLATES[lang]["portrait"]
+    pool = list(full)
+    if persistent_used is not None:
+        pool = [c for c in pool if c not in persistent_used]
+        if not pool:
+            # 池内文案全部跨批次用尽：回到完整池，用序号后缀兜底保证不重复
+            caption = pick_caption(list(full), persistent_used)
+            used[(lang, caption)] = used.get((lang, caption), 0) + 1
+            return caption
     counts = [(used.get((lang, c), 0), i, c) for i, c in enumerate(pool)]
     counts.sort()
     m = counts[0][0]
     candidates = [c for u, _, c in counts if u == m]
     caption = random.choice(candidates)
     used[(lang, caption)] = used.get((lang, caption), 0) + 1
+    if persistent_used is not None:
+        persistent_used.add(caption)
     return caption
 
 
@@ -882,6 +895,7 @@ def rewrite_csv(
     seed: int,
     use_existing_lang: bool = False,
     content_aware: bool = False,
+    dedupe_file: str | None = None,
 ) -> tuple[int, dict[str, int]]:
     """Rewrite ``content`` column into subject-voice captions.
 
@@ -909,6 +923,7 @@ def rewrite_csv(
         ]
     used_counts: dict[tuple[str, str], int] = {}
     lang_stats: Counter = Counter()
+    persistent_used = load_used_captions(dedupe_file) if dedupe_file else None
 
     fields = list(rows[0].keys())
     if "_lang" not in fields:
@@ -937,12 +952,17 @@ def rewrite_csv(
             if not caption and use_llm:
                 caption = llm_caption(orig_title, scene, lang)
             if not caption:
-                caption = pick_template(scene, lang, used_counts)
+                caption = pick_template(scene, lang, used_counts, persistent_used=persistent_used)
+            if persistent_used is not None:
+                persistent_used.add(caption)
             row["content"] = caption
             row["_lang"] = lang
             row["_scene"] = scene
             writer.writerow(row)
             lang_stats[lang] += 1
+
+    if persistent_used is not None and dedupe_file:
+        save_used_captions(persistent_used, dedupe_file)
 
     return len(rows), dict(lang_stats)
 
@@ -962,6 +982,8 @@ def main() -> int:
                     help="build differentiated captions from each row's own "
                          "title + _excerpt (avoids template homogeneity; TW media)")
     ap.add_argument("--seed", type=int, default=20260703)
+    ap.add_argument("--dedupe-file", default="state/seen_captions_multilang.json",
+                    help="已用文案账本（跨批次防重复）；传空字符串关闭去重")
     args = ap.parse_args()
 
     langs = [l.strip() for l in args.langs.split(",") if l.strip()]
@@ -971,11 +993,14 @@ def main() -> int:
               file=sys.stderr)
         return 2
 
+    dedupe_file = args.dedupe_file.strip() or None
+
     n, stats = rewrite_csv(
         Path(args.input), Path(args.output),
         langs=langs, use_llm=args.use_llm, seed=args.seed,
         use_existing_lang=args.use_existing_lang,
         content_aware=args.content_aware,
+        dedupe_file=dedupe_file,
     )
     print(f"[OK] rewrote {n} rows → {args.output}")
     print(f"[OK] language stats: {stats}")

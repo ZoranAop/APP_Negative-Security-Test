@@ -44,6 +44,8 @@ def main() -> int:
     ap.add_argument("--lang", default="en", choices=list(REWRITE_TEMPLATES.keys()) + ["auto"],
                     help="文案语言（auto=读取CSV中_lang列）")
     ap.add_argument("--scene", default="travel", help="场景类型")
+    ap.add_argument("--dedupe-file", default="state/seen_captions_diversify.json",
+                    help="已用文案账本（跨批次防重复）；传空字符串关闭去重")
     args = ap.parse_args()
 
     # 读取
@@ -73,12 +75,19 @@ def main() -> int:
         lang_groups = {args.lang: list(range(len(rows)))}
 
     # 为每组语言生成唯一文案
+    persistent_used = None
+    if (args.dedupe_file or "").strip():
+        from caption_dedupe import load_used_captions, save_used_captions
+        persistent_used = load_used_captions(args.dedupe_file.strip())
     for lang, indices in lang_groups.items():
         effective_lang = lang if lang in REWRITE_TEMPLATES else "en"
-        rw = CaptionRewriter(lang=effective_lang, scene=args.scene)
+        rw = CaptionRewriter(lang=effective_lang, scene=args.scene, persistent_used=persistent_used)
         captions = rw.generate(count=len(indices))
         for j, idx in enumerate(indices):
             rows[idx]['content'] = captions[j]
+    if persistent_used is not None:
+        from caption_dedupe import save_used_captions
+        save_used_captions(persistent_used, args.dedupe_file.strip())
 
     # 验证
     new_contents = [r.get('content', '') for r in rows]

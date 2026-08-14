@@ -30,8 +30,12 @@ PY = [sys.executable]
 sys.path.insert(0, str(HERE))
 
 from fetch_tech import ALL_SOURCES, SITE_CN, SITE_LANG  # noqa: E402
+from caption_dedupe import load_used_captions, save_used_captions  # noqa: E402
 
 TAG = "科技"
+
+# 累计已用文案账本（跨批次防文案重复）
+CAPTION_DEDUPE_FILE = "state/seen_tech_captions.json"
 
 # ---------------------------------------------------------------------------
 # 来源过滤机制（Source Attribution Stripping）
@@ -537,7 +541,7 @@ def main() -> int:
         langs = DEFAULT_LANGS
     mode = args.lang_mode
     print(f"\n=== Step 2/3: 多语言角色文案（语言模式={mode}；候选 {'/'.join(langs)}，不重复）===")
-    seen_caps: set[str] = set()
+    seen_caps = load_used_captions(ROOT / CAPTION_DEDUPE_FILE)
     rows = []
     from collections import Counter
     lang_count: Counter = Counter()
@@ -561,6 +565,7 @@ def main() -> int:
             acct = accts[i % len(accts)]
             print(f"  #{i+1} [{(acct['nick'] or acct['email'])[:12]} /{lang}/ {persona}] {content[:56]}")
     print(f"[run_tech] 语言分布: {dict(lang_count)}")
+    save_used_captions(seen_caps, ROOT / CAPTION_DEDUPE_FILE)
 
     fields = ["content", "visibility", "room_id", "image_urls",
               "location_name", "location_address", "location_lat", "location_lon",
