@@ -196,12 +196,13 @@ def get_s3_creds(token: str, *, upload_url: str, timeout: int) -> dict:
 # of the image. Crop off a bottom strip to remove it. Same treatment for:
 #   - Xiaohongshu / 小红书  (xhscdn.com / xiaohongshu.com)
 #   - backpackers.com.tw    (sa.bbkz.net / sa1.bbkz.net attachment photos)
+#   - turismo.cc / 爱尤物   (img.youwushow.top — 底部烧录水印，含 xiuren/cosplay/youmi 等栏目)
 #   POST_CROP_BOTTOM_HOSTS  comma list of host substrings to crop
 #   POST_CROP_BOTTOM_PCT    fraction of height to crop off the bottom (default 0.08)
 # Set POST_CROP_BOTTOM_HOSTS="" to disable entirely.
 # ---------------------------------------------------------------------------
 
-_DEFAULT_CROP_HOSTS = "xhscdn.com,xiaohongshu.com,bbkz.net,erv-nsa.gov.tw"
+_DEFAULT_CROP_HOSTS = "xhscdn.com,xiaohongshu.com,bbkz.net,erv-nsa.gov.tw,youwushow.top"
 
 
 def _crop_hosts() -> list[str]:
@@ -395,6 +396,17 @@ def send_moment(
             last = f"HTTP {r.status_code}: {r.text[:120]}"
             time.sleep(backoff * (2 ** attempt))
             continue
+        # 4xx（非 429）：部分后端用 401 + code 10007/reason token_invalid 表示会话过期，
+        # 需识别并触发外层重新登录重试，否则会被当作普通业务失败静默丢弃。
+        try:
+            _j = r.json()
+        except Exception:  # noqa: BLE001
+            _j = {}
+        if (_j.get("code") == 10007
+                or "token_invalid" in str(_j.get("data", {}).get("reason", ""))
+                or "expired" in str(_j.get("msg", "")).lower()
+                or "sign in again" in str(_j.get("msg", "")).lower()):
+            return False, f"TOKEN_EXPIRED: {_j.get('msg', '')[:80]}"
         return False, f"HTTP {r.status_code}: {r.text[:200]}"  # 4xx（非429）不重试
     return False, f"retry-exhausted: {last}"
 
