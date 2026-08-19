@@ -8,6 +8,7 @@
 最近更新：2026-08-19
 
 - **Web3 用户池**：新增 `accounts_web3_104.csv`（104 个 Web3/Crypto 主题账号，昵称覆盖英文/繁体中文/日文三种风格），用于 Web3/加密/美股资讯发布
+- **Web3 图文组合发帖**：新增 `run_web3_beauty.py`（美女图 + 数字货币增长/收益资讯组合图文帖，生活化去 AI 味口吻 + 繁体中文，web3 用户池发布）；`sources/categories.json` 新增 `web3` 标签（`image_text` 图文类）
 - **架构优化 v0.4**：提取公共工具函数到 `utils.py`（`ensure_utf8_stdout`、`run_cmd`、`strip_source_attribution`），消除 20+ 处重复代码
 - **`caption_multilang.py`**：`zh_hant` 繁体中文模板去台湾地名化，改为通用场景描述，避免非台湾图片输出地域错误文案
 - **`publish_from_tokens.py`**：新增 token 过期自动刷新（发布阶段检测 `TOKEN_EXPIRED` → 重新登录 → 重试），减少静默失败
@@ -69,6 +70,7 @@ xxai-square-publisher/
 │   │   ├── run_europe.py          欧洲多语    ├── run_europe_en.py      欧洲英语
 │   │   ├── run_us_life.py         美国生活    ├── run_us_tech_ai.py     美国科技AI
 │   │   ├── run_tech.py            科技资讯    ├── run_web3.py           Web3 资讯
+│   │   ├── run_web3_beauty.py     Web3图文（美女图+币圈资讯）
 │   │   ├── run_cizucu.py          摄影社区    ├── run_xhs_video.py      小红书视频
 │   │   └── run_africa/arab/gulf/south_america... 非洲/阿拉伯/南美等
 │   ├── post_comments.py             # 自然口吻评论发布（消除AI感/Token复用）
@@ -144,6 +146,20 @@ py -3 scripts/post_moments.py --accounts-csv accounts_10.csv --csv moments.csv `
 - 昵称覆盖三种风格：**英文**（`0xVoidWalker`、`GaslessRonin`、`SolStalker` 等）、**繁体中文**（`链上炼金师`、`钻石手旅人`、`以太沉默者` 等）、**日文**（`ガス代回避`、`ガス代ゼロ派` 等），均为 Web3 社区化昵称（含 0x 地址风、链上/钻石手/Meme 等梗）。
 - 账号源自 `pre_企管用户_1300.csv` 主池，邮箱/密码与主池一致。
 - 用途：配合 `run_web3.py` / `fetch_web3.py` / `web3_caption_by_role.py` 发布 Web3/加密/美股资讯；`--lang auto-nick` 会按昵称文字系统自动匹配文案语言（英文昵称→英文、中文昵称→繁体、日文昵称→日文）。
+
+### Web3 图文组合发帖（run_web3_beauty.py）
+
+美女图 + 数字货币收益资讯的组合图文帖，由 web3 用户池发布（`sources/categories.json` 中注册为 `web3` 标签、`kind=image_text`）：
+
+```powershell
+# 发布 5 帖（美女图 + 币圈收益资讯文案，生活化口吻、繁体中文）
+py -3 scripts/run_web3_beauty.py --num-accounts 5 --yes
+
+# 只产出素材不发布（预演）
+py -3 scripts/run_web3_beauty.py --num-accounts 5 --skip-publish
+```
+
+特点：图片复用「美女」类素材（人物/画廊级去重）、文案为数字货币增长/收益资讯（Google News 中文加密行情，正向过滤 + 生活化去 AI 味口吻 + 繁体中文），资讯/文案/图片三层持久化去重。
 
 ---
 
