@@ -246,13 +246,40 @@ def _wublock_solve(arg1: str) -> str:
     return v
 
 
-def fetch_wublock(n):
+def _wublock_session() -> requests.Session:
     s = requests.Session()
     r = s.get("https://www.wublock123.com/", headers={"User-Agent": UA}, timeout=20)
     m = re.search(r"arg1='([0-9A-F]+)'", r.text)
     if m:
         s.cookies.set("acw_sc__v2", _wublock_solve(m.group(1)), domain="www.wublock123.com")
         r = s.get("https://www.wublock123.com/", headers={"User-Agent": UA}, timeout=20)
+    return s
+
+
+def _wublock_article_body(session: requests.Session, url: str, limit: int = 500) -> str:
+    """抓取吴说文章正文，提取「AI 解读」摘要 + TL;DR 要点，返回截断后的摘要。"""
+    try:
+        r = session.get(url, headers={"User-Agent": UA}, timeout=20)
+        paras = [html.unescape(re.sub(r"<[^>]+>", "", p)).strip()
+                 for p in re.findall(r"<p[^>]*>(.*?)</p>", r.text, re.S)]
+        summary, bullets = "", []
+        for p in paras:
+            p = re.sub(r"^\s*\d+\s*点赞\s*", "", p)  # 去掉「N点赞」前缀
+            if "AI 解读" in p or "AI 解讀" in p or "AI解读" in p or "AI解讀" in p:
+                s = re.sub(r"^AI\s*(?:解读|解讀)\s*", "", p)
+                s = re.split(r"\s*(?:编辑|編輯|作者)\s*[|：:]\s*", s)[0]
+                summary = s.strip()
+            elif p.startswith("·") and len(p) >= 10:
+                bullets.append(p.strip("· ").strip())
+        parts = [summary] + bullets
+        return " ".join(p for p in parts if p)[:limit]
+    except Exception:
+        return ""
+
+
+def fetch_wublock(n, *, with_body: bool = False):
+    s = _wublock_session()
+    r = s.get("https://www.wublock123.com/", headers={"User-Agent": UA}, timeout=20)
     t = r.text
     out, seen = [], set()
     pat = r'href="(/articles/[a-z0-9]+(?:-[a-z0-9]+)*-\d+)"[^>]*>(.*?)</a>'
@@ -260,10 +287,16 @@ def fetch_wublock(n):
         txt = html.unescape(re.sub(r"<[^>]+>", "", inner)).strip()
         if len(txt) >= 6 and link not in seen:
             seen.add(link)
-            out.append({"title": txt, "brief": "", "site": "wublock"})
+            brief = _wublock_article_body(s, "https://www.wublock123.com" + link) if with_body else ""
+            out.append({"title": txt, "brief": brief, "site": "wublock"})
         if len(out) >= n:
             break
     return out
+
+
+def fetch_wublock_deep(n):
+    """wublock — 吴说深度文章（抓取正文，用于深度分析帖）。"""
+    return fetch_wublock(n, with_body=True)
 
 
 # ---------------------------------------------------------------------------
@@ -460,6 +493,7 @@ FETCHERS = {
     "techflow": fetch_techflow, "web3bbs": fetch_web3bbs, "foresight": fetch_foresight,
     "menews": fetch_menews, "web3caff": fetch_web3caff, "panews": fetch_panews,
     "bingx": fetch_bingx, "blockweeks": fetch_blockweeks, "wublock": fetch_wublock,
+    "wublock_deep": fetch_wublock_deep,
     "e27": fetch_e27, "techinasia": fetch_techinasia, "coinlive": fetch_coinlive,
     "superteam": fetch_superteam, "blockhead": fetch_blockhead,
     "theblock": _make_rss_fetcher("https://www.theblock.co/rss.xml", "theblock"),

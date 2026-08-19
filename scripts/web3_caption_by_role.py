@@ -184,13 +184,13 @@ SITE_TAG = {"techflow": "#TechFlow", "web3bbs": "#Web3BBS", "foresight": "#Fores
             "marketwatch": "#MarketWatch", "yahoo_finance": "#YahooFinance", "benzinga": "#Benzinga",
             "ft": "#FT", "barrons": "#Barrons", "thestreet": "#TheStreet"}
 
-def detect_intent(text: str) -> str:
+def detect_intent(text: str) -> str | None:
     t = text or ""
     for name, kws in INTENTS:
         for kw in kws:
             if kw in t:
                 return name
-    return "market"
+    return None
 
 def clean_title(title: str) -> str:
     t = re.sub(r"\s+", " ", (title or "")).strip()
@@ -232,18 +232,45 @@ def detect_content_lang(title: str) -> str:
         return "en"
     return "zh_hant"
 
+def _strip_source(s: str) -> str:
+    """去除文案里的信息来源痕迹（媒体名、据XX报道、作者/编译、原文链接、金十等）。"""
+    if not s:
+        return s
+    s = re.sub(r"深潮\s*TechFlow\s*(?:消息|讯息|資訊|消息|资讯)?[，,]?\s*", "", s)
+    s = re.sub(r"(?:编辑|編輯)\s*\|\s*(?:吴说区块链|吳說區塊鏈)[，,]?\s*", "", s)
+    s = re.sub(r"AI\s*(?:解读|解讀)\s*", "", s)
+    s = re.sub(r"[据據][^\s，,。；;]{1,20}?\s*(?:数据|數據|报道|報道|消息|讯息|訊息)", "", s)
+    s = re.sub(r"(?:作者|編譯|编译)\s*[|：:]\s*[^\s，,。；;]{1,30}", "", s)
+    s = re.sub(r"(?:原文链接|原文鏈接|来源|來源)\s*[|：:]\s*\S+", "", s)
+    s = re.sub(r"整理\s*&\s*(?:编译|編譯)\s*[|：:]\s*[^\s，,。；;]{1,30}", "", s)
+    s = re.sub(r"[（(]金十[)）]", "", s)
+    s = re.sub(r"^吴说每日精选(?:加密新闻)?\s*[-\-–]\s*", "", s)
+    s = re.sub(r"^吳說每日精選(?:加密新聞)?\s*[-\-–]\s*", "", s)
+    s = re.sub(r"^白线\s*WhiteLine\s*Daily\s*[｜|]\s*", "", s)
+    s = re.sub(r"^白線\s*WhiteLine\s*Daily\s*[｜|]\s*", "", s)
+    s = re.split(r"白线日报\s*WhiteLine\s*Daily\s*[，,]", s)[0]
+    s = re.split(r"白線日報\s*WhiteLine\s*Daily\s*[，,]", s)[0]
+    s = re.split(r"凝聚(?:吴说|吳說)(?:团队|團隊)思考", s)[0]
+    s = re.sub(r"\s{2,}", " ", s).strip(" ，,。；;|:：")
+    return s
+
+
 def make_caption(title: str, brief: str, site: str, lang: str, idx: int,
-                 min_len: int = 0, max_len: int = 280) -> str:
+                 min_len: int = 0, max_len: int = 280, no_source: bool = False) -> str:
     """生成文案。支持 min_len/max_len 控制字符数。
-    
+
     关键原则：整条帖子语言统一。
     - 如果 lang=en，整条帖子全英文（不夹杂中文标题）；
     - 如果 lang=ms，整条帖子全马来语（不夹杂中文标题）；
     - 如果 lang=zh_hant，标题+点评都是繁中。
+    - no_source=True 时：不追加来源标签，且清洗摘要里的媒体/作者等来源痕迹。
     """
     ct = clean_title(title)
-    text_for_intent = ct + " " + (brief or "")
-    intent = detect_intent(text_for_intent)
+    if no_source:
+        ct = _strip_source(ct)
+        brief = _strip_source(brief or "")
+    # 意图分类优先看标题，标题无匹配时用摘要兜底（如引用型标题），最终回落 market
+    intent = detect_intent(ct) or detect_intent(brief) or "market"
     bank = BANKS[lang][intent]
     seed = sum(ord(c) for c in ct) + idx
     comment = bank[seed % len(bank)]
@@ -261,7 +288,7 @@ def make_caption(title: str, brief: str, site: str, lang: str, idx: int,
     else:
         tags = TAGS[intent][:]
     st = SITE_TAG.get(site)
-    if st and st not in tags:
+    if st and st not in tags and not no_source:
         tags.append(st)
     tagline = " ".join(tags)
 
@@ -317,6 +344,8 @@ def main() -> int:
                     help="文案最小字符数（默认 0 不限制）")
     ap.add_argument("--max-len", type=int, default=280,
                     help="文案最大字符数（默认 280）")
+    ap.add_argument("--no-source", action="store_true",
+                    help="不带信息来源：不追加来源标签，并清洗摘要里的媒体名/据XX报道/作者等痕迹")
     args = ap.parse_args()
 
     lang_mode = args.lang
@@ -354,7 +383,8 @@ def main() -> int:
                 lang = lang_mode  # 强制统一 (zh_hant/en/ja/ms)
             row["content"] = make_caption(row.get("content", ""), row.get("_brief", ""),
                                           row.get("_site", ""), lang, i,
-                                          min_len=min_len, max_len=max_len)
+                                          min_len=min_len, max_len=max_len,
+                                          no_source=args.no_source)
             row["_lang"] = lang
             row["_role_nick"] = nick
             w.writerow(row)
