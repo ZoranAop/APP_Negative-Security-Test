@@ -368,6 +368,14 @@
         { "site": "bloomberg_jp", "type": "technews", "name": "Bloomberg(Markets)",        "lang": "en",      "url": "https://feeds.bloomberg.com/markets/news.rss",       "fmt": "rss",  "status": "active", "note": "2026-07-13 验证通过, 官网403但公开RSS feed可用" },
         { "site": "ifnews",       "type": "technews", "name": "国际金融报",                "lang": "zh_hant", "url": "https://news.google.com/rss/search?q=site:ifnews.com&hl=zh-CN&gl=CN&ceid=CN:zh-Hans", "fmt": "rss", "status": "active", "note": "2026-07-13 验证通过, 官网SPA无法直接抓取, 通过Google News RSS代理" }
       ]
+    },
+    "web3": {
+      "label": "web3",
+      "kind": "image_text",
+      "tag": "web3",
+      "lang": "zh_hant",
+      "description": "Web3 图文组合发帖：美女类图片 + 数字货币增长/收益资讯文案（Google News 中文加密行情，正向过滤，生活化去AI味口吻，繁体中文），由 web3 用户池发布。采集/发布走 scripts/run_web3_beauty.py。",
+      "sources": []
     }
   }
 }
