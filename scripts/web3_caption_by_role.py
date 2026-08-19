@@ -128,6 +128,46 @@ BANKS = {
   },
 }
 
+# ---- 正向口吻点评库（侧重描述 Web3 资源的优势，正向发展视角）----
+POSITIVE_BANKS = {
+ "zh_hant": {
+  "regulation": ["監管走向清晰，長期是行業成熟的標誌，Web3 的合規優勢會越來越明顯。", "規則明確讓更多人敢進場，這是 Web3 走向主流的必經之路。"],
+  "etf":        ["ETF 讓傳統資金能低門檻配置加密資產，Web3 與傳統金融的融合正在加速。", "機構資金持續流入，說明市場對 Web3 資產的認可度在提升。"],
+  "exchange":   ["交易所創新不斷，用戶體驗和流動性都在變好，行業基礎設施越來越扎實。", "新產品的推出讓更多場景落地，Web3 的可用性越來越強。"],
+  "ai":         ["AI 與 Web3 的結合打開了全新的想像空間，這是技術趨勢的交匯點。", "算力和智能合約的結合，正在重塑價值創造的範式。"],
+  "stablecoin": ["穩定幣讓跨境支付更高效，Web3 的金融基礎設施正被更多人使用。", "穩定幣是 Web3 與現實世界的橋樑，普及度只會越來越高。"],
+  "security":   ["安全能力的提升讓行業更成熟，鏈上資產的保護越來越完善。", "每一次安全加固，都讓 Web3 的基礎更可靠。"],
+  "bitcoin":    ["比特幣作為價值存儲的敘事越來越被認可，長線價值持續凸顯。", "比特幣的稀缺性和去中心化，是其長期價值的核心支撐。"],
+  "ethereum":   ["以太坊生態最繁榮，Layer2 讓可擴展性大幅提升，發展空間巨大。", "以太坊的創新活力是 Web3 最大的引擎。"],
+  "market":     ["市場的波動只是短期，Web3 的長期趨勢依然向上。", "每一次回調都是長期佈局的機會，行業基本面持續向好。"],
+  "research":   ["深度研究讓行業認知不斷提升，Web3 的敘事越來越扎實。", "優質內容的湧現，說明行業正在從炒作走向價值。"],
+ },
+ "en": {
+  "regulation": ["Clearer rules mean more confidence — this is Web3 maturing in the right direction.", "Regulatory clarity is what brings mainstream adoption; the outlook keeps improving."],
+  "etf":        ["ETF inflows show traditional capital finally recognizing Web3's value.", "The bridge between TradFi and crypto keeps getting stronger."],
+  "exchange":   ["Better products and liquidity — the infrastructure keeps getting more solid.", "Every new launch expands Web3's real-world use cases."],
+  "ai":         ["AI and Web3 are converging into something much bigger.", "Compute plus smart contracts is reshaping how value is created."],
+  "stablecoin": ["Stablecoins make cross-border payments effortless — real adoption is growing.", "Stablecoins are the bridge between crypto and everyday finance."],
+  "security":   ["Stronger security makes the whole space more trustworthy.", "Every hardening step makes Web3's foundation more reliable."],
+  "bitcoin":    ["Bitcoin's scarcity and decentralization are its long-term moat.", "The store-of-value narrative keeps gaining acceptance."],
+  "ethereum":   ["Ethereum's ecosystem keeps thriving — L2 scalability opens huge room to grow.", "Ethereum remains the engine of Web3 innovation."],
+  "market":     ["Volatility is short-term; the long-term trend stays up.", "Pullbacks are entry points — fundamentals keep improving."],
+  "research":   ["Deep research builds real understanding — Web3's narrative keeps getting stronger."],
+ },
+ "ja": {
+  "regulation": ["規制の明確化は成熟の証、Web3は正しい方向へ進んでいる。", "ルールが整えば主流化が加速する。"],
+  "etf":        ["ETFへの資金流入はWeb3の価値が認められた証拠。", "伝統金融と暗号資産の架け橋はさらに強くなる。"],
+  "exchange":   ["より良い製品と流動性、インフラは着実に強くなっている。", "新しいサービスがWeb3の実用性を広げる。"],
+  "ai":         ["AIとWeb3の融合はさらに大きな可能性を開く。", "計算資源とスマートコントラクトの組み合わせが価値創造を変える。"],
+  "stablecoin": ["ステーブルコインは国際送金を簡単に、実用が広がっている。", "ステーブルコインは暗号資産と日常金融の橋渡し。"],
+  "security":   ["セキュリティ強化が業界全体の信頼を高める。", "強固な基盤がWeb3の未来を支える。"],
+  "bitcoin":    ["ビットコインの希少性と非中央集権こそ長期の強み。", "価値保存の物語はますます受け入れられている。"],
+  "ethereum":   ["イーサリアムの生態系は最も活発、L2で拡張性も向上。", "イーサリアムはWeb3革新のエンジン。"],
+  "market":     ["変動は短期、長期的な上昇トレンドは変わらない。", "押し目はチャンス、ファンダメンタルは改善中。"],
+  "research":   ["深い研究が理解を深め、Web3の物語を強くする。"],
+ },
+}
+
 TAGS_MS = {
   "regulation": ["#web3", "#RegulasiKripto", "#Pematuhan"],
   "etf": ["#web3", "#ETFKripto", "#Institusi"],
@@ -257,7 +297,8 @@ def _strip_source(s: str) -> str:
 
 
 def make_caption(title: str, brief: str, site: str, lang: str, idx: int,
-                 min_len: int = 0, max_len: int = 280, no_source: bool = False) -> str:
+                 min_len: int = 0, max_len: int = 280, no_source: bool = False,
+                 tone: str = "neutral") -> str:
     """生成文案。支持 min_len/max_len 控制字符数。
 
     关键原则：整条帖子语言统一。
@@ -265,6 +306,7 @@ def make_caption(title: str, brief: str, site: str, lang: str, idx: int,
     - 如果 lang=ms，整条帖子全马来语（不夹杂中文标题）；
     - 如果 lang=zh_hant，标题+点评都是繁中。
     - no_source=True 时：不追加来源标签，且清洗摘要里的媒体/作者等来源痕迹。
+    - tone=positive 时：使用正向口吻点评库（侧重描述 Web3 优势与发展）。
     """
     ct = clean_title(title)
     if no_source:
@@ -272,7 +314,10 @@ def make_caption(title: str, brief: str, site: str, lang: str, idx: int,
         brief = _strip_source(brief or "")
     # 意图分类优先看标题，标题无匹配时用摘要兜底（如引用型标题），最终回落 market
     intent = detect_intent(ct) or detect_intent(brief) or "market"
-    bank = BANKS[lang][intent]
+    if tone == "positive" and lang in POSITIVE_BANKS:
+        bank = POSITIVE_BANKS[lang][intent]
+    else:
+        bank = BANKS[lang][intent]
     seed = sum(ord(c) for c in ct) + idx
     comment = bank[seed % len(bank)]
     # 取第二条点评（用于补足长度）
@@ -347,6 +392,8 @@ def main() -> int:
                     help="文案最大字符数（默认 280）")
     ap.add_argument("--no-source", action="store_true",
                     help="不带信息来源：不追加来源标签，并清洗摘要里的媒体名/据XX报道/作者等痕迹")
+    ap.add_argument("--tone", default="neutral", choices=["neutral", "positive"],
+                    help="点评口吻：neutral=中性点评，positive=正向点评（侧重描述 Web3 优势与发展）")
     args = ap.parse_args()
 
     lang_mode = args.lang
@@ -385,7 +432,7 @@ def main() -> int:
             row["content"] = make_caption(row.get("content", ""), row.get("_brief", ""),
                                           row.get("_site", ""), lang, i,
                                           min_len=min_len, max_len=max_len,
-                                          no_source=args.no_source)
+                                          no_source=args.no_source, tone=args.tone)
             row["_lang"] = lang
             row["_role_nick"] = nick
             w.writerow(row)
