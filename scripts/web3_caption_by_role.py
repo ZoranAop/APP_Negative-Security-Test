@@ -164,7 +164,47 @@ POSITIVE_BANKS = {
   "bitcoin":    ["ビットコインの希少性と非中央集権こそ長期の強み。", "価値保存の物語はますます受け入れられている。"],
   "ethereum":   ["イーサリアムの生態系は最も活発、L2で拡張性も向上。", "イーサリアムはWeb3革新のエンジン。"],
   "market":     ["変動は短期、長期的な上昇トレンドは変わらない。", "押し目はチャンス、ファンダメンタルは改善中。"],
-  "research":   ["深い研究が理解を深め、Web3の物語を強くする。"],
+ "research":   ["深い研究が理解を深め、Web3の物語を強くする。"],
+  },
+}
+
+# ---- 币安广场式收益感慨点评库（发帖人结合资讯表达自身已获收益的感慨）----
+TRADER_BANKS = {
+ "zh_hant": {
+  "regulation": ["政策一明朗，我早前佈局的倉位就漲了，這波合規紅利算是吃到了。", "監管落地是利好，我持倉終於回本了，這次是賺的。"],
+  "etf":        ["ETF 資金持續流入，我手裡的現貨跟著水漲船高，這波吃到了。", "機構進場的信號太明顯了，我早就埋伏，賬戶已經翻倍。"],
+  "exchange":   ["新幣上線前我就在關注了，上市後第一時間進場，已經吃到肉。", "這波交易所行情我踩對了節奏，利潤很可觀。"],
+  "ai":         ["AI 概念我早早就埋伏了，這波漲勢讓我賬戶大豐收。", "看好 AI 這條線，我持倉已經漲了不少，感慨當初的判斷。"],
+  "stablecoin": ["穩定幣收益雖然穩，但積少成多，我這幾個月也攢了不少。", "穩定幣借貸的收益我一直在吃，複利真的很香。"],
+  "security":   ["安全第一，我躲過了幾次盜幣，保住了本金就是賺。", "好在提前撤了槓桿，躲過了這波清算，本金還在。"],
+  "bitcoin":    ["比特幣這波反彈我抄底成功，賬戶已經翻倍，感恩。", "BTC 就是信仰，我從低點一路拿到現在，利潤可觀。"],
+  "ethereum":   ["以太坊生態我重倉了，這波 L2 行情讓我賺了不少。", "ETH 的 Layer2 賽道我埋伏很久，這次終於爆發了。"],
+  "market":     ["這波行情我踩對了節奏，低吸高拋，賺得盆滿缽滿。", "回調就是機會，我趁跌加倉，現在賬戶浮盈可觀。"],
+  "research":   ["看了研報提前佈局，這波賺到了，深度研究的價值就在這。", "跟著研究報告走，我的持倉翻倍了，認知就是財富。"],
+ },
+ "en": {
+  "regulation": ["My early positions pumped once the rules clarified — this compliance rally paid off.", "Regulatory clarity finally pushed my bags back into profit."],
+  "etf":        ["ETF inflows lifted my spot holdings nicely — glad I positioned early.", "I saw the institutional signal and loaded up; the account has doubled."],
+  "exchange":   ["I watched the listing before launch and got in first — this one paid.", "Timed this exchange move right and the gains have been solid."],
+  "ai":         ["I positioned into AI early and this rally made my portfolio a lot richer.", "Holding the AI narrative has paid off big time — glad I trusted it."],
+  "stablecoin": ["Stablecoin yields add up — months of compounding really shows.", "I've been collecting stablecoin lending yield and it's compounding nicely."],
+  "security":   ["Kept my keys safe and dodged a few hacks — protecting principal is a win.", "Glad I pulled leverage early and avoided the liquidation."],
+  "bitcoin":    ["Caught this BTC dip and my bag is up nicely now — this is why I hold.", "Bought the low and rode it up — the account has doubled, grateful."],
+  "ethereum":   ["Heavy in the Ethereum ecosystem and this L2 run made me solid gains.", "I've been in the L2 trade for a while — finally it paid off."],
+  "market":     ["Timed this swing right and banked solid profits.", "Added on the dip and I'm nicely in profit now."],
+  "research":   ["Read the report early and positioned ahead — this one paid, research is wealth."],
+ },
+ "ja": {
+  "regulation": ["規制が明確になって、早めのポジションが上がった。この上昇は大きい。", "コンプライアンスの追い風で、持ち分がやっと利益に戻った。"],
+  "etf":        ["ETF流入で現物も上がった。早めに仕込んで正解だった。", "機関のシグナルに乗って、口座は倍になった。"],
+  "exchange":   ["上場前に注目して、一番で入った。今回は利益が出た。", "取引所の動きに乗って、しっかり稼げた。"],
+  "ai":         ["AIは早めに仕込んでいて、この上昇で大きく増えた。", "AIの流れを信じて持っていたら、大きく化けた。"],
+  "stablecoin": ["ステーブルの利回りは地味に効く。複利でじわじわ増えている。", "ステーブルのレンディング利回りをずっと回している。"],
+  "security":   ["鍵を守ってハッキングを回避、元本を守れたのが勝ち。", "早めにレバを解消して清算を回避、助かった。"],
+  "bitcoin":    ["BTCの底で拾って、そのまま上がった。口座は倍、感謝。", "ビットコインは信仰。安く買って持ち続けたら増えた。"],
+  "ethereum":   ["イーサリアムを厚めに持っていて、L2相場で大きく稼げた。", "L2は長く仕込んでいた、ようやく花開いた。"],
+  "market":     ["この相場、リズムを掴んでしっかり利益を取れた。", "押し目で買い増して、今は含み益が大きい。"],
+  "research":   ["レポートを読んで先回り、今回は勝てた。研究は財産。"],
  },
 }
 
@@ -316,6 +356,8 @@ def make_caption(title: str, brief: str, site: str, lang: str, idx: int,
     intent = detect_intent(ct) or detect_intent(brief) or "market"
     if tone == "positive" and lang in POSITIVE_BANKS:
         bank = POSITIVE_BANKS[lang][intent]
+    elif tone == "trader" and lang in TRADER_BANKS:
+        bank = TRADER_BANKS[lang][intent]
     else:
         bank = BANKS[lang][intent]
     seed = sum(ord(c) for c in ct) + idx
@@ -392,8 +434,9 @@ def main() -> int:
                     help="文案最大字符数（默认 280）")
     ap.add_argument("--no-source", action="store_true",
                     help="不带信息来源：不追加来源标签，并清洗摘要里的媒体名/据XX报道/作者等痕迹")
-    ap.add_argument("--tone", default="neutral", choices=["neutral", "positive"],
-                    help="点评口吻：neutral=中性点评，positive=正向点评（侧重描述 Web3 优势与发展）")
+    ap.add_argument("--tone", default="neutral", choices=["neutral", "positive", "trader"],
+                    help="点评口吻：neutral=中性点评，positive=正向点评（侧重描述 Web3 优势），"
+                         "trader=币安广场式收益感慨（发帖人表达自身已获收益）")
     args = ap.parse_args()
 
     lang_mode = args.lang
