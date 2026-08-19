@@ -41,6 +41,23 @@ from __future__ import annotations
 import argparse, csv, re, sys, unicodedata
 from pathlib import Path
 
+try:
+    from opencc import OpenCC
+    _CC_S2T = OpenCC("s2t")
+except Exception:  # noqa: BLE001
+    _CC_S2T = None
+
+
+def _to_hant(s: str) -> str:
+    """简体→繁体（opencc s2t）；不可用或异常时原样返回。"""
+    if not s or _CC_S2T is None:
+        return s
+    try:
+        return _CC_S2T.convert(s)
+    except Exception:  # noqa: BLE001
+        return s
+
+
 # ---- 新闻意图分类（关键词 → 意图桶）----
 INTENTS = [
     ("regulation", ["工信部", "四部门", "监管", "監管", "SEC", "合规", "合規", "FBI", "诈骗", "詐騙", "犯罪", "国会", "國會", "作证", "作證", "诉讼", "訴訟", "立法", "政策"]),
@@ -143,6 +160,18 @@ TAGS_EN = {
   "market": ["#web3", "#CryptoMarket", "#Markets"],
   "research": ["#web3", "#Research", "#Trends"],
 }
+TAGS_JA = {
+  "regulation": ["#web3", "#暗号規制", "#コンプライアンス"],
+  "etf": ["#web3", "#暗号ETF", "#機関投資家"],
+  "exchange": ["#web3", "#取引所", "#デリバティブ"],
+  "ai": ["#web3", "#AI", "#テクノロジー"],
+  "stablecoin": ["#web3", "#ステーブルコイン", "#DeFi"],
+  "security": ["#web3", "#オンチェーンセキュリティ", "#セキュリティ"],
+  "bitcoin": ["#web3", "#ビットコイン", "#BTC"],
+  "ethereum": ["#web3", "#イーサリアム", "#Layer2"],
+  "market": ["#web3", "#暗号市場", "#マーケット"],
+  "research": ["#web3", "#リサーチ", "#トレンド"],
+}
 SITE_TAG = {"techflow": "#TechFlow", "web3bbs": "#Web3BBS", "foresight": "#ForesightNews",
             "menews": "#MENews", "web3caff": "#Web3Caff", "panews": "#PANews", "bingx": "#BingX"}
 
@@ -218,6 +247,8 @@ def make_caption(title: str, brief: str, site: str, lang: str, idx: int,
         tags = TAGS_MS[intent][:]
     elif lang == "en":
         tags = TAGS_EN[intent][:]
+    elif lang == "ja":
+        tags = TAGS_JA[intent][:]
     else:
         tags = TAGS[intent][:]
     st = SITE_TAG.get(site)
@@ -226,33 +257,31 @@ def make_caption(title: str, brief: str, site: str, lang: str, idx: int,
     tagline = " ".join(tags)
 
     # ---- 组装正文（确保语言统一）----
-    if lang in ("en", "ms"):
-        # 英文/马来语帖：不嵌入中文标题，纯用对应语言的评论
-        # 用两条评论拼接以达到足够长度
+    if lang in ("en", "ms", "ja"):
+        # 英文/马来语/日文帖：不嵌入中文标题，纯用对应语言的评论
+        # 用两条评论拼接以达到足够长度，避免出现中英/中日混杂
         body = f"{comment}\n\n{comment2}"
-    elif lang == "ja":
-        body = f"{comment}\n\n{ct}"
     else:
-        # zh_hant：中文标题 + 繁中点评
-        body = f"{ct}\n{comment}"
+        # zh_hant：中文标题 + 繁中点评（标题统一转繁体，避免简繁混排）
+        body = f"{_to_hant(ct)}\n{comment}"
 
     out = f"{body}\n{tagline}"
 
     # 如果低于 min_len 且有 brief，尝试补足（仅限同语言内容）
     if min_len > 0 and len(out) < min_len:
-        # 对于 en/ms，再加第三条点评
-        if lang in ("en", "ms"):
+        # 对于 en/ms/ja，再加第三条点评
+        if lang in ("en", "ms", "ja"):
             comment3 = bank[(seed + 3) % len(bank)]
             if comment3 not in (comment, comment2):
                 body = f"{comment}\n\n{comment2}\n\n{comment3}"
                 out = f"{body}\n{tagline}"
         else:
-            # zh_hant/ja 可以追加 brief
+            # zh_hant 可以追加 brief
             if brief:
                 brief_clean = re.sub(r"\s+", " ", brief).strip()
                 avail = max_len - len(out) - 2
                 if avail > 20:
-                    body = f"{ct}\n{comment}\n\n{brief_clean[:avail]}"
+                    body = f"{_to_hant(ct)}\n{comment}\n\n{_to_hant(brief_clean[:avail])}"
                     out = f"{body}\n{tagline}"
 
     # 限制 max_len
