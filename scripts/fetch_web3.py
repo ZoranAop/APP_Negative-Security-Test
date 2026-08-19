@@ -18,6 +18,12 @@ fetch_web3.py — 统一 Web3 资讯多源采集器：从 14 个 Web3/Crypto/Tec
   coinlive    CoinLive           https://www.coinlive.com/news                        (HTML, Crypto 新闻)
   superteam   Superteam SG       https://superteam.sg/                                (HTML, Solana 生态/Web3 社区)
   blockhead   Blockhead          https://www.blockhead.co/                            (HTML, 东南亚 Crypto/Web3)
+  theblock    The Block          https://www.theblock.co/rss.xml                      (RSS)
+  decrypt     Decrypt            https://decrypt.co/feed                              (RSS)
+  thedefiant  The Defiant        https://thedefiant.io/feed                           (RSS)
+  bitcoinmagazine Bitcoin Magazine https://bitcoinmagazine.com/feed                  (RSS)
+  beincrypto  BeInCrypto         https://beincrypto.com/feed/                         (RSS)
+  odaily      Odaily 星球日报     https://www.odaily.news/                            (HTML SSR, 中文 Web3 资讯)
 
 用法：
   py -3 scripts/fetch_web3.py --sources techflow,foresight,menews,web3caff,panews,bingx,blockweeks,wublock,web3bbs,e27,techinasia,coinlive,superteam,blockhead `
@@ -347,12 +353,66 @@ def fetch_blockhead(n):
     return out
 
 
+def _fetch_rss(url: str, site: str, n: int) -> list[dict]:
+    """通用 RSS 采集：提取 <item> 的 title + description 摘要。"""
+    r = _get(url, headers={"User-Agent": UA})
+    r.encoding = "utf-8"
+    out = []
+    for it in re.findall(r"<item>(.*?)</item>", r.text, re.S):
+        tm = re.search(r"<title>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?</title>", it, re.S)
+        if not tm:
+            continue
+        title = html.unescape(tm.group(1).strip())
+        if not title:
+            continue
+        dm = re.search(r"<description>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?</description>", it, re.S)
+        brief = ""
+        if dm:
+            brief = re.sub(r"<[^>]+>", "", html.unescape(dm.group(1))).strip()[:200]
+        out.append({"title": title, "brief": brief, "site": site})
+        if len(out) >= n:
+            break
+    return out
+
+
+def _make_rss_fetcher(url: str, site: str):
+    def _f(n: int) -> list[dict]:
+        return _fetch_rss(url, site, n)
+    return _f
+
+
+def fetch_odaily(n):
+    """odaily.news（Odaily 星球日报）— 中文 Web3 资讯（服务端渲染，抽取文章卡片）。"""
+    r = _get("https://www.odaily.news/", headers={"User-Agent": UA, "Accept-Language": "zh-CN,zh;q=0.9"})
+    txt = r.text
+    out, seen = [], set()
+    # 文章卡片：<a href="/zh-CN/post/ID" ...><img alt="标题" ...> 或直接文本标题
+    for m in re.finditer(r'href="/zh-CN/post/\d+"[^>]*>(.*?)</a>', txt, re.S):
+        inner = m.group(1)
+        alt = re.search(r'alt="([^"]+)"', inner)
+        title = html.unescape(alt.group(1)).strip() if alt else ""
+        if not title:
+            title = html.unescape(re.sub(r"<[^>]+>", "", inner)).strip()
+        if title and len(title) >= 6 and title not in seen:
+            seen.add(title)
+            out.append({"title": title, "brief": "", "site": "odaily"})
+        if len(out) >= n:
+            break
+    return out
+
+
 FETCHERS = {
     "techflow": fetch_techflow, "web3bbs": fetch_web3bbs, "foresight": fetch_foresight,
     "menews": fetch_menews, "web3caff": fetch_web3caff, "panews": fetch_panews,
     "bingx": fetch_bingx, "blockweeks": fetch_blockweeks, "wublock": fetch_wublock,
     "e27": fetch_e27, "techinasia": fetch_techinasia, "coinlive": fetch_coinlive,
     "superteam": fetch_superteam, "blockhead": fetch_blockhead,
+    "theblock": _make_rss_fetcher("https://www.theblock.co/rss.xml", "theblock"),
+    "decrypt": _make_rss_fetcher("https://decrypt.co/feed", "decrypt"),
+    "thedefiant": _make_rss_fetcher("https://thedefiant.io/feed", "thedefiant"),
+    "bitcoinmagazine": _make_rss_fetcher("https://bitcoinmagazine.com/feed", "bitcoinmagazine"),
+    "beincrypto": _make_rss_fetcher("https://beincrypto.com/feed/", "beincrypto"),
+    "odaily": fetch_odaily,
 }
 ALL_SOURCES = list(FETCHERS.keys())
 
