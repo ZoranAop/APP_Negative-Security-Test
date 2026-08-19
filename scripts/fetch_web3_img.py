@@ -115,14 +115,18 @@ def main() -> int:
                     help="逗号分隔来源 key：" + ",".join(SOURCES))
     ap.add_argument("--per-site", type=int, default=5, help="每个来源取多少条")
     ap.add_argument("--dedupe-file", default=None, help="去重档（记录归一化标题）")
+    ap.add_argument("--img-url-dedupe-file", default=None,
+                    help="图片 URL 去重档（记录已用封面图 URL，避免重复图片）")
     ap.add_argument("--output", required=True)
     args = ap.parse_args()
 
     used = _load_dedupe(args.dedupe_file)
+    used_img_urls = _load_dedupe(args.img_url_dedupe_file)
     sources = [s.strip() for s in args.sources.split(",") if s.strip() in SOURCES]
 
     rows: list[dict] = []
     picked: set[str] = set()
+    picked_img_urls: set[str] = set()
     for site in sources:
         try:
             items = _rss_items(SOURCES[site], args.per_site * 2)
@@ -136,7 +140,12 @@ def main() -> int:
             n = _norm(it["title"])
             if n in used or n in picked:
                 continue
+            img_url = (it["image_urls"] or "").strip()
+            if img_url and (img_url in used_img_urls or img_url in picked_img_urls):
+                print(f"[web3_img] {site} skip dup-image: {img_url[:60]}", file=sys.stderr)
+                continue
             picked.add(n)
+            picked_img_urls.add(img_url)
             rows.append({"title": it["title"], "brief": it["brief"],
                          "image_urls": it["image_urls"], "site": site})
             kept += 1
@@ -148,6 +157,8 @@ def main() -> int:
 
     if args.dedupe_file:
         _save_dedupe(args.dedupe_file, used | picked)
+    if args.img_url_dedupe_file:
+        _save_dedupe(args.img_url_dedupe_file, used_img_urls | picked_img_urls)
 
     out = Path(args.output)
     out.parent.mkdir(parents=True, exist_ok=True)

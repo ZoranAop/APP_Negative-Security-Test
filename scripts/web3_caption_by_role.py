@@ -70,7 +70,7 @@ INTENTS = [
     ("security",   ["安全", "漏洞", "黑客", "被盗", "被盜", "钓鱼", "釣魚", "签名", "簽名", "风控", "風控",
                     "exploit", "hack", "hacked", "vulnerability", "breach", "attack", "stolen", "phishing", "theft"]),
     ("bitcoin",    ["比特币", "比特幣", "BTC", "Saylor", "Bitcoin", "矿企", "礦企", "休眠", "储备", "儲備", "mining", "miner", "halving"]),
-    ("ethereum",   ["以太坊", "ETH", "L2", "Rollup", "Layer2", "唯链", "VeChain", "AMM", "DeFi", "Uniswap", "rollups"]),
+    ("ethereum",   ["以太坊", "ETH", "L2", "Rollup", "Layer2", "唯链", "VeChain", "AMM", "DeFi", "Uniswap", "rollups", "Ethereum", "Solana"]),
     ("market",     ["股市", "熔断", "熔斷", "海力士", "KOSPI", "纳斯达克", "納斯達克", "暴跌", "重挫", "浮亏", "浮虧", "行情", "流动性", "流動性", "宏观", "宏觀", "降息",
                     "stock", "stocks", "IPO", "shares", "equity", "earnings", "Fed", "index", "S&P", "Nasdaq", "Dow", "rally", "fell", "surge", "plunge", "slump"]),
     ("research",   ["研报", "研報", "周报", "週報", "报告", "報告", "盘点", "盤點", "前瞻", "解读", "解讀", "展望", "report", "analysis", "research", "outlook"]),
