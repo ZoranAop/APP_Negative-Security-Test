@@ -24,6 +24,16 @@ fetch_web3.py — 统一 Web3 资讯多源采集器：从 14 个 Web3/Crypto/Tec
   bitcoinmagazine Bitcoin Magazine https://bitcoinmagazine.com/feed                  (RSS)
   beincrypto  BeInCrypto         https://beincrypto.com/feed/                         (RSS)
   odaily      Odaily 星球日报     https://www.odaily.news/                            (HTML SSR, 中文 Web3 资讯)
+  bloomberg   Bloomberg          https://feeds.bloomberg.com/markets/news.rss          (RSS, 美股)
+  cnbc        CNBC               https://www.cnbc.com/id/100003114/device/rss/rss.html (RSS, 美股)
+  wsj         WSJ 华尔街日报      https://feeds.a.dj.com/rss/RSSWSJD.xml               (RSS, 美股)
+  reuters     Reuters 路透社      (Google News RSS 兜底)                              (RSS, 美股)
+  marketwatch MarketWatch        https://feeds.content.dowjones.io/public/rss/mw_topstories (RSS, 美股)
+  yahoo_finance Yahoo Finance    https://finance.yahoo.com/news/rssindex                (RSS, 美股)
+  benzinga    Benzinga           https://www.benzinga.com/                             (HTML, 美股)
+  ft          FT 金融时报         https://www.ft.com/rss/home                          (RSS, 美股)
+  barrons     Barron's           https://www.barrons.com/market-data                    (HTML, 美股)
+  thestreet   TheStreet          https://www.thestreet.com/.rss/full/                  (RSS, 美股)
 
 用法：
   py -3 scripts/fetch_web3.py --sources techflow,foresight,menews,web3caff,panews,bingx,blockweeks,wublock,web3bbs,e27,techinasia,coinlive,superteam,blockhead `
@@ -401,6 +411,51 @@ def fetch_odaily(n):
     return out
 
 
+def _fetch_html_headlines(url: str, site: str, n: int) -> list[dict]:
+    """通用 HTML 标题抽取：取 h2/h3 中的新闻标题（过滤导航/短文本/全大写/CSS 片段）。"""
+    r = _get(url, headers={"User-Agent": UA, "Accept-Language": "en-US,en;q=0.9"})
+    out, seen = [], set()
+    for raw in re.findall(r"<h[234][^>]*>(.*?)</h[234]>", r.text, re.S):
+        t = html.unescape(re.sub(r"<[^>]+>", "", raw)).strip()
+        if (t and len(t) >= 15 and not t.isupper() and not t.startswith(".")
+                and t not in seen):
+            seen.add(t)
+            out.append({"title": t, "brief": "", "site": site})
+        if len(out) >= n:
+            break
+    return out
+
+
+def fetch_benzinga(n):
+    """benzinga.com — 美股财经资讯（HTML 标题抽取）。"""
+    return _fetch_html_headlines("https://www.benzinga.com/", "benzinga", n)
+
+
+def fetch_barrons(n):
+    """barrons.com — Barron's 美股市场（HTML 标题抽取，付费墙外摘要）。"""
+    return _fetch_html_headlines("https://www.barrons.com/market-data", "barrons", n)
+
+
+def fetch_reuters(n):
+    """reuters.com — 路透社市场/美股资讯（Google News RSS 兜底，直连 feeds.reuters.com 常被墙）。"""
+    url = "https://news.google.com/rss/search?q=site:reuters.com%20markets&hl=en-US&gl=US&ceid=US:en"
+    r = _get(url, headers={"User-Agent": UA})
+    r.encoding = "utf-8"
+    out, seen = [], set()
+    for it in re.findall(r"<item>(.*?)</item>", r.text, re.S):
+        tm = re.search(r"<title>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?</title>", it, re.S)
+        if not tm:
+            continue
+        t = html.unescape(tm.group(1).strip())
+        t = re.sub(r"\s+-\s+Reuters\s*$", "", t).strip()  # 去掉 Google News 的来源后缀
+        if t and t not in seen:
+            seen.add(t)
+            out.append({"title": t, "brief": "", "site": "reuters"})
+        if len(out) >= n:
+            break
+    return out
+
+
 FETCHERS = {
     "techflow": fetch_techflow, "web3bbs": fetch_web3bbs, "foresight": fetch_foresight,
     "menews": fetch_menews, "web3caff": fetch_web3caff, "panews": fetch_panews,
@@ -413,6 +468,16 @@ FETCHERS = {
     "bitcoinmagazine": _make_rss_fetcher("https://bitcoinmagazine.com/feed", "bitcoinmagazine"),
     "beincrypto": _make_rss_fetcher("https://beincrypto.com/feed/", "beincrypto"),
     "odaily": fetch_odaily,
+    "bloomberg": _make_rss_fetcher("https://feeds.bloomberg.com/markets/news.rss", "bloomberg"),
+    "cnbc": _make_rss_fetcher("https://www.cnbc.com/id/100003114/device/rss/rss.html", "cnbc"),
+    "wsj": _make_rss_fetcher("https://feeds.a.dj.com/rss/RSSWSJD.xml", "wsj"),
+    "reuters": fetch_reuters,
+    "marketwatch": _make_rss_fetcher("https://feeds.content.dowjones.io/public/rss/mw_topstories", "marketwatch"),
+    "yahoo_finance": _make_rss_fetcher("https://finance.yahoo.com/news/rssindex", "yahoo_finance"),
+    "benzinga": fetch_benzinga,
+    "ft": _make_rss_fetcher("https://www.ft.com/rss/home", "ft"),
+    "barrons": fetch_barrons,
+    "thestreet": _make_rss_fetcher("https://www.thestreet.com/.rss/full/", "thestreet"),
 }
 ALL_SOURCES = list(FETCHERS.keys())
 

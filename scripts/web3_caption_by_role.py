@@ -175,7 +175,10 @@ TAGS_JA = {
 SITE_TAG = {"techflow": "#TechFlow", "web3bbs": "#Web3BBS", "foresight": "#ForesightNews",
             "menews": "#MENews", "web3caff": "#Web3Caff", "panews": "#PANews", "bingx": "#BingX",
             "theblock": "#TheBlock", "decrypt": "#Decrypt", "thedefiant": "#TheDefiant",
-            "bitcoinmagazine": "#BitcoinMagazine", "beincrypto": "#BeInCrypto", "odaily": "#Odaily"}
+            "bitcoinmagazine": "#BitcoinMagazine", "beincrypto": "#BeInCrypto", "odaily": "#Odaily",
+            "bloomberg": "#Bloomberg", "cnbc": "#CNBC", "wsj": "#WSJ", "reuters": "#Reuters",
+            "marketwatch": "#MarketWatch", "yahoo_finance": "#YahooFinance", "benzinga": "#Benzinga",
+            "ft": "#FT", "barrons": "#Barrons", "thestreet": "#TheStreet"}
 
 def detect_intent(text: str) -> str:
     t = text or ""
