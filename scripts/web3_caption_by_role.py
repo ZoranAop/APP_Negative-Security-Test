@@ -60,16 +60,20 @@ def _to_hant(s: str) -> str:
 
 # ---- 新闻意图分类（关键词 → 意图桶）----
 INTENTS = [
-    ("regulation", ["工信部", "四部门", "监管", "監管", "SEC", "合规", "合規", "FBI", "诈骗", "詐騙", "犯罪", "国会", "國會", "作证", "作證", "诉讼", "訴訟", "立法", "政策"]),
+    ("regulation", ["工信部", "四部门", "监管", "監管", "SEC", "合规", "合規", "FBI", "诈骗", "詐騙", "犯罪", "国会", "國會", "作证", "作證", "诉讼", "訴訟", "立法", "政策",
+                    "regulation", "regulator", "regulatory", "CFTC", "Congress", "rules", "law", "policy", "compliance", "lawsuit"]),
     ("etf",        ["ETF", "资金流出", "資金流出", "资金流入", "資金流入", "IBIT", "现货", "現貨", "信托", "信託"]),
-    ("exchange",   ["币安", "幣安", "火币", "火幣", "HTX", "Upbit", "Gate", "交易所", "上线", "上線", "永续", "永續", "合约", "合約", "清算", "赔偿", "賠償"]),
-    ("ai",         ["AI", "OpenAI", "Anthropic", "Claude", "芯片", "晶圆", "晶圓", "Intel", "xAI", "算力", "具身智能", "人工智能", "代理", "Agent"]),
-    ("stablecoin", ["稳定币", "穩定幣", "USD", "USDT", "JPYSC", "Circle", "借贷", "借貸", "收益"]),
-    ("security",   ["安全", "漏洞", "黑客", "被盗", "被盜", "钓鱼", "釣魚", "签名", "簽名", "风控", "風控"]),
-    ("bitcoin",    ["比特币", "比特幣", "BTC", "Saylor", "Bitcoin", "矿企", "礦企", "休眠", "储备", "儲備"]),
-    ("ethereum",   ["以太坊", "ETH", "L2", "Rollup", "Layer2", "唯链", "VeChain"]),
-    ("market",     ["股市", "熔断", "熔斷", "海力士", "KOSPI", "纳斯达克", "納斯達克", "暴跌", "重挫", "浮亏", "浮虧", "行情", "流动性", "流動性", "宏观", "宏觀", "降息"]),
-    ("research",   ["研报", "研報", "周报", "週報", "报告", "報告", "盘点", "盤點", "前瞻", "解读", "解讀", "展望"]),
+    ("exchange",   ["币安", "幣安", "火币", "火幣", "HTX", "Upbit", "Gate", "交易所", "上线", "上線", "永续", "永續", "合约", "合約", "清算", "赔偿", "賠償",
+                    "exchange", "Binance", "perps", "perpetual", "futures", "derivatives", "listing", "liquidation"]),
+    ("ai",         ["AI", "OpenAI", "Anthropic", "Claude", "芯片", "晶圆", "晶圓", "Intel", "xAI", "算力", "具身智能", "人工智能", "代理", "Agent", "machine learning"]),
+    ("stablecoin", ["稳定币", "穩定幣", "USD", "USDT", "JPYSC", "Circle", "借贷", "借貸", "收益", "stablecoin", "Tether"]),
+    ("security",   ["安全", "漏洞", "黑客", "被盗", "被盜", "钓鱼", "釣魚", "签名", "簽名", "风控", "風控",
+                    "exploit", "hack", "hacked", "vulnerability", "breach", "attack", "stolen", "phishing", "theft"]),
+    ("bitcoin",    ["比特币", "比特幣", "BTC", "Saylor", "Bitcoin", "矿企", "礦企", "休眠", "储备", "儲備", "mining", "miner", "halving"]),
+    ("ethereum",   ["以太坊", "ETH", "L2", "Rollup", "Layer2", "唯链", "VeChain", "AMM", "DeFi", "Uniswap", "rollups"]),
+    ("market",     ["股市", "熔断", "熔斷", "海力士", "KOSPI", "纳斯达克", "納斯達克", "暴跌", "重挫", "浮亏", "浮虧", "行情", "流动性", "流動性", "宏观", "宏觀", "降息",
+                    "stock", "stocks", "IPO", "shares", "equity", "earnings", "Fed", "index", "S&P", "Nasdaq", "Dow", "rally", "fell", "surge", "plunge", "slump"]),
+    ("research",   ["研报", "研報", "周报", "週報", "报告", "報告", "盘点", "盤點", "前瞻", "解读", "解讀", "展望", "report", "analysis", "research", "outlook"]),
 ]
 
 # ---- 每意图的第一人称点评库（繁中 / 英 / 日）----
