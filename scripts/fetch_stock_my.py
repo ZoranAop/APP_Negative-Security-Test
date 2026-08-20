@@ -1,20 +1,22 @@
 #!/usr/bin/env python3
 """
-fetch_stock_my.py — Fetch watermark-free Malaysia photos from Pexels & Pixabay
+fetch_stock_my.py — Fetch watermark-free stock photos from 5 free sites
 using a real (Playwright) browser, and write a moments CSV compatible with
 ``post_moments.py`` / ``publish_from_tokens.py``.
 
 Why Playwright
-    Pexels and Pixabay sit behind a Cloudflare JS challenge; a plain HTTP GET
-    returns 403 ("Just a moment..."). A headless real browser passes the
-    challenge, renders the grid, and exposes the *original* CDN image urls
-    (images.pexels.com/photos/... , cdn.pixabay.com/photo/...). Those originals
-    carry NO watermark (unlike Shutterstock / iStock comps), which is exactly
-    the "open the detail / save the original" behaviour requested.
+    Pexels / Pixabay / Kaboompics sit behind a Cloudflare JS challenge; a plain
+    HTTP GET returns 403 ("Just a moment..."). A headless real browser passes the
+    challenge, renders the grid, and exposes the *original* CDN image urls. Those
+    originals carry NO watermark (unlike Shutterstock / iStock comps), which is
+    exactly the "open the detail / save the original" behaviour requested.
 
 Sources (public, no API key)
-    pexels   -> https://www.pexels.com/search/<q>/        img: images.pexels.com/photos/<id>/...
-    pixabay  -> https://pixabay.com/photos/search/<q>/    img: cdn.pixabay.com/photo/....jpg
+    pexels       -> https://www.pexels.com/search/<q>/        img: images.pexels.com/photos/<id>/...
+    pixabay      -> https://pixabay.com/photos/search/<q>/    img: cdn.pixabay.com/photo/....jpg
+    unsplash     -> https://unsplash.com/s/photos/<q>         img: images.unsplash.com/photo-...
+    kaboompics   -> https://kaboompics.com/gallery?search=<q> img: kaboompics.com/cache_1/<...>/<hash>.jpeg
+    gratisography-> https://gratisography.com/?s=<q>          img: gratisography.com/wp-content/uploads/...jpg
 
 Output CSV columns (identical to the other fetch_* scripts, plus _source)
     content,visibility,room_id,image_urls,
@@ -130,6 +132,52 @@ def fetch_unsplash(pg, query: str, want: int) -> list[dict]:
     return out
 
 
+def fetch_kaboompics(pg, query: str, want: int) -> list[dict]:
+    import urllib.parse
+    q = urllib.parse.quote(query or "")
+    url = f"https://kaboompics.com/gallery?search={q}"
+    pg.goto(url, wait_until="domcontentloaded", timeout=60000)
+    pg.wait_for_timeout(9000)
+    _scroll(pg, rounds=max(4, want // 12 + 3))
+    items = pg.eval_on_selector_all(
+        "img",
+        "els => els.map(e => e.src||'').filter(o => o.includes('cache'))",
+    )
+    out, seen = [], set()
+    for it in items:
+        clean = it.split("?")[0]
+        if clean in seen:
+            continue
+        seen.add(clean)
+        out.append({"image_urls": clean, "content": "", "_source": "kaboompics"})
+        if len(out) >= want:
+            break
+    return out
+
+
+def fetch_gratisography(pg, query: str, want: int) -> list[dict]:
+    import urllib.parse
+    q = urllib.parse.quote(query or "")
+    url = f"https://gratisography.com/?s={q}"
+    pg.goto(url, wait_until="domcontentloaded", timeout=60000)
+    pg.wait_for_timeout(5000)
+    _scroll(pg, rounds=max(3, want // 10 + 2))
+    items = pg.eval_on_selector_all(
+        "img",
+        "els => els.map(e => e.src||'').filter(o => o.includes('wp-content/uploads'))",
+    )
+    out, seen = [], set()
+    for it in items:
+        clean = it.split("?")[0]
+        if clean in seen:
+            continue
+        seen.add(clean)
+        out.append({"image_urls": clean, "content": "", "_source": "gratisography"})
+        if len(out) >= want:
+            break
+    return out
+
+
 def _load_dedupe(path: str | None) -> set[str]:
     if not path:
         return set()
@@ -157,7 +205,7 @@ def main() -> int:
     _ensure_utf8_stdout()
     ap = argparse.ArgumentParser(description="Fetch watermark-free Malaysia photos (Pexels+Pixabay) → CSV")
     ap.add_argument("--sources", default="pexels,pixabay",
-                    help="comma list: pexels,pixabay,unsplash")
+                    help="comma list: pexels,pixabay,unsplash,kaboompics,gratisography")
     ap.add_argument("--query", default="malaysia")
     ap.add_argument("--per-source", type=int, default=30,
                     help="max images to take from each source")
@@ -187,6 +235,10 @@ def main() -> int:
                     got = fetch_pixabay(pg, args.query, args.per_source)
                 elif src == "unsplash":
                     got = fetch_unsplash(pg, args.query, args.per_source)
+                elif src == "kaboompics":
+                    got = fetch_kaboompics(pg, args.query, args.per_source)
+                elif src == "gratisography":
+                    got = fetch_gratisography(pg, args.query, args.per_source)
                 else:
                     print(f"[warn] unknown source {src}", file=sys.stderr)
                     continue
