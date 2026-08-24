@@ -102,17 +102,29 @@ BANKS = {
   "market":     ["Wild session — risk control matters more than anything.", "Circuit breakers both ways; sentiment is at an extreme.", "Unrealized losses are a reminder: keep your exit discipline.", "The crazier the market, the calmer you should be."],
   "research":   ["Dense report — bookmarking this one to read slowly.", "Depth beats chasing hype; this piece is solid.", "Not many reports map the trend this clearly.", "Much clearer on the whole sector after reading this."],
  },
- "ja": {
-  "regulation": ["規制が明確になるのは長期的にプラス。注視したい。", "規制が追いつくのは業界が成熟してきた証拠。", "この政策シグナルは一日で終わらない影響がありそう。", "コンプライアンスが前に進むと信頼も戻ってくる。"],
-  "etf":        ["ETFの資金フローは日々の値動きより機関の本音が見える。", "数字より流れの向きが本当の話。", "ETF経由の機関マネーはもう明確なトレンド。", "ローソク足よりETFフローを見ている。"],
-  "exchange":   ["取引所の動きが多い週。上場やイベントはリスクに注意。", "無期限のレバは高い。触る前にポジション管理を。", "取引所の告知は相場を動かす。情報差が勝負。", "新規上場は下調べしてから、高値追いは禁物。"],
-  "ai":         ["AI×Web3はどんどん実用的に。この方向は強気。", "技術は先行しても、AIのバリュエーションは冷静に。", "チップと計算資源が今回のAIの本当の戦場。", "主体が人からエージェントに変わるとルールも書き換わる。"],
-  "stablecoin": ["ステーブルの利回りモデルが増加中。鍵はコンプライアンス。", "ステーブルのレンディングは追う価値あり。実用性が高い。", "既存の寡占を誰が崩すかが見どころ。", "ステーブルはオンチェーン金融の土台。"],
-  "security":   ["オンチェーンの安全は最優先。利回りだけを追わない。", "署名主体がエージェントになると安全境界の再考が必要。", "こういう事案は鍵と承認の管理を思い出させる。", "防御的セキュリティの重要性は増すばかり。"],
-  "bitcoin":    ["ビットコインは長期戦。忍耐する人が勝つ。", "クジラの動きは参考に、でも盲目的な追随はNG。", "物語は変わっても、BTCの根本ロジックは変わらない。", "BTC保有はスピードより心構え。"],
-  "ethereum":   ["イーサはやはり生態系が最も豊か。L2は正解だった。", "ネイティブRollupこそ本当に効くアップグレード。", "インフラから生態系の中心へ、まだ道は長い。", "L2の競争が次のサイクルを決める。"],
-  "market":     ["荒い相場。何よりリスク管理が大事。", "両方向でサーキットブレーカー、センチメントは極端。", "含み損は損切り規律を思い出させてくれる。", "相場が荒れるほど冷静に。"],
-  "research":   ["情報量の多いレポート。じっくり読みたい。", "ハヤリを追うより深掘りが実になる。良記事。", "トレンドをここまで整理した報告は貴重。", "読後、セクター全体の流れがクリアになった。"],
+  "ja": {
+   "regulation": ["規制が明確になるのは長期的にプラス。注視したい。", "規制が追いつくのは業界が成熟してきた証拠。", "この政策シグナルは一日で終わらない影響がありそう。", "コンプライアンスが前に進むと信頼も戻ってくる。"],
+   "etf":        ["ETFの資金フローは日々の値動きより機関の本音が見える。", "数字より流れの向きが本当の話。", "ETF経由の機関マネーはもう明確なトレンド。", "ローソク足よりETFフローを見ている。"],
+   "exchange":   ["取引所の動きが多い週。上場やイベントはリスクに注意。", "無期限のレバは高い。触る前にポジション管理を。", "取引所の告知は相場を動かす。情報差が勝負。", "新規上場は下調べしてから、高値追いは禁物。"],
+   "ai":         ["AI×Web3はどんどん実用的に。この方向は強気。", "技術は先行しても、AIのバリュエーションは冷静に。", "チップと計算資源が今回のAIの本当の戦場。", "主体が人からエージェントに変わるとルールも書き換わる。"],
+   "stablecoin": ["ステーブルの利回りモデルが増加中。鍵はコンプライアンス。", "ステーブルのレンディングは追う価値あり。実用性が高い。", "既存の寡占を誰が崩すかが見どころ。", "ステーブルはオンチェーン金融の土台。"],
+   "security":   ["オンチェーンの安全は最優先。利回りだけを追わない。", "署名主体がエージェントになると安全境界の再考が必要。", "こういう事案は鍵と承認の管理を思い出させる。", "防御的セキュリティの重要性は増すばかり。"],
+   "bitcoin":    ["ビットコインは長期戦。忍耐する人が勝つ。", "クジラの動きは参考に、でも盲目的な追随はNG。", "物語は変わっても、BTCの根本ロジックは変わらない。", "BTC保有はスピードより心構え。"],
+   "ethereum":   ["イーサはやはり生態系が最も豊か。L2は正解だった。", "ネイティブRollupこそ本当に効くアップグレード。", "インフラから生態系の中心へ、まだ道は長い。", "L2の競争が次のサイクルを決める。"],
+   "market":     ["荒い相場。何よりリスク管理が大事。", "両方向でサーキットブレーカー、センチメントは極端。", "含み損は損切り規律を思い出させてくれる。", "相場が荒れるほど冷静に。"],
+   "research":   ["情報量の多いレポート。じっくり読みたい。", "ハヤリを追うより深掘りが実になる。良記事。", "トレンドをここまで整理した報告は貴重。", "読後、セクター全体の流れがクリアになった。"],
+   },
+  "ru": {
+   "regulation": ["Новые правила — это шаг в сторону зрелости рынка, долгосрочно только плюс.", "Чёткие регуляторные рамки дают уверенность институциям, это медленно, но верно.", "Если регулирование движется вперёд, доверие к отрасли тоже растёт.", "Комплаенс — это не враг Web3, а фундамент для массового принятия."],
+   "etf":        ["Потоки ETF говорят о институциональном интересе больше, чем дневные свечки.", "Деньги через ETF — это уже тренд, игнорировать его нельзя.", "Спотовые ETF открывают двери для традиционного капитала в крипто.", "Следить за ETF-флуами важнее, чем ловить каждую свечу."],
+   "exchange":   ["Активности на биржах много, но нужно помнить про риски на листингах.", "Высокое плечо на перпетуалах — сначала управляй позицией, потом торгуй.", "Анонсы бирж двигают рынок, информационное преимущество решает.", "Делай домашнюю работу перед тем как гнаться за новым листингом."],
+   "ai":           ["Слияние AI и Web3 становится всё более реальным — я бытоварищ к этому направлению.", "Оценка AI-проектов требует здравой критики, даже когда технологии бегут вперёд.", "Чипы и вычислительные мощности — это настоящая битва этого AI-цикла.", "Когда агент меняет человека, правила переписываются заново."],
+   "stablecoin":  ["Модели доходности стейблкоинов умножаются — комплаенс остаётся ключом.", "Стейблкоин-лендинг — перспективное направление с реальной полезностью.", "Интересный вопрос: кто разобьёт текущую монополию стейблкоинов?", "Стейблкоины — это базовый слой ончейн-финансов, стандарты будут расти."],
+   "security":   ["Ончейн-безопасность всегда на первом месте, не гонитесь за доходностью слепо.", "Когда агенты подписывают транзакции, периметр безопасности нужно переосмыслить.", "Такие инциденты напоминают: осторожно с ключами и разрешениями.", "Проактивная безопасность становится только важнее с каждым днём."],
+   "bitcoin":    ["Биткоин — это длинная игра, терпение обычно побеждает.", "Движения китов стоит замечать, но не копировать вслепую.", "Нарратив меняется, но базовая логика BTC остаётся прежней.", "Холдить BTC — это про mindset, а не про скорость."],
+   "ethereum":   ["Экосистема Ethereum всё ещё самая богатая, L2 был верным решением.", "Нативные роллапы — это тот тип обновления, который действительно важен.", "От инфраструктуры к хабу экосистемы — Ethereum ещё далеко прошёл.", "Гонка L2 определит следующий цикл."],
+   "market":     ["Дикая сессия — контроль рисков важнее всего.", "Колхозные брейкеры в обе стороны; sentiment на экстремуме.", "Нереализованные убытки напоминают: дисциплина выхода критична.", "Чем безумнее рынок, тем спокойнее ты должен быть."],
+   "research":   ["Плотный отчёт — стоит bookmark, чтобы прочитать спокойно.", "Глубина лучше, чем погоня за хайпом; эта статья крепкая.", "Немногие отчёты так чётко картуют тренд.", "После прочтения картина по сектору стала гораздо яснее."],
   },
  "ms": {
   "regulation": ["Regulasi makin jelas — ini bagus untuk jangka panjang. Pasaran perlukan kepastian, dan langkah ini menunjukkan industri crypto sedang matang.", "Pematuhan melangkah ke hadapan, keyakinan pasaran akan kembali. Peraturan yang jelas bukan musuh, malah ia asas kepada pertumbuhan yang sihat.", "Isyarat polisi macam ni bukan sehari dua kesan dia. Kita patut pantau perkembangan ni dengan teliti dan lihat bagaimana ia akan bentuk masa depan industri.", "Regulasi yang jatuh adalah permulaan kematangan industri — fundamentals tetap penting dan fokus kita patut kekal di situ."],
@@ -131,7 +143,7 @@ BANKS = {
 # ---- 正向口吻点评库（侧重描述 Web3 资源的优势，正向发展视角）----
 POSITIVE_BANKS = {
  "zh_hant": {
-  "regulation": ["監管走向清晰，長期是行業成熟的標誌，Web3 的合規優勢會越來越明顯。", "規則明確讓更多人敢進場，這是 Web3 走向主流的必經之路。"],
+  "regulation": ["監管走向清晰，長期是行業成熟的標誌，Web3 的合規優勢會越來越明顯。", "規則明確讓更多人敢進場，這是 Web3 走向主流的必經之路。", "合規穩定幣正在爲機構資金開門，這是最強勁的順風。", "監管機構站到這一邊，整個生態的信任度都上了一個臺階。"],
   "etf":        ["ETF 讓傳統資金能低門檻配置加密資產，Web3 與傳統金融的融合正在加速。", "機構資金持續流入，說明市場對 Web3 資產的認可度在提升。"],
   "exchange":   ["交易所創新不斷，用戶體驗和流動性都在變好，行業基礎設施越來越扎實。", "新產品的推出讓更多場景落地，Web3 的可用性越來越強。"],
   "ai":         ["AI 與 Web3 的結合打開了全新的想像空間，這是技術趨勢的交匯點。", "算力和智能合約的結合，正在重塑價值創造的範式。"],
@@ -143,7 +155,7 @@ POSITIVE_BANKS = {
   "research":   ["深度研究讓行業認知不斷提升，Web3 的敘事越來越扎實。", "優質內容的湧現，說明行業正在從炒作走向價值。"],
  },
  "en": {
-  "regulation": ["Clearer rules mean more confidence — this is Web3 maturing in the right direction.", "Regulatory clarity is what brings mainstream adoption; the outlook keeps improving."],
+  "regulation": ["Clearer rules mean more confidence — this is Web3 maturing in the right direction.", "Regulatory clarity is what brings mainstream adoption; the outlook keeps improving.", "Compliant stablecoins are opening the door for institutional money — a huge tailwind.", "When regulators lean in, the whole ecosystem gets a credibility boost."],
   "etf":        ["ETF inflows show traditional capital finally recognizing Web3's value.", "The bridge between TradFi and crypto keeps getting stronger."],
   "exchange":   ["Better products and liquidity — the infrastructure keeps getting more solid.", "Every new launch expands Web3's real-world use cases."],
   "ai":         ["AI and Web3 are converging into something much bigger.", "Compute plus smart contracts is reshaping how value is created."],
@@ -155,7 +167,7 @@ POSITIVE_BANKS = {
   "research":   ["Deep research builds real understanding — Web3's narrative keeps getting stronger."],
  },
  "ja": {
-  "regulation": ["規制の明確化は成熟の証、Web3は正しい方向へ進んでいる。", "ルールが整えば主流化が加速する。"],
+  "regulation": ["規制の明確化は成熟の証、Web3は正しい方向へ進んでいる。", "ルールが整えば主流化が加速する。", "コンプライアンス対応のステーブルコインが機関マネーの扉を開く。", "規制当局が寄り添えば、エコシステム全体の信頼が高まる。"],
   "etf":        ["ETFへの資金流入はWeb3の価値が認められた証拠。", "伝統金融と暗号資産の架け橋はさらに強くなる。"],
   "exchange":   ["より良い製品と流動性、インフラは着実に強くなっている。", "新しいサービスがWeb3の実用性を広げる。"],
   "ai":         ["AIとWeb3の融合はさらに大きな可能性を開く。", "計算資源とスマートコントラクトの組み合わせが価値創造を変える。"],
@@ -167,6 +179,36 @@ POSITIVE_BANKS = {
  "research":   ["深い研究が理解を深め、Web3の物語を強くする。"],
   },
 }
+
+# ---- 负面情绪点评库（发帖人对坏消息的抱怨/吐槽，贴近真人，去 AI 味）----
+# 仅覆盖负面意图：security / market / regulation / exchange。
+COMPLAINT_BANKS = {
+ "zh_hant": {
+  "security":   ["又看到被盜的消息，鏈上安全真的讓人心累，錢放哪都不踏實。", "每次這種漏洞曝光，我都要回去翻一遍自己授權過哪些網站，太煩了。", "黑客真是防不勝防，這波又有人要哭了，私鑰和授權都得再查一遍。", "安全事件一出接著一出，搞得我現在什麼都不敢點，心累。"],
+  "market":     ["這行情把人折磨得夠嗆，浮虧看得我心都在滴血。", "又崩了，前兩天剛回的一點血一下全吐回去，真的很難受。", "跌成這樣還談什麼信仰，先讓我的賬戶緩一緩吧。", "這波震得我人都麻了，天天盯盤眼睛都花了還是虧。"],
+  "regulation": ["監管一出手就是一堆麻煩，項目方頭疼，我們這些散戶也跟著遭殃。", "罰單一張接一張，行業整天人心惶惶，什麼時候能安穩點。", "政策風向變得比翻書還快，現在佈局都不敢亂動了。", "規矩改來改去，真的不知道下個月還能不能玩。"],
+  "exchange":   ["交易所能不能不搞這麼多騷操作，突然清算真的扛不住。", "槓桿爆倉的教訓太慘痛了，現在都不敢重倉了。", "公告改來改去，散戶就是被收割的命，真的累了。", "一上線一停牌，錢包跟著心驚膽戰，這體驗太折磨人。"],
+ },
+ "en": {
+  "security":   ["Another hack… honestly tired of re-securing everything after every breach.", "These exploits keep happening and it's exhausting watching funds disappear again.", "Every time I see news like this I go re-check my approvals. So annoying.", "Security incidents one after another — now I'm scared to click anything, tired of it."],
+  "market":     ["This market is honestly exhausting — my unrealized losses hurt to look at.", "Another dump. All of last week's gains just evaporated, this is rough.", "At this point I'm past panic, just tired of the swings.", "Watching the tape burn all day just to end up red — draining."],
+  "regulation": ["Regulators throwing fines left and right, and retail ends up footing the bill.", "Regulation whiplash is real — hard to plan moves when rules keep shifting.", "These crackdowns keep everyone on edge, wish things would just settle for once.", "Rules changing every other week, no idea if this is even playable next month."],
+  "exchange":   ["Exchanges pulling moves like this is why the liquidation stories never end.", "Got burned by leverage before, never touching heavy margin again.", "Announcements flip so fast, retail always ends up on the losing side. Exhausting.", "Listing then halting, my wallet can't take the whiplash anymore."],
+ },
+ "ja": {
+  "security":   ["また盗難のニュース。オンチェーンの安全には本当に疲れる。", "脆弱性が出るたびに承認を見直すの、正直うんざりだ。", "ハッカーには本当に手がつけられない。また誰かが泣く。", "セキュリティ事故が続いて、もう何も押せなくなった。疲れた。"],
+  "market":     ["この相場には本当に疲れた。含み損を見るのがつらい。", "また暴落。先週の利益が一瞬で消えた、きつい。", "もうパニックじゃなくて、ただ揺れに疲れた。", "一日中チャート見てて結局マイナス、消耗がひどい。"],
+  "regulation": ["規制が厳しくなると、結局は個人投資家が割を食う。", "方針が二転三転して、ポジションも動かせない。", "罰金のニュースばかりで、業界全体が落ち着かない。", "ルールが毎回変わる、来月も続けられるかわからない。"],
+  "exchange":   ["取引所のこういう動き、清算の話が絶えないわけだ。", "レバレッジで痛い目を見たから、もう重い証拠金は握らない。", "告知がすぐ変わる、個人はいつも不利だ。疲れる。", "上場してすぐ停止、財布がひやひやして耐えられない。"],
+ },
+ "ms": {
+  "security":   ["Berita kecurian lagi. Keselamatan on-chain ni buat orang letih betul.", "Setiap kali exploit muncul, saya kena semak balik semua kelulusan. Menyusahkan.", "Hacker memang tak boleh diduga, ada lagi yang kena tanggung rugi.", "Insiden keselamatan berturut-turut, sekarang takut nak tekan apa-apa."],
+  "market":     ["Pasaran macam ni buat orang letih, tengok rugi belum realis pun sakit.", "Jatuh lagi. Untung minggu lepas hilang semua, memang susah.", "Dah tak panik, cuma penat dengan turun naik ni.", "Sepanjang hari tengok carta, akhirnya masih rugi. Menyakitkan."],
+  "regulation": ["Regulasi makin ketat, akhirnya pelabur runcit yang tanggung.", "Polisi berubah tak menentu, nak rancang langkah pun susah.", "Berita denda tak habis-habis, industri tak tenang.", "Peraturan berubah setiap minggu, tak tahu bulan depan boleh main lagi ke tak."],
+  "exchange":   ["Pertukaran buat hal macam ni, sebab tu cerita likuidasi tak habis.", "Pernah kena leverage, dah tak berani margin besar lagi.", "Pengumuman berubah cepat, runcit selalu di pihak rugi.", "Baru disenarai terus digantung, dompet tak boleh tahan lagi."],
+ },
+}
+NEGATIVE_INTENTS = {"security", "market", "regulation", "exchange"}
 
 # ---- 币安广场式收益感慨点评库（发帖人结合资讯表达自身已获收益的感慨）----
 TRADER_BANKS = {
@@ -256,6 +298,18 @@ TAGS_JA = {
   "market": ["#web3", "#暗号市場", "#マーケット"],
   "research": ["#web3", "#リサーチ", "#トレンド"],
 }
+TAGS_RU = {
+  "regulation": ["#web3", "#КриптоРегулирование", "#Комплаенс"],
+  "etf": ["#web3", "#КриптоETF", "#Институционалы"],
+  "exchange": ["#web3", "#Биржа", "#Деривативы"],
+  "ai": ["#web3", "#AI", "#Технологии"],
+  "stablecoin": ["#web3", "#Стейблкоин", "#DeFi"],
+  "security": ["#web3", "#ОнчейнБезопасность", "#Инфобез"],
+  "bitcoin": ["#web3", "#Биткоин", "#BTC"],
+  "ethereum": ["#web3", "#Эфириум", "#Layer2"],
+  "market": ["#web3", "#КриптоРынок", "#Рынки"],
+  "research": ["#web3", "#Исследование", "#Тренды"],
+}
 SITE_TAG = {"techflow": "#TechFlow", "web3bbs": "#Web3BBS", "foresight": "#ForesightNews",
             "menews": "#MENews", "web3caff": "#Web3Caff", "panews": "#PANews", "bingx": "#BingX",
             "theblock": "#TheBlock", "decrypt": "#Decrypt", "thedefiant": "#TheDefiant",
@@ -283,9 +337,12 @@ def role_lang(nick: str) -> str:
         return "zh_hant"
     has_jp = any('\u3040' <= c <= '\u30ff' for c in nick)  # 平/片假名
     has_cjk = any('\u4e00' <= c <= '\u9fff' for c in nick)
+    has_ru = any('\u0400' <= c <= '\u04ff' for c in nick)  # 西里尔字母
     has_latin = any('a' <= c.lower() <= 'z' for c in nick)
     if has_jp:
         return "ja"
+    if has_ru:
+        return "ru"
     if has_cjk:
         return "zh_hant"
     if has_latin:
@@ -312,6 +369,26 @@ def detect_content_lang(title: str) -> str:
         return "en"
     return "zh_hant"
 
+def _truncate_clean(body: str, limit: int) -> str:
+    """在不超过 limit 的前提下，尽量按句末/换行/空格边界截断，避免拦腰切断句子。"""
+    if limit <= 0:
+        return ""
+    if len(body) <= limit:
+        return body
+    # 依次找最近的可断点：句末 > 换行 > 空格
+    for sep in ("。", ". ", "!", "?", "\n", "，", ", ", "；", "; "):
+        idx = body.rfind(sep, 0, limit)
+        if idx > 0:
+            cut = body[:idx].rstrip()
+            if cut:
+                return cut
+    # 退回到最近的空格
+    idx = body.rfind(" ", 0, limit)
+    if idx > 0:
+        return body[:idx].rstrip()
+    return body[:limit].rstrip().rstrip("...") + "…"
+
+
 def _strip_source(s: str) -> str:
     """去除文案里的信息来源痕迹（媒体名、据XX报道、作者/编译、原文链接、金十等）。"""
     if not s:
@@ -336,6 +413,22 @@ def _strip_source(s: str) -> str:
     return s
 
 
+# 负面情绪词（标题/摘要命中 → 视为坏消息，供 complain 口吻使用）
+_NEG_TONE_KW = ["跌", "崩", "暴跌", "下跌", "重挫", "闪崩", "爆仓", "清算", "亏损", "诈骗",
+                "黑客", "被盗", "违法", "调查", "起诉", "逮捕", "洗钱", "腰斩", "跳水",
+                "罚款", "罚单", "崩溃", "危机", "暴雷", "跑路", "恐慌", "抛售", "缩水",
+                "crash", "plunge", "fall", "drop", "decline", "slump", "loss", "bear",
+                "dump", "hack", "scam", "fraud", "arrest", "lawsuit", "ban", "delist",
+                "suspend", "liquidat", "selloff", "sell-off", "crackdown", "exploit",
+                "stolen", "fined", "fine", "probe", "investigat", "breach", "theft"]
+
+
+def _is_negative(text: str) -> bool:
+    """判断资讯是否为负面消息（按负面情绪词命中）。"""
+    t = (text or "").lower()
+    return any(k in t for k in _NEG_TONE_KW)
+
+
 def make_caption(title: str, brief: str, site: str, lang: str, idx: int,
                  min_len: int = 0, max_len: int = 280, no_source: bool = False,
                  tone: str = "neutral") -> str:
@@ -347,6 +440,7 @@ def make_caption(title: str, brief: str, site: str, lang: str, idx: int,
     - 如果 lang=zh_hant，标题+点评都是繁中。
     - no_source=True 时：不追加来源标签，且清洗摘要里的媒体/作者等来源痕迹。
     - tone=positive 时：使用正向口吻点评库（侧重描述 Web3 优势与发展）。
+    - tone=complain 时：仅对负面消息（标题/摘要命中负面情绪词）使用抱怨/吐槽点评，否则回退中性。
     """
     ct = clean_title(title)
     if no_source:
@@ -354,10 +448,15 @@ def make_caption(title: str, brief: str, site: str, lang: str, idx: int,
         brief = _strip_source(brief or "")
     # 意图分类优先看标题，标题无匹配时用摘要兜底（如引用型标题），最终回落 market
     intent = detect_intent(ct) or detect_intent(brief) or "market"
-    if tone == "positive" and lang in POSITIVE_BANKS:
+    negative = _is_negative(ct + " " + (brief or ""))
+    if tone == "complain" and negative and intent in NEGATIVE_INTENTS and lang in COMPLAINT_BANKS:
+        bank = COMPLAINT_BANKS[lang][intent]
+    elif tone == "positive" and lang in POSITIVE_BANKS:
         bank = POSITIVE_BANKS[lang][intent]
     elif tone == "trader" and lang in TRADER_BANKS:
         bank = TRADER_BANKS[lang][intent]
+    elif lang == "ru":
+        bank = BANKS["ru"][intent]
     else:
         bank = BANKS[lang][intent]
     seed = sum(ord(c) for c in ct) + idx
@@ -373,6 +472,8 @@ def make_caption(title: str, brief: str, site: str, lang: str, idx: int,
         tags = TAGS_EN[intent][:]
     elif lang == "ja":
         tags = TAGS_JA[intent][:]
+    elif lang == "ru":
+        tags = TAGS_RU[intent][:]
     else:
         tags = TAGS[intent][:]
     st = SITE_TAG.get(site)
@@ -381,8 +482,8 @@ def make_caption(title: str, brief: str, site: str, lang: str, idx: int,
     tagline = " ".join(tags)
 
     # ---- 组装正文（确保语言统一）----
-    if lang in ("en", "ms", "ja"):
-        # 英文/马来语/日文帖：不嵌入中文标题，纯用对应语言的评论
+    if lang in ("en", "ms", "ja", "ru"):
+        # 英文/马来文/日文/俄文帖：不嵌入中文标题，纯用对应语言的评论
         # 用两条评论拼接以达到足够长度，避免出现中英/中日混杂
         body = f"{comment}\n\n{comment2}"
     else:
@@ -393,8 +494,8 @@ def make_caption(title: str, brief: str, site: str, lang: str, idx: int,
 
     # 如果低于 min_len 且有 brief，尝试补足（仅限同语言内容）
     if min_len > 0 and len(out) < min_len:
-        # 对于 en/ms/ja，再加第三条点评
-        if lang in ("en", "ms", "ja"):
+        # 对于 en/ms/ja/ru，再加第三条点评
+        if lang in ("en", "ms", "ja", "ru"):
             comment3 = bank[(seed + 3) % len(bank)]
             if comment3 not in (comment, comment2):
                 body = f"{comment}\n\n{comment2}\n\n{comment3}"
@@ -408,15 +509,17 @@ def make_caption(title: str, brief: str, site: str, lang: str, idx: int,
                     body = f"{_to_hant(ct)}\n{comment}\n\n{_to_hant(brief_clean[:avail])}"
                     out = f"{body}\n{tagline}"
 
-    # 限制 max_len
+    # 限制 max_len：优先在句末/词边界截断，避免把句子拦腰切断
     if len(out) > max_len:
-        # 截断 body 保留 comment + tagline
-        keep = max_len - len(tagline) - 2
-        body = body[:keep].rstrip()
-        out = f"{body}\n{tagline}"
-    # 最终硬截断
+        avail = max_len - len(tagline) - 1
+        if avail <= 0:
+            body = ""
+        else:
+            body = _truncate_clean(body, avail)
+        out = f"{body}\n{tagline}".strip()
+    # 最终硬截断（仍截在边界）
     if len(out) > max_len:
-        out = out[:max_len - 3] + "..."
+        out = _truncate_clean(out, max_len)
     return out
 
 def main() -> int:
@@ -425,8 +528,8 @@ def main() -> int:
     ap.add_argument("--output", required=True)
     ap.add_argument("--accounts-csv", required=True)
     ap.add_argument("--lang", default="content",
-                    choices=["content", "zh_hant", "en", "ja", "ms", "auto-nick", "mixed_en_ms"],
-                    help="语言策略：content=按内容语言自动判断，zh_hant/en/ja/ms=强制统一，"
+                    choices=["content", "zh_hant", "en", "ja", "ms", "ru", "auto-nick", "mixed_en_ms"],
+                    help="语言策略：content=按内容语言自动判断，zh_hant/en/ja/ms/ru=强制统一，"
                          "mixed_en_ms=50%%英文+50%%马来语交替，auto-nick=按昵称。默认 content。")
     ap.add_argument("--min-len", type=int, default=0,
                     help="文案最小字符数（默认 0 不限制）")
@@ -434,9 +537,10 @@ def main() -> int:
                     help="文案最大字符数（默认 280）")
     ap.add_argument("--no-source", action="store_true",
                     help="不带信息来源：不追加来源标签，并清洗摘要里的媒体名/据XX报道/作者等痕迹")
-    ap.add_argument("--tone", default="neutral", choices=["neutral", "positive", "trader"],
+    ap.add_argument("--tone", default="neutral", choices=["neutral", "positive", "trader", "complain"],
                     help="点评口吻：neutral=中性点评，positive=正向点评（侧重描述 Web3 优势），"
-                         "trader=币安广场式收益感慨（发帖人表达自身已获收益）")
+                         "trader=币安广场式收益感慨（发帖人表达自身已获收益），"
+                         "complain=对坏消息的抱怨/吐槽（仅负面意图 security/market/regulation/exchange 生效）")
     args = ap.parse_args()
 
     lang_mode = args.lang
@@ -457,6 +561,9 @@ def main() -> int:
         if extra not in fields:
             fields.append(extra)
 
+    from caption_dedupe import load_used_captions, save_used_captions
+    seen = load_used_captions("state/seen_web3_captions.json")
+
     with open(args.output, "w", newline="", encoding="utf-8-sig") as fh:
         w = csv.DictWriter(fh, fieldnames=fields)
         w.writeheader()
@@ -471,14 +578,26 @@ def main() -> int:
                 # 50% 英文 + 50% 马来语，交替分配
                 lang = "en" if (i % 2 == 0) else "ms"
             else:
-                lang = lang_mode  # 强制统一 (zh_hant/en/ja/ms)
-            row["content"] = make_caption(row.get("content", ""), row.get("_brief", ""),
-                                          row.get("_site", ""), lang, i,
-                                          min_len=min_len, max_len=max_len,
-                                          no_source=args.no_source, tone=args.tone)
+                lang = lang_mode  # 强制统一 (zh_hant/en/ja/ms/ru)
+            # 生成文案；若与跨批次/本批已用重复，则偏移 seed 重试直到唯一
+            cap = make_caption(row.get("content", ""), row.get("_brief", ""),
+                               row.get("_site", ""), lang, i,
+                               min_len=min_len, max_len=max_len,
+                               no_source=args.no_source, tone=args.tone)
+            j = 1
+            while cap in seen and (i + j) < 1000:
+                cap = make_caption(row.get("content", ""), row.get("_brief", ""),
+                                   row.get("_site", ""), lang, i + j,
+                                   min_len=min_len, max_len=max_len,
+                                   no_source=args.no_source, tone=args.tone)
+                j += 1
+            seen.add(cap)
+            row["content"] = cap
             row["_lang"] = lang
             row["_role_nick"] = nick
             w.writerow(row)
+
+    save_used_captions(seen, "state/seen_web3_captions.json")
     # 统计语言分布
     from collections import Counter
     lang_stats = Counter()
