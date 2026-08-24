@@ -144,6 +144,7 @@ _DEFAULT_REFERER_MAP: dict[str, str] = {
     "opennana.com": "https://opennana.com/",
     "yituyu.com": "https://www.yituyu.com/",
     "tuziyouwang.com": "http://tuziyouwang.com/",
+    "aituitu.com": "https://ww.aituitu.com/",
     "open-prompts.com": "https://www.open-prompts.com/",
     "lovimg.com": "https://lovimg.com/",
     "twimg.com": "https://twitter.com/",

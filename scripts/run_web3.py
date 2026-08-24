@@ -77,6 +77,12 @@ def main() -> int:
     ap.add_argument("--max-len", type=int, default=280, help="文案最大字符数")
     ap.add_argument("--no-caption", action="store_true",
                     help="不改写文案，直接用原标题发（默认会走 web3_caption_by_role 改写）")
+    ap.add_argument("--no-source", action="store_true",
+                    help="不带信息来源：不追加来源标签，并清洗摘要里的媒体/作者等来源痕迹")
+    ap.add_argument("--tone", default="neutral",
+                    choices=["neutral", "positive", "trader", "complain"],
+                    help="点评口吻：neutral=中性，positive=正向，trader=收益感慨，"
+                         "complain=对坏消息的抱怨（负面意图生效）")
     # publish
     ap.add_argument("--concurrency", type=int, default=3)
     ap.add_argument("--tokens", default="result/tokens.json")
@@ -123,7 +129,10 @@ def main() -> int:
                     "--accounts-csv", str(ROOT / args.accounts_csv),
                     "--lang", args.lang,
                     "--min-len", str(args.min_len),
-                    "--max-len", str(args.max_len)]
+                    "--max-len", str(args.max_len),
+                    "--tone", args.tone]
+        if args.no_source:
+            cmd.append("--no-source")
         if _run(cmd) != 0 or not moments.exists():
             print("[run_web3] 文案改写失败，终止。", file=sys.stderr)
             return 1
@@ -131,14 +140,6 @@ def main() -> int:
     import csv as _csv
     rows = list(_csv.DictReader(moments.open(encoding="utf-8-sig")))
     print(f"[run_web3] moments ready: {len(rows)} 条（纯文本）")
-
-    # Step 2.5: 文案差异化（确保每帖内容不重复）
-    # 注：web3 使用 web3_caption_by_role 已有一定多样性，此步为兜底保障
-    print("\n--- Step 2.5: 文案差异化 (caption_diversify) ---")
-    cmd = PY + [str(HERE / "caption_diversify.py"),
-                "--input", str(moments), "--output", str(moments),
-                "--lang", "auto", "--scene", "travel"]
-    _run(cmd)
 
     if args.skip_publish:
         print("\n[run_web3] --skip-publish，仅产出素材：", moments)

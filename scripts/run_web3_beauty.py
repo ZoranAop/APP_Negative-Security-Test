@@ -143,6 +143,14 @@ USED_EMAILS = {
     "u_6szpcgbh@xxai.com", "u_3uk5hyy0@xxai.com",
     "u_5n8gjcbp@xxai.com", "u_5yyiefn8@xxai.com", "u_f0mgv5on@xxai.com",
     "u_5wqipk83@xxai.com", "u_77t19lwi@xxai.com",
+    "u_55ssoq1s@xxai.com", "u_1i98gjun@xxai.com", "u_b9ncxcmz@xxai.com",
+    "u_5p3potrv@xxai.com", "u_7ikzosc4@xxai.com",
+    "u_6r8m4g98@xxai.com", "u_92rxvth1@xxai.com", "u_9qdoytvb@xxai.com",
+    "u_8b7vkut6@xxai.com", "u_er5p09rd@xxai.com",
+    "u_77zupdvv@xxai.com", "u_a6mznyef@xxai.com", "u_3333zf7p@xxai.com",
+    "u_4148g1gd@xxai.com", "u_db58e3ex@xxai.com",
+    "u_8aocgm0z@xxai.com", "u_2d0ypcd1@xxai.com", "u_adgju8sg@xxai.com",
+    "u_dg27gcte@xxai.com", "u_35ratte7@xxai.com",
 }
 
 UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
@@ -255,7 +263,11 @@ def _clean_title(raw: str) -> str:
         if t == prev:
             break
     t = re.sub(r"\s*[|｜]\s*[^|｜]*$", "", t).strip()
+    # 去掉快讯时间戳（如 "20:50:15"）、栏目括号（如 【...】）与栏目前缀（如 分析：）
+    t = re.sub(r"^\d{1,2}:\d{2}(:\d{2})?\s*", "", t)
     t = re.sub(r"^【[^】]*】\s*", "", t)
+    t = re.sub(r"^\[[^\]]*\]\s*", "", t)
+    t = re.sub(r"^(?:分析|解读|观点|独家|快讯)[:：]\s*", "", t)
     t = re.sub(r"\s+", " ", t).strip()
     return t
 
@@ -297,6 +309,7 @@ def main() -> int:
     ap.add_argument("--login-spacing", type=float, default=2.5)
     ap.add_argument("--tokens", default="result/tokens.json")
     ap.add_argument("--workdir", default="web3_beauty_run")
+    ap.add_argument("--text-only", action="store_true", help="纯文本发帖（不带图片）")
     ap.add_argument("--skip-publish", action="store_true")
     ap.add_argument("--yes", action="store_true")
     args = ap.parse_args()
@@ -339,49 +352,54 @@ def main() -> int:
         captions.append(cap)
         print(f"    #{i+1} {cap[:80]}")
 
-    # ---- 4. 采集美女图（来源不变，复用美女去重账本）----
-    print(f"\n=== Step 3/4: 采集美女标签图片（需 {n} 张）===")
-    seed_urls, seed_ids = _seed_ledgers()
-    own_urls = _load_url_dedupe(DEDUPE_IMG)
-    used_urls = seed_urls | own_urls
-    used_ids = seed_ids
-    used_persons = {_person_of_id(i) for i in used_ids}
-    for u in used_urls:
-        p = _person_of_url(u)
-        if p:
-            used_persons.add(p)
+    # ---- 4. 采集美女图（来源不变，复用美女去重账本；--text-only 跳过）----
+    imgs = []
+    if args.text_only:
+        print(f"\n=== Step 3/4: 纯文本模式（--text-only），跳过图片采集 ===")
+        used_urls = set()
+    else:
+        print(f"\n=== Step 3/4: 采集美女标签图片（需 {n} 张）===")
+        seed_urls, seed_ids = _seed_ledgers()
+        own_urls = _load_url_dedupe(DEDUPE_IMG)
+        used_urls = seed_urls | own_urls
+        used_ids = seed_ids
+        used_persons = {_person_of_id(i) for i in used_ids}
+        for u in used_urls:
+            p = _person_of_url(u)
+            if p:
+                used_persons.add(p)
 
-    def _id_used(i):
-        return i in used_ids or _person_of_id(i) in used_persons
+        def _id_used(i):
+            return i in used_ids or _person_of_id(i) in used_persons
 
-    def _url_used(u):
-        return u in used_urls or bool(_person_of_url(u) and _person_of_url(u) in used_persons)
+        def _url_used(u):
+            return u in used_urls or bool(_person_of_url(u) and _person_of_url(u) in used_persons)
 
-    cats = load_categories()
-    beauty_srcs = cats.get("美女", {}).get("sources", [])
-    cats["美女"]["sources"] = [s for s in beauty_srcs
-                               if s.get("type") in ("yituyu", "turismo", "aituitu")]
-    for s in cats["美女"]["sources"]:
-        if s.get("type") == "yituyu":
-            s["imgs_per_gallery"] = 1
-        elif s.get("type") == "turismo":
-            s["imgs_per_post"] = 1
-    recs = collect_category("美女", max(n * 4, n + 8),
-                            has_id=_id_used, has_url=_url_used, categories=cats)
-    imgs, seen_person = [], set(used_persons)
-    for r in recs:
-        if len(imgs) >= n:
-            break
-        if r["url"] in used_urls:
-            continue
-        p = _person_of_id(r["id"]) or _person_of_url(r["url"])
-        if p in seen_person:
-            continue
-        seen_person.add(p)
-        imgs.append(r)
-    print(f"[web3_beauty] 美女图 {len(imgs)} 张（需 {n}）")
-    for r in imgs:
-        print(f"    - [{r['site']}] {r['url'][:60]}")
+        cats = load_categories()
+        beauty_srcs = cats.get("美女", {}).get("sources", [])
+        cats["美女"]["sources"] = [s for s in beauty_srcs
+                                   if s.get("type") in ("yituyu", "turismo", "aituitu")]
+        for s in cats["美女"]["sources"]:
+            if s.get("type") == "yituyu":
+                s["imgs_per_gallery"] = 1
+            elif s.get("type") == "turismo":
+                s["imgs_per_post"] = 1
+        recs = collect_category("美女", max(n * 4, n + 8),
+                                has_id=_id_used, has_url=_url_used, categories=cats)
+        seen_person = set(used_persons)
+        for r in recs:
+            if len(imgs) >= n:
+                break
+            if r["url"] in used_urls:
+                continue
+            p = _person_of_id(r["id"]) or _person_of_url(r["url"])
+            if p in seen_person:
+                continue
+            seen_person.add(p)
+            imgs.append(r)
+        print(f"[web3_beauty] 美女图 {len(imgs)} 张（需 {n}）")
+        for r in imgs:
+            print(f"    - [{r['site']}] {r['url'][:60]}")
 
     # ---- 组装 ----
     ts = time.strftime("%Y%m%d_%H%M%S")
@@ -389,9 +407,14 @@ def main() -> int:
     wd.mkdir(parents=True, exist_ok=True)
 
     rows = []
-    for i in range(min(len(imgs), len(captions))):
-        rows.append({"content": captions[i], "image_urls": imgs[i]["url"],
-                     "_source": "web3_beauty", "_site": imgs[i]["site"], "_lang": "zh_hant"})
+    if args.text_only:
+        for i, cap in enumerate(captions):
+            rows.append({"content": cap, "image_urls": "",
+                         "_source": "web3_beauty_text", "_site": "", "_lang": "zh_hant"})
+    else:
+        for i in range(min(len(imgs), len(captions))):
+            rows.append({"content": captions[i], "image_urls": imgs[i]["url"],
+                         "_source": "web3_beauty", "_site": imgs[i]["site"], "_lang": "zh_hant"})
 
     acc_out = wd / f"accounts_web3_beauty_{ts}.csv"
     with acc_out.open("w", newline="", encoding="utf-8-sig") as f:
@@ -419,7 +442,8 @@ def main() -> int:
     DEDUPE_NEWS.write_text(json.dumps(sorted(used_norm), ensure_ascii=False, indent=2),
                            encoding="utf-8")
     save_used_captions(used_cap, DEDUPE_CAP)
-    _save_url_dedupe(DEDUPE_IMG, used_urls | {r["image_urls"] for r in rows})
+    if not args.text_only:
+        _save_url_dedupe(DEDUPE_IMG, used_urls | {r["image_urls"] for r in rows})
 
     if args.skip_publish:
         print("[web3_beauty] --skip-publish，仅产出素材。")

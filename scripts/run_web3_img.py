@@ -66,6 +66,28 @@ EN_TEMPLATES = [
     "Just saw the latest {topic} development and had to share. Information edge is everything here. 💡 #crypto #{topic} #crypto",
 ]
 
+# 繁体中文 · 抱怨/吐槽口吻（针对下跌/被盗/监管等坏消息，去 AI 味）
+ZH_COMPLAIN_TEMPLATES = [
+    "又睇到{topic}嘅壞消息，老實講真係心累，呢排個市已經夠折磨人。😮‍💨 #幣市 #{topic} #加密貨幣",
+    "{topic}又出事，啲消息真係得人驚，倉位又要重新諗過。😔 #加密貨幣 #{topic} #幣市",
+    "見到{topic}咁樣，真係想熄咗個 App 唔再睇，越睇越煩。🤦 #幣市 #{topic} #加密貨幣",
+    "{topic}呢單嘢又嚟，散戶真係捱得好辛苦，一點好日子都冇。😞 #加密貨幣 #{topic} #幣圈",
+]
+
+# 英文 · 抱怨/吐槽口吻（针对坏消息）
+EN_COMPLAIN_TEMPLATES = [
+    "More bad news on {topic}. Honestly tired of this market draining everyone. 😮‍💨 #crypto #{topic} #markets",
+    "{topic} again… hard to feel good about this space some days. 😔 #crypto #{topic} #trading",
+    "Saw the {topic} news and just wanted to close the app for a while. Exhausting. 🤦 #crypto #{topic} #markets",
+    "Another rough {topic} headline. Retail really can't catch a break. 😞 #crypto #{topic} #crypto",
+]
+
+# 负面关键词（标题命中 → 用抱怨口吻）
+NEG_TITLE_KW = ["fall", "drop", "plunge", "crash", "slump", "sink", "tumble", "decline",
+                "loss", "bear", "dump", "hack", "scam", "fraud", "exploit", "stolen",
+                "arrest", "lawsuit", "ban", "delist", "suspend", "liquidat", "sec ",
+                "fine", "lose", "selloff", "sell-off"]
+
 
 def _u8():
     import io
@@ -97,7 +119,11 @@ def _topic(title: str, lang: str) -> str:
 def _caption(title: str, site: str, lang: str, idx: int) -> str:
     topic = _topic(title, lang)
     default = "加密貨幣" if lang == "zh_hant" else "crypto"
-    pool = ZH_TEMPLATES if lang == "zh_hant" else EN_TEMPLATES
+    neg = any(k in (title or "").lower() for k in NEG_TITLE_KW)
+    if neg:
+        pool = ZH_COMPLAIN_TEMPLATES if lang == "zh_hant" else EN_COMPLAIN_TEMPLATES
+    else:
+        pool = ZH_TEMPLATES if lang == "zh_hant" else EN_TEMPLATES
     cap = pool[idx % len(pool)].format(topic=topic)
     # 话题为默认值时，去掉重复的话题标签（模板已带 #加密貨幣 / #crypto）
     if topic == default:

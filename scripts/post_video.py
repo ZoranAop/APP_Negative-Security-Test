@@ -79,7 +79,7 @@ def find_account(accounts_csv: Path, identifier: str) -> Tuple[str, str]:
 def login(email: str, password: str) -> str:
     """登录并返回 Bearer token。"""
     payload = {
-        "username": email,
+        "email": email,
         "password": password,
         "device_id": config.POST_DEVICE_ID,
         "device_name": config.POST_DEVICE_NAME,
