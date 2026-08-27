@@ -239,6 +239,60 @@ py -3 scripts/run_web3.py --accounts-csv accounts_10.csv --yes
 
 ---
 
+## 24.7 Firecrawl 增强采集
+
+当 RSS/API 源不稳定或需要抓取反爬网站时，可使用 Firecrawl 作为补充采集方式。
+
+### 24.7.1 配置
+
+1. 确保 `~/.workbuddy/skills/firecrawl/.api_key` 存在（见 `docs/30-firecrawl-migration.md`）
+2. 或在 `.env` 中设置 `FIRECRAWL_API_KEY`
+
+### 24.7.2 使用方式
+
+#### 方式一：抓取指定 URL 列表
+
+```powershell
+# 创建 URL 列表文件
+Set-Content scripts/urls_web3.txt @'
+https://www.coindesk.com
+https://cointelegraph.com
+https://www.theblock.co
+'https@' -Encoding UTF8
+
+# 运行（自动输出到 web3_run/ 目录）
+py -3 scripts/run_web3_fc.py --use-firecrawl --urls-file scripts/urls_web3.txt `
+    --accounts-csv accounts_10.csv --per-site 5 --yes
+```
+
+#### 方式二：Firecrawl Search 搜索新闻
+
+```powershell
+py -3 scripts/run_web3_fc.py --use-firecrawl --search "bitcoin ethereum crypto news" `
+    --fc-limit 10 --accounts-csv accounts_10.csv --lang en --yes
+```
+
+#### 方式三：混合模式（原有源 + Firecrawl 补充）
+
+```powershell
+py -3 scripts/run_web3_fc.py --sources techflow,foresight,wublock `
+    --urls-file scripts/urls_web3.txt --per-site 5 --yes
+```
+
+### 24.7.3 脚本说明
+
+| 脚本 | 用途 |
+|------|------|
+| `fetch_firecrawl.py` | 独立的 Firecrawl 采集器，输出标准 moments CSV |
+| `run_web3_fc.py` | 完整版一键发布（含文案改写 + 发布），支持 Firecrawl 模式 |
+
+### 24.7.4 降级策略
+
+- Firecrawl 失败时自动回退到原有 fetchers
+- 无需修改现有工作流程，`--use-firecrawl` 为可选开关
+
+---
+
 ## 24.6 安全
 
 - 沿用 `docs/09-security.md`：**不入库**任何账号 CSV / `.env` / token。

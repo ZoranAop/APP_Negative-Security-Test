@@ -11,6 +11,7 @@ Last updated: 2026-08-25
 
 ## Recent Updates
 
+- **Firecrawl Integration** — Added `fetch_firecrawl.py` + `run_web3_fc.py` for Web3 news scraping via Firecrawl API. Supports URL list mode (`--urls-file`), search mode (`--search`), and auto-fallback to original fetchers. See `docs/24-web3-sources.md#247`.
 - **Web3 Deep Research** — Added 4 new in-depth research posts covering: Apple Pay Bitcoin purchases, Umbra privacy on Solana, Angola crypto exchanges, and Capitec Bank crypto access. All posted via `docs/web3-research-summary.md` (#深度研究 #数字科技)
 - **Vietnam political news** — Published 5 Vietnamese-language posts about public/political news from VnExpress using interaction pool accounts
 - **Myanmar political news** — Published 5 Myanmar-language posts about political events using English-nickname accounts
