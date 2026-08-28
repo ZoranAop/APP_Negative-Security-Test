@@ -5,12 +5,13 @@
 >
 > **Dual-branch support**: `main` (production, all live scripts), `test/regression-suite-v3` (regression test harness).
 
-Last updated: 2026-08-25
+Last updated: 2026-08-28
 
 ---
 
 ## Recent Updates
 
+- **Account Pool Centralization (v0.6)** — All scripts now use `scripts/account_pool.py` for unified account selection. Photographer accounts sourced exclusively from `pre_企管用户_街拍摄影师.csv`; Web3/interaction accounts from `互动用户池_100账号_完整信息.xlsx` / `互动用户池_220账号_完整信息.xlsx`. All derived `accounts_*.csv` sub-files removed from repo root. Already-used tracking via `result/tokens.json` + run-directory `accounts_merged_*.csv`.
 - **Firecrawl Integration** — Added `fetch_firecrawl.py` + `run_web3_fc.py` for Web3 news scraping via Firecrawl API. Supports URL list mode (`--urls-file`), search mode (`--search`), and auto-fallback to original fetchers. See `docs/24-web3-sources.md#247`.
 - **Web3 Deep Research** — Added 4 new in-depth research posts covering: Apple Pay Bitcoin purchases, Umbra privacy on Solana, Angola crypto exchanges, and Capitec Bank crypto access. All posted via `docs/web3-research-summary.md` (#深度研究 #数字科技)
 - **Vietnam political news** — Published 5 Vietnamese-language posts about public/political news from VnExpress using interaction pool accounts
@@ -164,11 +165,40 @@ See [`docs/08-quick-replay.md`](docs/08-quick-replay.md).
 
 ---
 
-## Web3 Account Pool (`accounts_web3_100.csv`)
+## Account Pools
 
-- `accounts_web3_100.csv` contains **100 Web3/Crypto enthusiast accounts** (English nicknames like `0xVoidWalker`, `GaslessRonin`, `SolStalker`; Chinese names like `币圈狙击手`, `链上赌徒`; Japanese names like `暗号通貨探求者`)
-- Accounts sourced from `pre_互動用戶_1300.csv` deduped against other pools
-- Use `run_web3.py` / `fetch_web3.py` / `web3_caption_by_role.py` to post Web3/news content with `--lang auto-nick` which auto-matches caption language to nickname
+### Photographer Accounts
+
+**Source file:** `pre_企管用户_街拍摄影师.csv` (181 accounts, includes EN/JP/CN nicknames)
+
+All photographer scripts call `account_pool.pick_photographer_accounts(n)` which:
+1. Reads from `pre_企管用户_街拍摄影师.csv`
+2. Filters English-nickname accounts only
+3. Excludes emails already in `result/tokens.json` or previous run directories
+4. Returns fresh accounts ready for login
+
+### Web3 / Interaction User Pools
+
+**Source files:**
+- `互动用户池_100账号_完整信息.xlsx` — 100 interaction accounts
+- `互动用户池_220账号_完整信息.xlsx` — 220 interaction accounts (full pool)
+- `accounts_web3_100.csv` — derived Web3 subset (regenerated from xlsx as needed)
+
+All web3 scripts call `account_pool.pick_web3_accounts(n)` or `account_pool.pick_interact_accounts(n, lang)` which:
+1. Reads from the xlsx source files directly (no intermediate CSV needed)
+2. Filters by language (EN / ZH / auto)
+3. Excludes already-used accounts via `result/tokens.json`
+
+### Account Tracking
+
+| File | Purpose |
+|------|---------|
+| `result/tokens.json` | All logged-in emails → tokens (auto-refreshed) |
+| `state/blocked_emails.json` | Hard-blocked emails (manual override) |
+| `photographer_opennana_*_run/accounts_merged_*.csv` | Per-run used photographer emails |
+| `state/seen_photographer_opennana_*.json` | Per-run used image slugs |
+
+> **No `accounts_*.csv` files should be created in the repo root.** All batch CSVs are generated in run subdirectories at runtime.
 
 ### Web3 Beauty Image Posts (`run_web3_beauty.py`)
 
