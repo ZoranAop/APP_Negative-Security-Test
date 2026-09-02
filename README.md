@@ -9,6 +9,47 @@ Last updated: 2026-08-28
 
 ---
 
+## 连接方式
+
+### GitLab 仓库地址
+
+| 方式 | 地址 |
+|------|------|
+| **Web 浏览** | `http://100.64.0.45:8999/chenzhuo/xxai-square-publisher/-/tree/main?ref_type=heads` |
+| **HTTPS 克隆** | `http://100.64.0.45:8999/chenzhuo/xxai-square-publisher.git` |
+| **SSH 克隆** | `git@100.64.0.45:8999:chenzhuo/xxai-square-publisher.git` |
+
+### 本地克隆
+
+```powershell
+# HTTPS（需 GitLab 账号密码）
+git clone http://100.64.0.45:8999/chenzhuo/xxai-square-publisher.git
+
+# SSH（需配置 GitLab 公钥）
+git clone git@100.64.0.45:8999:chenzhuo/xxai-square-publisher.git
+```
+
+### 已配置的 Remote
+
+| Remote | URL | 用途 |
+|--------|-----|------|
+| `origin` | `http://100.64.0.45:8999/chenzhuo/xxai-square-publisher.git` | 主仓库（fetch / push） |
+| `biz` | `http://100.64.0.45:8999/chenzhuo/xxai_business_test.git` | 业务测试仓 |
+| `github` | `https://github.com/ZoranAop/im-e2e-tests.git` | 外部参考仓库 |
+
+### 主要分支
+
+| 分支 | 说明 |
+|------|------|
+| `main` | 生产分支，所有正式脚本 |
+| `test/regression-suite-v3` | 回归测试套件（12 个测试套件，347 个用例） |
+| `singapore` | 新加坡地区相关功能 |
+| `feature/room-group-post` | 群组/房间发帖功能 |
+| `feature/customs-links` | 海关链接功能 |
+| `branch/operation-accounts` | 运营账号相关 |
+
+---
+
 ## Recent Updates
 
 - **Account Pool Centralization (v0.6)** — All scripts now use `scripts/account_pool.py` for unified account selection. Photographer accounts sourced exclusively from `pre_企管用户_街拍摄影师.csv`; Web3/interaction accounts from `互动用户池_100账号_完整信息.xlsx` / `互动用户池_220账号_完整信息.xlsx`. All derived `accounts_*.csv` sub-files removed from repo root. Already-used tracking via `result/tokens.json` + run-directory `accounts_merged_*.csv`.
