@@ -236,12 +236,24 @@ def fetch_video_detail(note_id, xsec_token):
     desc = note.get("desc", "")
     content = f"{title}\n{desc}".strip() if desc else title
     
-    # Clean up XHS-specific formatting
-    content = re.sub(r"#([^\[#]+)\[话题\]#", r"#\1", content)
-    content = re.sub(r"\[[^\]]+R\]", "", content)
-    content = re.sub(r"@[\w\u4e00-\u9fff]+", "", content)
-    content = re.sub(r" +", " ", content)
-    content = re.sub(r"\n+", "\n", content).strip()
+        # Clean up XHS-specific formatting and source attribution
+        content = re.sub(r"#([^\[#]+)\[话题\]#", r"#\1", content)
+        content = re.sub(r"\[[^\]]+R\]", "", content)
+        content = re.sub(r"@[\w\u4e00-\u9fff]+", "", content)
+        content = re.sub(r" +", " ", content)
+        content = re.sub(r"\n+", "\n", content).strip()
+        
+        # Remove source/attribution information
+        # Strip any "[来源: xxx]" or "via xxx" patterns
+        content = re.sub(r'\[来源[：:][^\]]*\]', '', content)
+        content = re.sub(r'[vV]ia\s+\w+', '', content)
+        content = re.sub(r'来源[：:]\s*\S+', '', content)
+        content = re.sub(r'转自[：:]\s*\S+', '', content)
+        content = re.sub(r'原文[：:]\s*\S+', '', content)
+        
+        # Clean up extra spaces after removal
+        content = re.sub(r' +', ' ', content)
+        content = re.sub(r'\n+', '\n', content).strip()
     
     return {
         "video_url": video_url,
