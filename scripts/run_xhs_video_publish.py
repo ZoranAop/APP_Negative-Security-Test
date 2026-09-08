@@ -42,7 +42,8 @@ except ImportError:
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 XHS_HEADERS = {"User-Agent": UA, "Referer": "https://www.xiaohongshu.com/"}
 PHOTOGRAPHER_CSV = ROOT / "pre_企管用户_街拍摄影师.csv"
-INTERACT_CSV = ROOT / "互动用户池_220账号_完整信息.xlsx"
+INTERACT_220_CSV = ROOT / "互动用户池_220账号_完整信息.xlsx"
+INTERACT_570_CSV = ROOT / "互动用户池_570账号_完整信息.xlsx"
 STATE_DIR = ROOT / "state"
 DEDUPE_FILE = STATE_DIR / "seen_xhs_video_publish.json"
 
@@ -103,9 +104,9 @@ def pick_accounts(n, source="photographer"):
     prev_used = _load_used_emails()
     exclude = tokens | prev_used
     
-    if source == "interact":
-        # Load from 互动用户池_220账号_完整信息.xlsx
-        wb = openpyxl.load_workbook(str(INTERACT_CSV), read_only=True)
+    if source == "interact_570":
+        # Load from 互动用户池_570账号_完整信息.xlsx
+        wb = openpyxl.load_workbook(str(INTERACT_570_CSV), read_only=True)
         ws = wb.active
         rows = list(ws.iter_rows(min_row=2, values_only=True))
         wb.close()
@@ -118,6 +119,31 @@ def pick_accounts(n, source="photographer"):
             email = str(row[1]).strip() if row[1] else ""  # 邮箱列
             nick = str(row[3]).strip() if row[3] else ""   # 昵称列
             password = str(row[4]).strip() if row[4] else ""  # 密码列
+            
+            if not email or not password:
+                continue
+            if email.lower() in seen:
+                continue
+            seen.add(email.lower())
+            picked.append({"邮箱": email, "昵称": nick, "密码": password})
+            if len(picked) >= n:
+                break
+        return picked
+    elif source == "interact":
+        # Load from 互动用户池_220账号_完整信息.xlsx
+        wb = openpyxl.load_workbook(str(INTERACT_220_CSV), read_only=True)
+        ws = wb.active
+        rows = list(ws.iter_rows(min_row=2, values_only=True))
+        wb.close()
+        
+        picked = []
+        seen = set(exclude)
+        for row in rows:
+            if len(row) < 5:
+                continue
+            email = str(row[1]).strip() if row[1] else ""
+            nick = str(row[3]).strip() if row[3] else ""
+            password = str(row[4]).strip() if row[4] else ""
             
             if not email or not password:
                 continue
@@ -316,8 +342,8 @@ def main():
     ap.add_argument("--concurrency", type=int, default=1)
     ap.add_argument("--tokens", default="result/tokens.json")
     ap.add_argument("--workdir", default="xhs_video_publish_run")
-    ap.add_argument("--source", choices=["photographer", "interact"], default="photographer",
-                    help="Account source: photographer (街拍摄影师) or interact (互动用户池)")
+    ap.add_argument("--source", choices=["photographer", "interact", "interact_570"], default="photographer",
+                    help="Account source: photographer (街拍摄影师), interact (互动用户池220), or interact_570 (互动用户池570)")
     ap.add_argument("--login-spacing", type=float, default=5.0,
                     help="Login interval seconds (default 5.0, avoid 429)")
     ap.add_argument("--max-retries", type=int, default=3,
