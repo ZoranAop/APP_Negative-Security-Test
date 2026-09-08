@@ -483,6 +483,8 @@ def main() -> int:
     ap.add_argument("--output-csv", default="",
                     help="publish-result CSV (default: result/publish_<ts>.csv)")
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--skip-upload", action="store_true",
+                    help="Skip S3 upload phase (for text-only posts)")
     args = ap.parse_args()
 
     # ---- adaptive login spacing (optimize against 429) ----
@@ -537,12 +539,16 @@ def main() -> int:
         log_info("[dry-run] stopping after login phase")
         return 0
 
-    # ---- Phase 2: upload ----
-    anchor_email = next(iter(tokens))
-    creds = get_s3_creds(tokens[anchor_email], upload_url=args.upload_url, timeout=args.timeout)
-    log_info(f"[Phase 2] S3 creds via {anchor_email} bucket={creds.get('bucket')}")
-
+    # ---- Phase 2: upload (skip if --skip-upload or no images) ----
     all_urls = unique_image_urls(rows)
+    if args.skip_upload or not all_urls:
+        log_info("[Phase 2] skipping S3 upload (--skip-upload or no images)")
+        cache: dict[str, str] = {}
+        img_dimensions: dict[str, tuple[int, int]] = {}
+    else:
+        anchor_email = next(iter(tokens))
+        creds = get_s3_creds(tokens[anchor_email], upload_url=args.upload_url, timeout=args.timeout)
+        log_info(f"[Phase 2] S3 creds via {anchor_email} bucket={creds.get('bucket')}")
     # Filter out known watermarked image sources — these will be skipped and
     # their posts will fallback to text-only (content description without image).
     _wm_hosts_raw = os.getenv("POST_WATERMARK_SKIP_HOSTS",
