@@ -318,6 +318,10 @@ def main():
     ap.add_argument("--workdir", default="xhs_video_publish_run")
     ap.add_argument("--source", choices=["photographer", "interact"], default="photographer",
                     help="Account source: photographer (街拍摄影师) or interact (互动用户池)")
+    ap.add_argument("--login-spacing", type=float, default=5.0,
+                    help="Login interval seconds (default 5.0, avoid 429)")
+    ap.add_argument("--max-retries", type=int, default=3,
+                    help="Max login retry attempts (default 3)")
     ap.add_argument("--yes", action="store_true")
     args = ap.parse_args()
 
@@ -389,9 +393,23 @@ def main():
         print(f"  Video: {m['note_id']} | {m['duration_sec']:.0f}s | lang={m['lang']}")
         
         try:
-            # Login
-            token = login_user(email, acct["密码"])
-            print(f"  [1/5] Login OK")
+            # Login with retry
+            token = None
+            for retry in range(args.max_retries):
+                try:
+                    token = login_user(email, acct["密码"])
+                    print(f"  [1/5] Login OK")
+                    break
+                except Exception as e:
+                    if retry < args.max_retries - 1:
+                        wait = 10 * (retry + 1)
+                        print(f"  [1/5] Login failed ({e}), retry {retry+1}/{args.max_retries} in {wait}s...")
+                        time.sleep(wait)
+                    else:
+                        raise
+            
+            if not token:
+                raise RuntimeError("Login failed after retries")
             
             # S3 creds
             creds = get_s3_creds(token)
@@ -448,9 +466,9 @@ def main():
                 "status": f"FAIL: {e}",
             })
         
-        # Delay between posts
+        # Delay between posts to avoid 429
         if i < len(moments) - 1:
-            time.sleep(3)
+            time.sleep(args.login_spacing)
 
     # Summary
     print(f"\n{'='*60}")
