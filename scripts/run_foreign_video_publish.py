@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
-run_foreign_video_publish.py — Publish videos from OpenNana (AI-generated).
+run_foreign_video_publish.py — Publish short videos from free stock video sources.
+Sources: Mixkit, Coverr, Pixabay (free stock videos).
 Uses English-nickname photographer accounts with English captions.
 """
 from __future__ import annotations
@@ -29,23 +30,53 @@ except ImportError:
     sys.exit(1)
 
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-OPENNANA_HEADERS = {"User-Agent": UA, "Referer": "https://opennana.com/"}
 PHOTOGRAPHER_CSV = ROOT / "pre_企管用户_街拍摄影师.csv"
 STATE_DIR = ROOT / "state"
 DEDUPE_FILE = STATE_DIR / "seen_foreign_video_publish.json"
 
-# OpenNana video slugs to publish
-OPENNANA_VIDEOS = [
-    ("japanese-street-fashion-autumn-cafe-portrait", "en",
-     "Love this autumn cafe scene. The Japanese street fashion combined with the cozy cafe atmosphere creates such a warm, inviting mood."),
-    ("cinematic-fashion-portrait-young-woman-boutique", "en",
-     "Cinematic fashion portraits in boutiques are my favorite genre. The young model's presence against curated backdrops creates editorial energy."),
-    ("modern-indoor-crouching-east-asian-woman-fashion-photography", "en",
-     "Crouching poses in indoor fashion photography create striking geometry. The East Asian model's poise against modern backdrop is compelling."),
-    ("young-woman-mirror-selfie-photography-studio", "en",
-     "Studio mirror selfies have this professional-yet-casual quality I love. The young woman's confidence in front of the lens is inspiring."),
-    ("east-asian-woman-realistic-phone-selfie-dreamcore-aesthetic", "en",
-     "Dreamcore aesthetics with realistic phone selfies — the kind of content that feels like a memory from a parallel universe."),
+# Free stock video sources with direct download URLs
+# These are curated from Mixkit, Coverr, and other free video sites
+FREE_VIDEOS = [
+    {
+        "url": "https://assets.mixkit.co/videos/preview/mixkit-waves-in-the-water-1164-large.mp4",
+        "title": "Ocean Waves",
+        "desc": "Soothing ocean waves crashing on shore. Perfect for relaxation content.",
+    },
+    {
+        "url": "https://assets.mixkit.co/videos/preview/mixkit-tree-branches-being-blown-by-the-wind-1179-large.mp4",
+        "title": "Wind in Trees",
+        "desc": "Beautiful tree branches swaying in the wind. Nature at its most peaceful.",
+    },
+    {
+        "url": "https://assets.mixkit.co/videos/preview/mixkit-aerial-view-of-city-traffic-at-night-11-large.mp4",
+        "title": "City at Night",
+        "desc": "Stunning aerial view of city traffic at night. Urban energy captured perfectly.",
+    },
+    {
+        "url": "https://assets.mixkit.co/videos/preview/mixkit-white-sport-car-driving-on-country-road-4288-large.mp4",
+        "title": "Sports Car",
+        "desc": "White sports car driving on country road. Speed and freedom combined.",
+    },
+    {
+        "url": "https://assets.mixkit.co/videos/preview/mixkit-person-editing-a-video-on-a-laptop-4279-large.mp4",
+        "title": "Video Editing",
+        "desc": "Person editing video on laptop. Creative workflow in action.",
+    },
+    {
+        "url": "https://assets.mixkit.co/videos/preview/mixkit-woman-working-on-her-laptop-at-home-4277-large.mp4",
+        "title": "Remote Work",
+        "desc": "Woman working on laptop at home. Modern lifestyle captured.",
+    },
+    {
+        "url": "https://assets.mixkit.co/videos/preview/mixkit-hands-of-a-woman-typing-on-a-laptop-4276-large.mp4",
+        "title": "Typing Hands",
+        "desc": "Close-up of hands typing on laptop. Focus and productivity.",
+    },
+    {
+        "url": "https://assets.mixkit.co/videos/preview/mixkit-you-woman-drinking-coffee-in-the-morning-4275-large.mp4",
+        "title": "Morning Coffee",
+        "desc": "Young woman enjoying morning coffee. Cozy start to the day.",
+    },
 ]
 
 # English caption templates
@@ -102,23 +133,6 @@ def pick_accounts(n):
     return picked
 
 
-def fetch_opennana_video(slug):
-    """Fetch video URL from OpenNana API."""
-    r = requests.get(f"https://api.opennana.com/api/prompts/{slug}",
-        headers=OPENNANA_HEADERS, timeout=20)
-    if r.status_code != 200:
-        return None
-    data = r.json().get("data", {})
-    videos = data.get("video_urls", [])
-    if not videos:
-        return None
-    return {
-        "video_url": videos[0],
-        "title": data.get("title", slug),
-        "thumbnail": data.get("images", [""])[0] if data.get("images") else "",
-    }
-
-
 def login_user(email, password):
     payload = {
         "email": email,
@@ -150,7 +164,9 @@ def download_file(url, save_dir, timeout=120):
     name = f"{uuid.uuid4().hex}{suffix}"
     dst = save_dir / name
     
-    headers = {"User-Agent": UA, "Referer": parsed.scheme + "://" + parsed.netloc + "/"}
+    headers = {"User-Agent": UA}
+    if parsed.netloc:
+        headers["Referer"] = parsed.scheme + "://" + parsed.netloc + "/"
     
     with requests.get(url, stream=True, headers=headers, timeout=timeout) as resp:
         resp.raise_for_status()
@@ -196,7 +212,7 @@ def publish_video(token, caption, video_url, thumbnail_url):
 
 
 def main():
-    ap = argparse.ArgumentParser(description="Foreign Video Publisher (OpenNana)")
+    ap = argparse.ArgumentParser(description="Foreign Video Publisher (Free Stock)")
     ap.add_argument("--num-users", type=int, default=2)
     ap.add_argument("--lang", choices=["en"], default="en")
     ap.add_argument("--target", type=int, default=5)
@@ -216,22 +232,19 @@ def main():
     accounts = pick_accounts(args.num_users)
     print(f"[accounts] {len(accounts)} photographers: {[a['昵称'] for a in accounts]}")
 
-    # Fetch videos
-    print(f"\n=== Fetching OpenNana videos (target: {args.target}) ===")
+    # Prepare videos from free sources
+    print(f"\n=== Preparing foreign videos (target: {args.target}) ===")
     videos = []
-    for i, (slug, lang, base_caption) in enumerate(OPENNANA_VIDEOS[:args.target]):
-        detail = fetch_opennana_video(slug)
-        if detail and detail["video_url"]:
-            caption = f"{detail['title']}\n\n{base_caption}"
-            videos.append({
-                "video_url": detail["video_url"],
-                "thumbnail_url": detail.get("thumbnail", ""),
-                "caption": caption,
-                "note_id": slug,
-            })
-            print(f"  [OK] {slug[:40]}...")
-        else:
-            print(f"  [SKIP] {slug} (no video)")
+    for i, v in enumerate(FREE_VIDEOS[:args.target]):
+        caption_idx = i % len(EN_CAPTIONS)
+        caption = f"{v['title']}\n\n{v['desc']}\n\n{EN_CAPTIONS[caption_idx]}"
+        videos.append({
+            "video_url": v["url"],
+            "thumbnail_url": "",  # Will use video first frame
+            "caption": caption,
+            "note_id": f"mixkit_{i+1}",
+        })
+        print(f"  [OK] {v['title'][:30]}...")
     
     print(f"\n[OK] {len(videos)} videos ready")
 
@@ -250,7 +263,7 @@ def main():
         nick = acct["昵称"] if acct else "?"
         
         print(f"\n[{i+1}/{len(videos)}] {nick} ({email})")
-        print(f"  Video: {v['note_id'][:20]}...")
+        print(f"  Video: {v['note_id']}")
         
         try:
             # Login with retry
@@ -280,24 +293,12 @@ def main():
             size_mb = video_local.stat().st_size / 1024 / 1024
             print(f"  [3/5] Downloaded video: {size_mb:.1f} MB")
             
-            # Download cover
-            cover_local = None
-            if v.get("thumbnail_url"):
-                try:
-                    cover_local = download_file(v["thumbnail_url"], MEDIA_DIR, timeout=30)
-                    print(f"  [3/5] Downloaded cover")
-                except:
-                    pass
-            
             # Upload video
             s3_video = upload_to_s3(video_local, creds)
             print(f"  [4/5] Uploaded video")
             
-            # Upload cover
+            # Use video URL as thumbnail fallback
             s3_cover = s3_video
-            if cover_local:
-                s3_cover = upload_to_s3(cover_local, creds)
-            print(f"  [4/5] Uploaded cover")
             
             # Publish
             result = publish_video(token, v["caption"], s3_video, s3_cover)
@@ -311,8 +312,6 @@ def main():
             
             # Cleanup
             video_local.unlink(missing_ok=True)
-            if cover_local:
-                cover_local.unlink(missing_ok=True)
                 
         except Exception as e:
             print(f"  [ERROR] {e}")
