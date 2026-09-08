@@ -139,13 +139,13 @@ def main():
     for i in range(min(len(NEWS_TOPICS), len(accounts))):
         topic, lang, caption = NEWS_TOPICS[i]
         
-        # Ensure uniqueness without adding suffix
+        # Ensure uniqueness by adding a unique identifier
         original_caption = caption
         for j in range(5):
             if caption not in used_caps:
                 break
-            # If duplicate, modify caption slightly instead of adding suffix
-            caption = f"{original_caption} — perspective {i+1}"
+            # If duplicate, modify caption slightly without adding suffix
+            caption = f"{original_caption.strip()} — #{i+1}"
         
         used_caps.add(caption)
         
