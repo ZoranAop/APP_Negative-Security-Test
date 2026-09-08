@@ -42,6 +42,7 @@ except ImportError:
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 XHS_HEADERS = {"User-Agent": UA, "Referer": "https://www.xiaohongshu.com/"}
 PHOTOGRAPHER_CSV = ROOT / "pre_企管用户_街拍摄影师.csv"
+INTERACT_CSV = ROOT / "互动用户池_220账号_完整信息.xlsx"
 STATE_DIR = ROOT / "state"
 DEDUPE_FILE = STATE_DIR / "seen_xhs_video_publish.json"
 
@@ -94,22 +95,53 @@ def _load_used_emails():
     return used
 
 
-def pick_accounts(n):
+def pick_accounts(n, source="photographer"):
+    """Pick accounts from either photographer pool or interact pool."""
+    import openpyxl
+    
     tokens = _load_tokens()
     prev_used = _load_used_emails()
     exclude = tokens | prev_used
-    rows = list(csv.DictReader(open(PHOTOGRAPHER_CSV, encoding="utf-8-sig")))
-    picked = []
-    seen = set(exclude)
-    for r in rows:
-        email = r.get("邮箱", "").strip().lower()
-        if email in seen:
-            continue
-        seen.add(email)
-        picked.append(r)
-        if len(picked) >= n:
-            break
-    return picked
+    
+    if source == "interact":
+        # Load from 互动用户池_220账号_完整信息.xlsx
+        wb = openpyxl.load_workbook(str(INTERACT_CSV), read_only=True)
+        ws = wb.active
+        rows = list(ws.iter_rows(min_row=2, values_only=True))
+        wb.close()
+        
+        picked = []
+        seen = set(exclude)
+        for row in rows:
+            if len(row) < 5:
+                continue
+            email = str(row[1]).strip() if row[1] else ""  # 邮箱列
+            nick = str(row[3]).strip() if row[3] else ""   # 昵称列
+            password = str(row[4]).strip() if row[4] else ""  # 密码列
+            
+            if not email or not password:
+                continue
+            if email.lower() in seen:
+                continue
+            seen.add(email.lower())
+            picked.append({"邮箱": email, "昵称": nick, "密码": password})
+            if len(picked) >= n:
+                break
+        return picked
+    else:
+        # Default: photographer pool
+        rows = list(csv.DictReader(open(PHOTOGRAPHER_CSV, encoding="utf-8-sig")))
+        picked = []
+        seen = set(exclude)
+        for r in rows:
+            email = r.get("邮箱", "").strip().lower()
+            if email in seen:
+                continue
+            seen.add(email)
+            picked.append(r)
+            if len(picked) >= n:
+                break
+        return picked
 
 
 def fetch_xhs_videos(target=10, delay=1.0):
@@ -284,6 +316,8 @@ def main():
     ap.add_argument("--concurrency", type=int, default=1)
     ap.add_argument("--tokens", default="result/tokens.json")
     ap.add_argument("--workdir", default="xhs_video_publish_run")
+    ap.add_argument("--source", choices=["photographer", "interact"], default="photographer",
+                    help="Account source: photographer (街拍摄影师) or interact (互动用户池)")
     ap.add_argument("--yes", action="store_true")
     args = ap.parse_args()
 
@@ -295,8 +329,9 @@ def main():
     MEDIA_DIR.mkdir(exist_ok=True)
 
     # Pick accounts
-    accounts = pick_accounts(args.num_users)
-    print(f"[accounts] {len(accounts)} photographers: {[a['昵称'] for a in accounts]}")
+    source = args.source
+    accounts = pick_accounts(args.num_users, source=source)
+    print(f"[accounts] {len(accounts)} photographers from {source} pool: {[a['昵称'] for a in accounts]}")
 
     # Fetch XHS videos
     print(f"\n=== Fetching XHS videos (target: {args.target}) ===")
