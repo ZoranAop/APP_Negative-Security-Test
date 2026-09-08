@@ -67,6 +67,21 @@ NEWS_TOPICS = [
      "Renewable energy costs have plummeted. Solar and wind are now cheaper than fossil fuels in most of the world. The energy transition is accelerating faster than most models predicted."),
     ("environment", "en",
      "Ocean conservation is getting the attention it deserves. Marine protected areas are expanding, and new technologies are helping us monitor ocean health in real time."),
+    # European news
+    ("europe", "en",
+     "Europe is betting big on AI sovereignty. The EU's approach to regulation versus innovation is creating a unique model that could shape how the world governs technology."),
+    ("europe", "en",
+     "The German auto industry is transitioning to electric at record speed. Volkswagen, BMW, Mercedes — they're not just adapting, they're leading the charge in sustainable mobility."),
+    # US politics & society
+    ("politics", "en",
+     "The 2024 election cycle is reshaping American politics. Campaign finance, social media influence, voter turnout — the dynamics are more complex than ever before."),
+    ("politics", "en",
+     "Tech regulation is finally getting serious attention on Capitol Hill. Antitrust lawsuits, data privacy bills, AI governance — the era of self-regulation is coming to an end."),
+    # Startup & innovation
+    ("startup", "en",
+     "The startup ecosystem is rebirthing after the 2022-23 correction. Seed funding is flowing again, and the next generation of unicorns is being forged in garages across Silicon Valley and beyond."),
+    ("startup", "en",
+     "Climate tech is having its moment. Carbon capture, green hydrogen, sustainable aviation fuel — investors are putting serious money behind solutions to the climate crisis."),
 ]
 
 
