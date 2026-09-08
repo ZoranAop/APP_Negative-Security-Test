@@ -20,6 +20,7 @@ ROOT = HERE.parent
 PY = [sys.executable]
 
 PHOTOGRAPHER_CSV = ROOT / "pre_企管用户_街拍摄影师.csv"
+ALT_ACCOUNTS_CSV = ROOT / "pre_企管用户_850.csv"
 STATE_DIR = ROOT / "state"
 DEDUPE_FILE = STATE_DIR / "seen_photographer_global_news_8.json"
 CAPTION_DEDUPE = STATE_DIR / "seen_global_news_captions2.json"
@@ -70,18 +71,28 @@ def pick_accounts(n):
     tokens = _load_tokens()
     prev_used = _load_used_emails()
     exclude = tokens | prev_used
-    rows = list(csv.DictReader(open(PHOTOGRAPHER_CSV, encoding="utf-8-sig")))
-    picked = []
-    seen = set(exclude)
-    for r in rows:
-        email = r.get("邮箱", "").strip().lower()
-        if email in seen:
+    
+    # Try photographer CSV first, then fallback to alt accounts
+    for csv_path in [PHOTOGRAPHER_CSV, ALT_ACCOUNTS_CSV]:
+        if not csv_path.exists():
             continue
-        seen.add(email)
-        picked.append(r)
-        if len(picked) >= n:
-            break
-    return picked
+        rows = list(csv.DictReader(open(csv_path, encoding="utf-8-sig")))
+        picked = []
+        seen = set(exclude)
+        for r in rows:
+            email = r.get("邮箱", "").strip().lower() or r.get("email", "").strip().lower()
+            if not email:
+                continue
+            if email in seen:
+                continue
+            seen.add(email)
+            picked.append(r)
+            if len(picked) >= n:
+                break
+        if picked:
+            return picked
+    
+    return []
 
 
 def main():
