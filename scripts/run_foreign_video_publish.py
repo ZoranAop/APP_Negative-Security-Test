@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-run_foreign_video_publish.py — Publish short videos from free stock video sources.
-Sources: Pexels (free stock videos), mixed with OpenNana AI videos.
+run_foreign_video_publish.py — Publish videos from OpenNana (AI-generated).
+Uses English-nickname photographer accounts with English captions.
 """
 from __future__ import annotations
 
@@ -29,12 +29,26 @@ except ImportError:
     sys.exit(1)
 
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-HEADERS = {"User-Agent": UA, "Referer": "https://www.pexels.com/"}
+OPENNANA_HEADERS = {"User-Agent": UA, "Referer": "https://opennana.com/"}
 PHOTOGRAPHER_CSV = ROOT / "pre_企管用户_街拍摄影师.csv"
 STATE_DIR = ROOT / "state"
 DEDUPE_FILE = STATE_DIR / "seen_foreign_video_publish.json"
 
-# English caption templates for foreign videos
+# OpenNana video slugs to publish
+OPENNANA_VIDEOS = [
+    ("japanese-street-fashion-autumn-cafe-portrait", "en",
+     "Love this autumn cafe scene. The Japanese street fashion combined with the cozy cafe atmosphere creates such a warm, inviting mood."),
+    ("cinematic-fashion-portrait-young-woman-boutique", "en",
+     "Cinematic fashion portraits in boutiques are my favorite genre. The young model's presence against curated backdrops creates editorial energy."),
+    ("modern-indoor-crouching-east-asian-woman-fashion-photography", "en",
+     "Crouching poses in indoor fashion photography create striking geometry. The East Asian model's poise against modern backdrop is compelling."),
+    ("young-woman-mirror-selfie-photography-studio", "en",
+     "Studio mirror selfies have this professional-yet-casual quality I love. The young woman's confidence in front of the lens is inspiring."),
+    ("east-asian-woman-realistic-phone-selfie-dreamcore-aesthetic", "en",
+     "Dreamcore aesthetics with realistic phone selfies — the kind of content that feels like a memory from a parallel universe."),
+]
+
+# English caption templates
 EN_CAPTIONS = [
     "This short clip really captures the essence of the moment. Love the energy and flow here.",
     "Found this beautiful moment and had to share. The composition and lighting are perfect.",
@@ -88,38 +102,21 @@ def pick_accounts(n):
     return picked
 
 
-def fetch_pexels_videos(query="lifestyle", per_page=20):
-    """Fetch videos from Pexels search API."""
-    url = "https://api.pexels.com/v1/search"
-    headers = {
-        "Authorization": "53456789-QJ9s8hLzK3vR2pN5tY6wX4mZ1bC7dF8eA9gH0iJ2kL4mN5",  # Demo key, may need real key
-        "User-Agent": UA,
-    }
-    params = {"query": query, "per_page": per_page}
-    
-    try:
-        r = requests.get(url, headers=headers, params=params, timeout=20)
-        if r.status_code == 200:
-            data = r.json()
-            videos = data.get("videos", [])
-            return [{"video_url": v.get("video_files", [{}])[0].get("link", ""),
-                     "thumbnail": v.get("image", ""),
-                     "title": v.get("alt", "")[:50]} for v in videos if v.get("video_files")]
-    except Exception as e:
-        print(f"  Pexels API error: {e}")
-    return []
-
-
 def fetch_opennana_video(slug):
-    """Fetch video from OpenNana."""
+    """Fetch video URL from OpenNana API."""
     r = requests.get(f"https://api.opennana.com/api/prompts/{slug}",
-        headers={"User-Agent": UA, "Referer": "https://opennana.com/"}, timeout=20)
-    if r.status_code == 200:
-        data = r.json().get("data", {})
-        videos = data.get("video_urls", [])
-        if videos:
-            return {"video_url": videos[0], "thumbnail": "", "title": data.get("title", "")}
-    return None
+        headers=OPENNANA_HEADERS, timeout=20)
+    if r.status_code != 200:
+        return None
+    data = r.json().get("data", {})
+    videos = data.get("video_urls", [])
+    if not videos:
+        return None
+    return {
+        "video_url": videos[0],
+        "title": data.get("title", slug),
+        "thumbnail": data.get("images", [""])[0] if data.get("images") else "",
+    }
 
 
 def login_user(email, password):
@@ -153,9 +150,7 @@ def download_file(url, save_dir, timeout=120):
     name = f"{uuid.uuid4().hex}{suffix}"
     dst = save_dir / name
     
-    headers = {"User-Agent": UA}
-    referer = parsed.scheme + "://" + parsed.netloc + "/"
-    headers["Referer"] = referer
+    headers = {"User-Agent": UA, "Referer": parsed.scheme + "://" + parsed.netloc + "/"}
     
     with requests.get(url, stream=True, headers=headers, timeout=timeout) as resp:
         resp.raise_for_status()
@@ -201,10 +196,10 @@ def publish_video(token, caption, video_url, thumbnail_url):
 
 
 def main():
-    ap = argparse.ArgumentParser(description="Foreign Video Publisher")
+    ap = argparse.ArgumentParser(description="Foreign Video Publisher (OpenNana)")
     ap.add_argument("--num-users", type=int, default=2)
     ap.add_argument("--lang", choices=["en"], default="en")
-    ap.add_argument("--target", type=int, default=10)
+    ap.add_argument("--target", type=int, default=5)
     ap.add_argument("--login-spacing", type=float, default=5.0)
     ap.add_argument("--max-retries", type=int, default=3)
     ap.add_argument("--yes", action="store_true")
@@ -221,31 +216,22 @@ def main():
     accounts = pick_accounts(args.num_users)
     print(f"[accounts] {len(accounts)} photographers: {[a['昵称'] for a in accounts]}")
 
-    # Fetch videos from multiple sources
-    print(f"\n=== Fetching foreign videos (target: {args.target}) ===")
-    
-    # Try OpenNana videos first (reliable)
-    opennana_slugs = [
-        "japanese-street-fashion-autumn-cafe-portrait",
-        "cinematic-fashion-portrait-young-woman-boutique",
-        "modern-indoor-crouching-east-asian-woman-fashion-photography",
-        "young-woman-mirror-selfie-photography-studio",
-        "east-asian-woman-realistic-phone-selfie-dreamcore-aesthetic",
-    ]
-    
+    # Fetch videos
+    print(f"\n=== Fetching OpenNana videos (target: {args.target}) ===")
     videos = []
-    for slug in opennana_slugs:
+    for i, (slug, lang, base_caption) in enumerate(OPENNANA_VIDEOS[:args.target]):
         detail = fetch_opennana_video(slug)
         if detail and detail["video_url"]:
+            caption = f"{detail['title']}\n\n{base_caption}"
             videos.append({
                 "video_url": detail["video_url"],
                 "thumbnail_url": detail.get("thumbnail", ""),
-                "caption": f"{detail['title']}\n\n{EN_CAPTIONS[len(videos) % len(EN_CAPTIONS)]}",
+                "caption": caption,
                 "note_id": slug,
             })
             print(f"  [OK] {slug[:40]}...")
-        if len(videos) >= args.target:
-            break
+        else:
+            print(f"  [SKIP] {slug} (no video)")
     
     print(f"\n[OK] {len(videos)} videos ready")
 
@@ -267,9 +253,23 @@ def main():
         print(f"  Video: {v['note_id'][:20]}...")
         
         try:
-            # Login
-            token = login_user(email, acct["密码"])
-            print(f"  [1/5] Login OK")
+            # Login with retry
+            token = None
+            for retry in range(args.max_retries):
+                try:
+                    token = login_user(email, acct["密码"])
+                    print(f"  [1/5] Login OK")
+                    break
+                except Exception as e:
+                    if retry < args.max_retries - 1:
+                        wait = 10 * (retry + 1)
+                        print(f"  [1/5] Login failed ({e}), retry {retry+1}/{args.max_retries} in {wait}s...")
+                        time.sleep(wait)
+                    else:
+                        raise
+            
+            if not token:
+                raise RuntimeError("Login failed")
             
             # S3 creds
             creds = get_s3_creds(token)
@@ -280,7 +280,7 @@ def main():
             size_mb = video_local.stat().st_size / 1024 / 1024
             print(f"  [3/5] Downloaded video: {size_mb:.1f} MB")
             
-            # Download cover if available
+            # Download cover
             cover_local = None
             if v.get("thumbnail_url"):
                 try:
