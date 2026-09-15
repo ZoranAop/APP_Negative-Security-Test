@@ -54,6 +54,7 @@ git clone git@100.64.0.45:8999:chenzhuo/xxai-square-publisher.git
 
 - **XHS Video Publish + Comment Workflow (v0.7)** — Added `scripts/run_xhs_video_850_comments.py` (one-group = 20 videos from `pre_企管用户_850.csv`, then 2-30 random accounts from `互动用户池_670账号.xlsx` post topic-aware comments, 60% English / 40% Traditional Chinese) and `scripts/run_retry_comments.py` (429-aware retry for failed comment logins). After publishing any XHS video batch, always run the matching comment script. Comment banks are editable in `EN_COMMENTS` / `ZH_COMMENTS` in `run_xhs_video_850_comments.py`.
 - **Account Pool Centralization (v0.6)** — All scripts now use `scripts/account_pool.py` for unified account selection. Photographer accounts sourced exclusively from `pre_企管用户_街拍摄影师.csv`; Web3/interaction accounts from `互动用户池_100账号_完整信息.xlsx` / `互动用户池_220账号_完整信息.xlsx`. All derived `accounts_*.csv` sub-files removed from repo root. Already-used tracking via `result/tokens.json` + run-directory `accounts_merged_*.csv`.
+- **OpenNana 670-pool custom publish + generic comment runner** — Added `run_opennana_670_custom56.py` (56-slug publisher to 670-pool EN accounts) and `run_comments_generic.py` (generic multi-pool comment runner supporting beauty/web3/general topics, 5-language banks, and any `publish_*.csv` report).
 - **Firecrawl Integration** — Added `fetch_firecrawl.py` + `run_web3_fc.py` for Web3 news scraping via Firecrawl API. Supports URL list mode (`--urls-file`), search mode (`--search`), and auto-fallback to original fetchers. See `docs/24-web3-sources.md#247`.
 - **Web3 Deep Research** — Added 4 new in-depth research posts covering: Apple Pay Bitcoin purchases, Umbra privacy on Solana, Angola crypto exchanges, and Capitec Bank crypto access. All posted via `docs/web3-research-summary.md` (#深度研究 #数字科技)
 - **Vietnam political news** — Published 5 Vietnamese-language posts about public/political news from VnExpress using interaction pool accounts
@@ -256,7 +257,7 @@ py -3 scripts/run_web3_beauty.py --num-accounts 5 --skip-publish
 
 ---
 
-## Comment Bot (`post_comments.py`)
+## Comment Bot (`post_comments.py` / `run_comments_generic.py`)
 
 Post natural-sounding comments across different user accounts to eliminate AI detection.
 
@@ -281,6 +282,44 @@ py -3 scripts/post_comments.py `
 ```
 
 Features: Token expiry auto-refresh, multi-topic comment banks (tech_ai/finance/entertainment/lifestyle/general), delay between posts.
+
+### Generic multi-pool comment runner (`run_comments_generic.py`)
+
+For any `publish_*.csv` report, publish N comments per post from a chosen user pool
+(670 / 100 / 220 / all existing tokens). Supports 5-language comment banks and
+configurable language mix.
+
+```powershell
+# Image + text posts, beauty topic, 670 pool, 5-30 comments/post
+# 60% EN / 20% zh-hant / 10% JA / 10% KO
+py -3 scripts/run_comments_generic.py `
+    --report result/publish_20260915_093316.csv `
+    --pool 670 `
+    --topic beauty `
+    --lang-mix "en:0.6:zh_hant:0.2:ja:0.1:ko:0.1" `
+    --min-comments 5 --max-comments 30 `
+    --yes
+
+# Text-only web3 posts, 100 pool, all-English comments, 3-10/post
+py -3 scripts/run_comments_generic.py `
+    --report result/publish_xxx.csv `
+    --pool 100 `
+    --topic web3 `
+    --lang-mix "en:1.0" `
+    --min-comments 3 --max-comments 10 `
+    --yes
+
+# Auto-detect topic from post content, use all token holders as commenters
+py -3 scripts/run_comments_generic.py `
+    --report result/publish_xxx.csv `
+    --pool all `
+    --topic auto `
+    --min-comments 5 --max-comments 20 `
+    --yes
+```
+
+Language mix format: `lang1:prob1:lang2:prob2:...` (probabilities are normalised).
+Topics: `beauty` / `web3` / `general` / `auto` (keyword-detected from post content).
 
 ---
 
