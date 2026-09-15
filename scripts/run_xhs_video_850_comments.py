@@ -724,8 +724,8 @@ def post_comment(token: str, moment_id: str, content: str) -> tuple[bool, str]:
 def main() -> int:
     ap = argparse.ArgumentParser(description="发布 XHS 视频（850 池）+ 670 池随机评论互动")
     ap.add_argument("--num-videos", type=int, default=20, help="一组视频帖数量（默认 20）")
-    ap.add_argument("--min-cmt", type=int, default=2, help="评论账号池最小值（默认 2）")
-    ap.add_argument("--max-cmt", type=int, default=30, help="评论账号池最大值（默认 30）")
+    ap.add_argument("--min-cmt", type=int, default=3, help="评论账号池最小值（默认 3）")
+    ap.add_argument("--max-cmt", type=int, default=10, help="评论账号池最大值（默认 10）")
     ap.add_argument("--login-spacing", type=float, default=3.0, help="发布账号登录间隔（默认 3s）")
     ap.add_argument("--cmt-delay", type=float, default=2.0, help="评论之间间隔（默认 2s）")
     ap.add_argument("--workdir", default="xhs_video_850_cmt_run")
@@ -841,6 +841,7 @@ def main() -> int:
     log(f"\n[Phase 3] 评论账号池：{len(en_accts)} 英文账号 + {len(zh_accts)} 繁中账号（共 {k} 计划）")
 
     # 任务分配：每个评论账号随机对应一条已发布视频
+    # 缺额时用另一语言账号兜底，确保总评论数尽量达到 k
     tasks: list[dict] = []
     for a in en_accts:
         vid = random.choice(published)
@@ -848,6 +849,16 @@ def main() -> int:
     for a in zh_accts:
         vid = random.choice(published)
         tasks.append({"account": a, "lang": "zh", "post": vid})
+    # 若繁中账号不足，用多余英文账号补到 k 条（标记为 en）
+    short = k - len(tasks)
+    if short > 0:
+        used_emails = {a["email"].lower() for a in en_accts + zh_accts}
+        filler = load_670_accounts(short, lang="en", exclude=used | used_emails)
+        for a in filler:
+            vid = random.choice(published)
+            tasks.append({"account": a, "lang": "en", "post": vid})
+        if not filler:
+            log(f"  [warn] 账号池不足，实际 {len(tasks)}/{k}")
     random.shuffle(tasks)
 
     # 评论账号 token 缓存
