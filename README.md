@@ -52,6 +52,7 @@ git clone git@100.64.0.45:8999:chenzhuo/xxai-square-publisher.git
 
 ## Recent Updates
 
+- **XHS Video Publish + Comment Workflow (v0.7)** — Added `scripts/run_xhs_video_850_comments.py` (one-group = 20 videos from `pre_企管用户_850.csv`, then 2-30 random accounts from `互动用户池_670账号.xlsx` post topic-aware comments, 60% English / 40% Traditional Chinese) and `scripts/run_retry_comments.py` (429-aware retry for failed comment logins). After publishing any XHS video batch, always run the matching comment script. Comment banks are editable in `EN_COMMENTS` / `ZH_COMMENTS` in `run_xhs_video_850_comments.py`.
 - **Account Pool Centralization (v0.6)** — All scripts now use `scripts/account_pool.py` for unified account selection. Photographer accounts sourced exclusively from `pre_企管用户_街拍摄影师.csv`; Web3/interaction accounts from `互动用户池_100账号_完整信息.xlsx` / `互动用户池_220账号_完整信息.xlsx`. All derived `accounts_*.csv` sub-files removed from repo root. Already-used tracking via `result/tokens.json` + run-directory `accounts_merged_*.csv`.
 - **Firecrawl Integration** — Added `fetch_firecrawl.py` + `run_web3_fc.py` for Web3 news scraping via Firecrawl API. Supports URL list mode (`--urls-file`), search mode (`--search`), and auto-fallback to original fetchers. See `docs/24-web3-sources.md#247`.
 - **Web3 Deep Research** — Added 4 new in-depth research posts covering: Apple Pay Bitcoin purchases, Umbra privacy on Solana, Angola crypto exchanges, and Capitec Bank crypto access. All posted via `docs/web3-research-summary.md` (#深度研究 #数字科技)
@@ -280,6 +281,46 @@ py -3 scripts/post_comments.py `
 ```
 
 Features: Token expiry auto-refresh, multi-topic comment banks (tech_ai/finance/entertainment/lifestyle/general), delay between posts.
+
+---
+
+## XHS Video → Comment Workflow (`run_xhs_video_850_comments.py`)
+
+Standard post-publish comment flow for XHS (小红书) video batches. **Always run the matching comment step after any XHS video publish.**
+
+### One-group flow (20 videos)
+
+```powershell
+# 1. Publish 20 XHS videos (crawl explore → pre_企管用户_850.csv → S3 → post)
+#    then auto-comment from 互动用户池_670账号.xlsx (random 2-30 accounts)
+py -3 scripts/run_xhs_video_850_comments.py --num-videos 20 --yes
+
+# 2. If some comment accounts hit 429 login rate-limit, retry them:
+py -3 scripts/run_retry_comments.py
+```
+
+The script picks `--min-cmt`…`--max-cmt` random 670-pool accounts (default 2-30),
+assigns 60% English-nick accounts to English comments and 40% Traditional-Chinese-nick
+accounts to 繁中 comments, and matches each comment to the topic of the video it targets.
+
+### Adjusting comment data
+
+All editable content lives at the top of `scripts/run_xhs_video_850_comments.py`:
+
+| What | Where | Notes |
+|------|-------|-------|
+| Topic keywords | `TOPIC_KEYWORDS` | Add `(keyword, topic)` pairs to route video text to a topic |
+| English comment banks | `EN_COMMENTS[topic]` | One list per topic + `general` fallback |
+| 繁中 comment banks | `ZH_COMMENTS[topic]` | One list per topic + `general` fallback |
+| EN/zh ratio | `n_en = round(k * 0.6)` in `main()` | Change `0.6` to adjust the split |
+| Random batch size | `--min-cmt` / `--max-cmt` | Default 2-30 |
+| Videos per group | `--num-videos` | Default 20 |
+| Login 429 backoff | `_login()` `max_retries` | Exponential 3s×2^n |
+
+The publish step and comment step are decoupled: `xhs_video_850_cmt_run/published_*.json`
+records each published `moment_id` + video text, and `comments_*.json` records the comment
+tasks (account, language, text, status). Re-run `run_retry_comments.py` anytime to
+recover failed 429 logins.
 
 ---
 
