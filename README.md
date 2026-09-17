@@ -98,6 +98,7 @@ xxai-square-publisher/
 │   ├── 20-dedupe.md                # Deduplication strategy
 │   ├── 23-cizucu.md                # Cizucu film analysis
 │   ├── 24-web3-sources.md          # Web3 news sources
+│   ├── 25-pexels-video-publish.md  # Pexels video publish workflow
 │   ├── 25-mixed-posting.md         # Mixed content posting
 │   ├── 28-source-attribution-filter.md  # Source attribution stripping
 │   └── runbooks/                   # Daily operational runbooks
@@ -140,6 +141,7 @@ xxai-square-publisher/
 │   │   ├── run_op200_cosplay.py    Op200 cosplay interaction
 │   │   ├── run_wublock_news_4.py   Wublock crypto news
 │   │   └── run_policy_news.py      Policy news runner
+│   ├── run_pexels_video.py         Pexels video publisher (6 themes, dedup, S3)
 │   └── legacy/README.md            # Legacy script documentation
 ├── templates/                      # CSV templates
 │   ├── accounts.example.csv        # Account CSV template
@@ -388,6 +390,34 @@ This repo ships an MCP Server with 25 tools for model-driven automation:
 | `run_eu_life_topics` | EU life topics one-command runner |
 
 See [`mcp/README.md`](mcp/README.md) for full usage.
+
+---
+
+## Pexels Video Publish (`run_pexels_video.py`)
+
+One-command Pexels video publishing for XXAI Square. Supports 6 travel themes with built-in caption banks, nickname-category account selection, dedup tracking, and S3 upload.
+
+```powershell
+# Cambodian travel videos, 10 accounts, EN-nick preferred
+py -3 scripts/run_pexels_video.py --theme cambodia --nick-filter en --count 10 --yes
+
+# Tokyo, Japanese captions, random-nick fallback to EN
+py -3 scripts/run_pexels_video.py --theme tokyo --nick-filter random --caption-lang ja --count 8 --yes
+
+# Southeast Asia, auto account selection
+py -3 scripts/run_pexels_video.py --theme southeast-asia --nick-filter auto --count 10 --yes
+```
+
+**Themes**: `cambodia` / `tokyo` / `japan` / `korea` / `india` / `southeast-asia`
+
+**Key features**:
+- Pexels video URL discovery (known ID list + Cloudflare-safe download redirect)
+- Dedup ledger (`data/used_pexels_video_ids.json`) prevents re-posting the same video
+- Account nickname categorization: `en` / `jp` / `cn` / `random`
+- S3 video + thumbnail upload with per-post retry and 429 backoff
+- Publish report CSV at `result/publish_pexels_{theme}_{ts}.csv`
+
+Full reference: [`docs/25-pexels-video-publish.md`](docs/25-pexels-video-publish.md)
 
 ---
 
