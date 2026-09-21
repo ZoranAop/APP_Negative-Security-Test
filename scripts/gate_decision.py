@@ -17,17 +17,39 @@ def load_json(path):
 
 
 def load_policy_decision(policy_path, policy_input):
-    """加载 OPA 策略评估结果"""
+    """加载 OPA 策略评估结果（真实执行 opa eval，失败则完整性检查 fallback，默认拒绝）"""
+    import subprocess, tempfile, os
     if policy_path and Path(policy_path).exists():
-        return load_json(policy_path)
-    
-    # 如果没有 OPA 策略文件，使用简化逻辑
-    return {
-        "allow": all(
-            evidence.get("status") == "PASS"
-            for evidence in policy_input.get("evidence", {}).values()
-        )
-    }
+        with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as f:
+            json.dump(policy_input, f, ensure_ascii=False, indent=2)
+            input_path = f.name
+        try:
+            cmd = ["opa", "eval", "-i", input_path, "-d", str(policy_path), "--format", "json", "data.release.allow"]
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+            if result.returncode == 0:
+                try:
+                    opa_output = json.loads(result.stdout)
+                    expressions = opa_output.get("result", [{}])[0].get("expressions", [{}])
+                    value_raw = expressions[0].get("value", False) if expressions else False
+                    allow = bool(value_raw) if isinstance(value_raw, bool) else False
+                    return {"allow": allow, "source": "opa_eval", "complete": True, "raw_stdout": result.stdout}
+                except Exception:
+                    pass
+            # 完整性检查 fallback（默认拒绝）
+            evidence_items = policy_input.get("evidence", {})
+            evidence_complete = isinstance(evidence_items, dict) and len(evidence_items) > 0 and all(isinstance(v, dict) for v in evidence_items.values())
+            all_pass = evidence_complete and all(v.get("status") == "PASS" for v in evidence_items.values())
+            return {"allow": False, "source": "integrity_check_fallback", "complete": evidence_complete, "all_evidence_complete": evidence_complete, "all_tests_pass": all_pass, "evidence": evidence_items, "note": "OPA 执行失败，执行完整性检查 fallback（Fail-Closed 默认拒绝）；请安装 opactl 并修复 policy"}
+        finally:
+            try:
+                os.unlink(input_path)
+            except Exception:
+                pass
+    else:
+        evidence_items = policy_input.get("evidence", {})
+        evidence_complete = isinstance(evidence_items, dict) and len(evidence_items) > 0 and all(isinstance(v, dict) for v in evidence_items.values())
+        all_pass = evidence_complete and all(v.get("status") == "PASS" for v in evidence_items.values())
+        return {"allow": False, "source": "integrity_check_no_policy", "complete": evidence_complete, "all_evidence_complete": evidence_complete, "all_tests_pass": all_pass, "evidence_summary": evidence_items, "note": "无 policy 文件，执行完整性检查（默认拒绝）；提供 negative.rego 并安装 opa 以启用完整策略评估"}
 
 
 def evaluate_gate(policy_decision, test_results):

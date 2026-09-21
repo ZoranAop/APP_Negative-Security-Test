@@ -270,7 +270,7 @@ def check_build_artifact_integrity(apk_path, ipa_path):
     # 检查 IPA 完整性
     if ipa_path and Path(ipa_path).exists():
         ipa_size = Path(ipa_path).stat().st_size
-        if ipa_size < 5000:  # 小于 5MB 的 IPA 可能有问题
+        if ipa_size < 5000000:  # 小于 5MB 的 IPA 可能有问题
             result["findings"].append({
                 "type": "ipa_too_small",
                 "value": f"{ipa_size} bytes",

@@ -161,13 +161,12 @@ def check_pubspec_for_mock(pubspec_path):
         
         # 检查 mock 相关依赖
         mock_dependencies = [
-            r'mockito',
-            r'fake',
-            r'mock',
-            r'fixture',
-            r'data_mock',
-            r'fake_data',
-            r'dummy'
+            r'mockito',  # 常见测试框架
+            r'fake_[^/]+',  # 精确假数据包
+            r'data_mock_[^/]+',
+            r'fixture_[^/]+',
+            r'dummy_[^/]+',
+            r'mock_[^/]+\.dart'  # 精确 mock 数据文件
         ]
         
         for dep_pattern in mock_dependencies:
@@ -204,21 +203,17 @@ def main():
     
     # Mock 检测模式
     mock_patterns = [
-        r'test_.*\.json',
-        r'mock_.*\.json',
-        r'fixture_.*\.json',
-        r'dummy_.*\.json',
-        r'fake_.*\.json',
-        r'mock',
-        r'fixture',
-        r'dummy',
-        r'fake_data',
-        r'test_announcement',
-        r'internal_test',
-        r'debug_data',
+        # 文件路径级精确匹配：避免泛匹配第三方 SDK 字符串
+        r'mock_[^/]+\.json$|mock_[^/]+\.json',
+        r'fixture_[^/]+\.json$|fixture_[^/]+\.json',
+        r'dummy_[^/]+\.json$|dummy_[^/]+\.json',
+        r'test_announcement[^/]*\.json$',
+        r'fake_[^/]+\.json$',
         r'mock_server',
-        r'test_api',
-        r'fake_response'
+        r'internal_test_data',
+        r'debug_test',
+        r'test_api_[^/]*\.json$',
+        r'fake_response_[^/]*\.json$'
     ]
     
     # 1. 检查 APK 资源
