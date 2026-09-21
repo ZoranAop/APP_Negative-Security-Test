@@ -34,6 +34,28 @@ OUTPUT_DIR="results"
 ARTIFACTS_DIR="security/artifacts"
 PLATFORM="android,ios"
 
+# 检查外部工具可用性
+check_tool() {
+    if ! command -v "$1" &>/dev/null; then
+        log_warning "外部工具 '$1' 未安装，相关测试可能跳过或失败"
+        MISSING_TOOLS+=("$1")
+    else
+        log_info "外部工具 '$1' 已就绪"
+    fi
+}
+
+MISSING_TOOLS=()
+log_info "检查外部工具依赖..."
+check_tool "python3"
+check_tool "unzip"
+check_tool "apktool"
+check_tool "jadx"
+check_tool "aapt2"
+check_tool "adb"
+check_tool "apksigner"
+check_tool "codesign"
+log_info "工具检查完成（缺失工具将触发相应测试降级或失败）"
+
 # 解析命令行参数
 while [[ $# -gt 0 ]]; do
     case $1 in

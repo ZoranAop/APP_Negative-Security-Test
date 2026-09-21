@@ -11,13 +11,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-from opencensus.trace import span as trace_span
-from opencensus.trace.samplers import ProbabilitySampler
-from opencensus.trace.tracer import Tracer
-def setup_tracer():
-    sampler = ProbabilitySampler(rate=1.0)
-    tracer = Tracer(sampler=sampler)
-    return tracer
 def check_debug_symbols(apk_path, artifacts_dir):
     """检查 APK 中的调试符号"""
     results = {

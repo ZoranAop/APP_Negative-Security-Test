@@ -178,6 +178,7 @@ def main():
     
     # 1. 检查 Android Manifest
     manifest_path = Path(args.manifest)
+    manifest_data = {"domains": [], "urls": []}
     if manifest_path.exists():
         manifest_data = parse_android_manifest(manifest_path)
         results["details"]["android_manifest"] = manifest_data
@@ -222,7 +223,7 @@ def main():
             if ats.get("NSAllowsArbitraryLoads"):
                 results["findings"].append({
                     "type": "ios_allows_arbitrary_loads",
-                    "value": ATS.get("NSAllowsArbitraryLoads")
+                    "value": ats.get("NSAllowsArbitraryLoads")
                 })
     
     # 3. 扫描构建产物中的所有文件（APK/IPA 解压后的文件）

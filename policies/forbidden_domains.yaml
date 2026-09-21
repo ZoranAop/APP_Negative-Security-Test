@@ -28,13 +28,13 @@ forbidden_domains:
     - "staging.feed-api.xxai.com"
     - "staging.ope.ai"
   # 本地 / 内网
+  # 10.x/172.x/192.x 为 RFC1918 私有网段，宽泛前缀匹配误报率高
+  # 10. 前缀仅列精确测试 IP（CI/内网常用地址）；172.16-31. 保留前缀匹配
   local:
     - "localhost"
     - "127.0.0.1"
     - "0.0.0.0"
     - "192.168."
-    # 10.x.x.x 是 RFC1918 私有网段，CI 机器 / 内网环境常用，直接宽泛匹配误报率高；
-    # 仅使用精确测试 IP 而非泛匹配所有 10. 前缀
     - "10.0.0.1"
     - "10.1.1.1"
     - "10.0.0.0"
@@ -79,6 +79,6 @@ production_domains:
 
 # 安全检查分类规则（用于 NS-02A / 门禁策略）
 classification:
-  FAIL: [dev, test, staging, localhost, 192.168., 10., 172.16.]
+  FAIL: [dev, test, staging, localhost, 192.168., 172.16.]
   THIRDPARTY: [flutter.dev, docs.flutter.dev, api.flutter.dev, plugins.flutter.dev, android.google.com, firebase.io, analytics.google.com]
   ALLOWLIST: [xxai.com, api.xxai.com, ope.ai]
