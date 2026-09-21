@@ -287,3 +287,22 @@ jobs:
 
 ### 6. 流水线架构图（docs/pipeline_diagram.md）
 新增可视化流程说明：`Build → Security Gate → PASS/FAIL → Upload/Block`，并标出各 SEC 项在流水线中的位置。
+
+---
+
+## Phase 1 补充（已完成框架，待完整验证）
+
+### NS-10 第三方依赖 / SDK 安全检查（新增框架）
+- 目标：检测生产包包含的第三方 Flutter Plugin、Native Library、SDK
+- 当前状态：框架已定义（`policies/forbidden_domains.yaml` 增加 `THIRDPARTY` 分类），完整扫描需要构建环境提供 `pubspec.yaml` / `build.gradle` / 实际 APK 内容解析
+- 计划完整验证：生成 `SBOM`（软件物料清单）并与构建产物逐项比对
+
+### NS-11 Secret / 凭证泄漏上下文检测（新增脚本）
+- 脚本：`scripts/check_secret_context.py`
+- 当前状态：基础分类规则已定义（`REAL_SECRET_CANDIDATE` / `THIRDPARTY_REF` / `CONTEXT_NEEDED` / `ALLOWLIST`），完整熵值/PEM/JWT 格式判断需要真实构建样本
+- 重要原则：`token`、`password`、`secret_key`、`auth_credential`、`private_key` 严禁进入白名单
+
+### NS-14 Android 组件暴露检查（新增脚本）
+- 脚本：`scripts/check_component_exposure.py`
+- 当前状态：检测规则已定义（`exported_activity`、`debug_activity`、`provider_permission`、`receiver_exported`），完整解析需要 `aapt2` 或解压后的 `AndroidManifest.xml`
+- 对应业务：防止 `DebugActivity`、`MockServer`、`Inspector` 等测试组件在生产构建中导出
