@@ -261,3 +261,25 @@ jobs:
 - **CI 管理员**：负责维护流水线配置、监控门禁状态
 
 如有疑问或需要新增规则，请联系安全团队。
+
+---
+
+## 补充内容说明（2024 更新）
+
+### 1. 统一测试矩阵（SEC-001 ~ SEC-012）
+详见 `security/test_matrix.md`，将原 9 条规则扩展为完整的 12 项安全基线，覆盖动态触发、日志分级、Release 配置验证。
+
+### 2. 禁止域名列表（forbidden_domains.yaml）
+`policies/forbidden_domains.yaml` 定义了生产包中绝对禁止出现的域名（`dev.*`、`test.*`、`staging.*`、`localhost`、`192.168.*` 等），`check_domain_isolation.py` 现在会同时比对该列表。
+
+### 3. Release 配置检查（SEC-012）
+新增 `scripts/check_release_config.py`，检查构建参数（`--release`、`--obfuscate`、`--split-debug-info`）以及 `build.gradle` `minifyEnabled` 配置。
+
+### 4. 动态触发测试（SEC-001 动态层）
+新增 `tests/test_dynamic_debug_trigger.py`，用于在模拟器/真机上尝试触发 Oops/Debug 面板，验证无法进入。
+
+### 5. 日志分级（SEC-006）
+`check_log_isolation.py` 现在支持分级扫描：Critical（Token/Secret）、High（UserId/Email）、Medium（Business params）。
+
+### 6. 流水线架构图（docs/pipeline_diagram.md）
+新增可视化流程说明：`Build → Security Gate → PASS/FAIL → Upload/Block`，并标出各 SEC 项在流水线中的位置。

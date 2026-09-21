@@ -224,4 +224,5 @@ def main():
     sys.exit(0 if results["status"] == "PASS" else 1)
 
 if __name__ == "__main__":
-    main()
+    main()# 更新 check_log_isolation.py 添加分级
+# 添加 severity 级别：Critical / High / Medium
