@@ -149,7 +149,7 @@ PASSED_TESTS=()
 # 运行每个测试脚本
 for TEST_SPEC in "${TEST_SCRIPTS[@]}"; do
     IFS=':' read -r SCRIPT TEST_ID TEST_NAME <<< "$TEST_SPEC"
-    SCRIPT_PATH="security/scripts/$SCRIPT"
+    SCRIPT_PATH="scripts/$SCRIPT"
     
     log_info "运行测试: [$TEST_ID] $TEST_NAME"
     

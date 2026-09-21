@@ -1,3 +1,9 @@
+# FAIL-CLOSED PATCH: missing/invalid APK must not return PASS
+import sys, os
+if __name__ == "__main__" and (not sys.argv or len(sys.argv) < 3):
+    print("SKIPPED: missing required input (apk/manifest)")
+    sys.exit(1)
+
 #!/usr/bin/env python3
 """
 SEC-014 / NS-14: Android Component Exposure 检查

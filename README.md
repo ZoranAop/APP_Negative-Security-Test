@@ -52,7 +52,7 @@ App 生产构建 **反向安全测试（Negative Security Test）+ CI 发布门�
 适用于开发阶段快速反馈，覆盖所有静态规则（NS-01~NS-03、NS-06~NS-09、NS-10~NS-20 基础解析/清单/配置检查、NS-14/NS-15 基础解析）：
 
 ```bash
-bash security/run_all_negative_tests.sh \
+bash run_all_negative_tests.sh \
   --apk build/app/outputs/flutter-apk/app-release.apk \
   --output-dir results/
 ```
@@ -199,7 +199,7 @@ security/
 适合开发阶段快速反馈，覆盖静态规则（所有 NS-01 静态、NS-02、NS-03 基础解析、NS-06、NS-07、NS-08 基础抽样、NS-09 基础签名、NS-10~NS-20 基础解析/清单/配置检查、NS-14 基础解析）：
 
 ```bash
-bash security/run_all_negative_tests.sh \
+bash run_all_negative_tests.sh \
   --apk build/app/outputs/flutter-apk/app-release.apk \
   --platform android \
   --output-dir results/
@@ -330,7 +330,7 @@ OPA 策略评估（negative.rego）
 可在任何开发环境执行静态检查、框架运行、文档生成：
 
 ```bash
-bash security/run_all_negative_tests.sh \
+bash run_all_negative_tests.sh \
   --apk build/app/outputs/flutter-apk/app-release.apk \
   --output-dir results/
 python security/scripts/gate_decision.py --evidence-dir results/ --policy-dir security/policies/
@@ -401,7 +401,7 @@ python security/scripts/gate_decision.py --evidence-dir results/
 
 ## 使用说明
 
-1. **快速检查**：直接执行 `bash security/run_all_negative_tests.sh --apk ... --output-dir results/`
+1. **快速检查**：直接执行 `bash run_all_negative_tests.sh --apk ... --output-dir results/`
 2. **完整 CI 流水线**：参考 `.github/workflows/release-gate.yml`，在 `macos-latest` 构建 + `ubuntu-latest` 测试环境执行
 3. **门禁执行**：执行 `python security/scripts/gate_decision.py --evidence-dir results/ --policy-dir security/policies/`
 4. **证据审计**：每条规则生成 `results/evidence/NS-XX.json`，策略决策生成 `results/policy_decision.json`
@@ -416,4 +416,4 @@ python security/scripts/gate_decision.py --evidence-dir results/
 - **CI 管理员**：维护流水线配置（`.github/workflows/release-gate.yml`）、监控门禁状态、确保构建产物与构建日志完整可追溯
 - **业务团队**：确认 `THIRDPARTY` 分类中的第三方 SDK 是否为业务必需、提供业务功能与权限映射关系（支持 `NS-13` 完整审计）
 
-如有疑问、需要新增规则、需要完整 `SBOM` 生成、需要动态能力完整验证环境支持，或需要针对特定业务（如 `ope.ai` 深链、`xxai_feature_square` 模块、`flutter_assets` 第三方依赖）的定制检测规则，请联系安全团队。
+如有疑问、需要新增规则、需要完整 `SBOM` 生成、需要动态能力完整验证环境支持，或需要针对特定业务（如 `ope.ai` 深链、`xxai_feature_square` 模块、`flutter_assets` 第三方依赖）的定制检测规则，请联系安全团队。参见完整测试与人工验证矩阵：security/docs/MANUAL_TEST_MATRIX.md

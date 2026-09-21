@@ -1,3 +1,9 @@
+# FAIL-CLOSED PATCH: missing/invalid APK must not return PASS
+import sys, os
+if __name__ == "__main__" and (not sys.argv or len(sys.argv) < 3):
+    print("SKIPPED: missing required input (apk/manifest)")
+    sys.exit(1)
+
 #!/usr/bin/env python3
 """
 SEC-011 / NS-11: Secret / Credential 上下文检测框架（基础版，待熵值增强）
