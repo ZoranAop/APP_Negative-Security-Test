@@ -14,7 +14,8 @@ security/
 ├── docs/
 │   └── NEGATIVE_TEST_GUIDE.md  # 机制设计说明（英文）
 ├── policies/
-│   ├── negative.rego           # OPA 策略即代码（Policy-as-Code）
+│   ├── negative.rego           # OPA 策略即代码
+│   └── forbidden_domains.yaml  # 禁止域名列表
 │   └── allowlist.yaml          # 白名单（已审计通过的第三方字符串）
 ├── scripts/
 │   ├── gate_decision.py        # 发布门禁决策脚本
@@ -26,10 +27,13 @@ security/
 │   ├── check_encryption_storage.py  # NS-05 登录态加密存储迁移
 │   ├── check_ios_file_sharing.py    # NS-06 iOS Documents 文件共享关闭
 │   ├── check_log_isolation.py       # NS-04 日志输出隔离
-│   └── check_mock_data_removal.py   # NS-07 移除生产包 mock 数据
+│   ├── check_mock_data_removal.py   # NS-07 移除生产包 mock 数据
+│   └── check_release_config.py      # SEC-012 Release 构建配置检查
 ├── tests/
 │   ├── conftest.py                 # pytest fixtures（构建产物/配置/断言工具）
 │   └── test_negative_security.py   # pytest 测试用例（9 条规则 → 自动化测试）
+├── test_matrix.md                  # SEC-001~SEC-012 统一测试矩阵
+├── docs/pipeline_diagram.md          # 流水线架构图
 └── run_all_negative_tests.sh       # 一键执行脚本（本地 / CI 入口）
 ```
 
