@@ -167,3 +167,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+# ALLOWLIST INTEGRATION: gate_decision accepts --allowlist via input.allowlist
+# Example: gate_decision --evidence-dir results/ --allowlist security/policies/allowlist.yaml

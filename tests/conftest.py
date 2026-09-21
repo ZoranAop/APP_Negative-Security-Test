@@ -256,7 +256,7 @@ def sarif_builder():
                 "tool": {
                     "driver": {
                         "name": "Negative Security Test",
-                        "informationUri": "http://100.64.0.45:8999/chenzhuo/xxai_app_negative-security-test",
+                        "informationUri": "http://<INTERNAL_GIT_URL>/<INTERNAL_USER>/xxai_app_negative-security-test",
                         "rules": [
                             {
                                 "id": r["id"],
