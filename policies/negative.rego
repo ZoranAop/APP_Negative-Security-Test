@@ -56,3 +56,7 @@ evidence_complete {
 
 release_decision := "ALLOW" if { allow }
 release_decision := "BLOCK" if { not allow }
+
+# Severity vocabulary for manual review / reporting (not blocking logic)
+# Critical: must block; High: must block; Medium: block unless reviewed; Low: record; Informational: record
+

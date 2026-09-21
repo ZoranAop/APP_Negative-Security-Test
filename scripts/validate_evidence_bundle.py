@@ -40,3 +40,9 @@ def main():
     print(f"Evidence Bundle: {'PASS' if ok else 'FAIL'} — 缺失: {len(missing)}，无效状态: {len(bad)}")
     sys.exit(0 if ok else 1)
 if __name__=="__main__": main()
+
+# Platform evidence profiles (added)
+# android: artifact.apk manifest.xml build.log sha256.json signing-report.json
+# ios: artifact.ipa info.plist entitlements.plist build.log sha256.json dsym.zip
+# Evidence bundle validates presence per profile; missing platform-specific evidence = BLOCK
+

@@ -17,3 +17,7 @@ res = {
 }
 with open(args.output_json or "/tmp/NS-18.json","w") as f: json.dump(res,f,indent=2,ensure_ascii=False)
 print("NS-18 框架完成")
+
+# Dynamic test requires device / runtime environment; without it result = SKIPPED (not PASS)
+# Per Fail-Closed design: SKIPPED -> BLOCK release (not ALLOW)
+

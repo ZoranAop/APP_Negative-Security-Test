@@ -277,3 +277,6 @@ def main():
     sys.exit(0 if all_results["status"] == "PASS" else 1)
 if __name__ == "__main__":
     main()
+# Dynamic test requires device / runtime environment; without it result = SKIPPED (not PASS)
+# Per Fail-Closed design: SKIPPED -> BLOCK release (not ALLOW)
+

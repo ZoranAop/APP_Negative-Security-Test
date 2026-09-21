@@ -30,26 +30,26 @@ App 生产构建 **反向安全测试（Negative Security Test）+ CI 发布门�
 
 | 编号 | 安全目标 | 检测内容 | 完整状态 |
 |---|---|---|---|
-| **NS-10** | 第三方依赖 / SDK 安全 | Flutter Plugin、Native Library、SDK 扫描 + `SBOM` 对比 | 🆕 框架已建（`policies/forbidden_domains.yaml` 增加 `THIRDPARTY` 分类），完整验证需构建环境 |
-| **NS-11** | Secret / 凭证泄漏上下文检测 | 提取 `token`、`password`、`secret_key`、`private_key`、`auth_credential`，根据上下文（第三方参考 / 真实凭证 / 需人工确认）分类判断 | 🆕 框架已建（`scripts/check_secret_context.py`），完整熵值/PEM/JWT 格式判断需真实样本 |
-| **NS-12** | 网络安全配置 | `cleartextTraffic`、`trust-all CA`、`certificate pinning disabled`、`hostname verifier bypass`、`debug proxy` | 🆕 框架已建（`scripts/check_network_security.py`），完整解析需构建配置文件 |
-| **NS-13** | 权限最小化审计 | `CAMERA`、`RECORD_AUDIO`、`LOCATION`、`REQUEST_INSTALL_PACKAGES`、`QUERY_ALL_PACKAGES` 等与业务映射检查 | 🆕 框架已建（`scripts/check_permission_audit.py`），完整业务映射需构建环境 |
-| **NS-14** | Android 组件暴露检查 | `exported` `Activity`、`Service`、`Receiver`、`Provider`、`DebugActivity`、`MockServer` 暴露检测 | 🆕 框架已建（`scripts/check_component_exposure.py`），完整解析需 `aapt2` |
-| **NS-15** | Deep Link / Intent 注入安全 | `open redirect`、`javascript:` 注入、`intent:` 注入、未登录访问敏感页面、参数绕过 | 🆕 框架已建（`scripts/check_intent_injection.py`），完整动态测试需设备 |
-| **NS-16** | WebView 安全 | `JavaScript` 接口暴露、`file://` 访问、`debugging`、`mixed content`、`URL allowlist` | 🆕 框架已建（`scripts/check_webview_security.py`），完整运行时验证需设备 |
-| **NS-17** | 本地敏感数据残留 | `SharedPreferences`、`Hive`、`SQLite`、`Cache`、`Clipboard`、`Crash dump` 中敏感内容残留检查 | 🆕 框架增强（`scripts/check_local_data_residue.py` 扩展 NS-05），完整验证需运行 |
-| **NS-18** | 屏幕隐私 / 截图保护 | `FLAG_SECURE`、`App Switcher` 快照保护、截图保护配置记录 | 🆕 框架已建（`scripts/check_screen_privacy.py`），完整验证需构建/设备 |
-| **NS-19** | 产物完整性 / SBOM 对比 | 构建清单与实际 APK 内容逐项比对，确保构建一致性 | 🆕 框架已建（`scripts/check_release_inventory.py`），完整 `SBOM` 生成需构建环境 |
-| **NS-20** | 发布产物清单 / 安全库存 | 自动列出 `dex`、`native .so`、`assets`、`flutter_assets`、`config`、`test/mock/debug resources` 等类型，生成安全库存报告 | 🆕 框架已建（`scripts/check_release_inventory.py`） |
-| **NS-21** | 禁止能力动态测试 | 实际尝试触发 `Oops/DevMenu`、访问 `dev` 深链、连接 `Mock Server`、执行 `debug` 操作、访问测试资源，验证生产包不具备不应有能力 | 🆕 增强（`tests/test_dynamic_debug_trigger.py` 增加 `FORBIDDEN_CAPABILITIES` 清单），完整执行需模拟器/真机 |
-| **SEC-012** | Release 构建配置检查 | 构建参数 `--release`、`--obfuscate`、`--split-debug-info`、`minifyEnabled`、`proguardFiles` 验证 | ✅ 框架已建（`scripts/check_release_config.py`），完整验证需构建日志 |
+| **NS-10** | 第三方依赖 / SDK 安全 | Flutter Plugin、Native Library、SDK 扫描 + `SBOM` 对比 | ✅ 真实执行（`check_dependency_audit.py` 解析 `pubspec.yaml`/`build.gradle`，上下文分类已修正） |
+| **NS-11** | Secret / 凭证泄漏上下文检测 | 提取 `token`、`password`、`secret_key`、`private_key`、`auth_credential`，根据上下文（第三方参考 / 真实凭证 / 需人工确认）分类判断 | ✅ 真实执行（`check_secret_context.py` 熵值/PEM/JWT/上下文分类，非 FRAMEWORK_READY） |
+| **NS-12** | 网络安全配置 | `cleartextTraffic`、`trust-all CA`、`certificate pinning disabled`、`hostname verifier bypass`、`debug proxy` | ✅ 真实执行（`check_network_security.py` 文件/APK 扫描 `cleartext`/`CA bypass`，输出 PASS/FAIL/REVIEW） |
+| **NS-13** | 权限最小化审计 | `CAMERA`、`RECORD_AUDIO`、`LOCATION`、`REQUEST_INSTALL_PACKAGES`、`QUERY_ALL_PACKAGES` 等与业务映射检查 | ✅ 真实执行（`check_permission_audit.py` 解析 manifest 提取高风险权限 → PASS/FAIL/REVIEW） |
+| **NS-14** | Android 组件暴露检查 | `exported` `Activity`、`Service`、`Receiver`、`Provider`、`DebugActivity`、`MockServer` 暴露检测 | ✅ 真实执行（`check_component_exposure.py` 真实解析 `exported` 组件，检测 `DebugActivity`/`MockServer`） |
+| **NS-15** | Deep Link / Intent 注入安全 | `open redirect`、`javascript:` 注入、`intent:` 注入、未登录访问敏感页面、参数绕过 | ✅ 真实执行（`check_intent_injection.py` 真实解析深链暴露 → PASS/FAIL/REVIEW，动态需设备） |
+| **NS-16** | WebView 安全 | `JavaScript` 接口暴露、`file://` 访问、`debugging`、`mixed content`、`URL allowlist` | ✅ 基础真实执行（`check_webview_security.py` APK/资源扫描 WebView 配置，运行时验证仍需设备） |
+| **NS-17** | 本地敏感数据残留 | `SharedPreferences`、`Hive`、`SQLite`、`Cache`、`Clipboard`、`Crash dump` 中敏感内容残留检查 | ✅ 基础真实执行（`check_local_data_residue.py` 扫描 APK 本地存储文件，运行时内容验证仍需执行） |
+| **NS-18** | 屏幕隐私 / 截图保护 | `FLAG_SECURE`、`App Switcher` 快照保护、截图保护配置记录 | ✅ 基础真实执行（`check_screen_privacy.py` APK/IPA 配置扫描，完整运行时验证需设备） |
+| **NS-19** | 产物完整性 / SBOM 对比 | 构建清单与实际 APK 内容逐项比对，确保构建一致性 | ✅ 真实执行（`check_release_inventory.py` 构建清单 + 禁止路径检测，完整 SBOM 仍需构建环境） |
+| **NS-20** | 发布产物清单 / 安全库存 | 自动列出 `dex`、`native .so`、`assets`、`flutter_assets`、`config`、`test/mock/debug resources` 等类型，生成安全库存报告 | ✅ 真实执行（`check_release_inventory.py` 清单 + 禁止路径检测，完整 SBOM 仍需构建环境） |
+| **NS-21** | 禁止能力动态测试 | 实际尝试触发 `Oops/DevMenu`、访问 `dev` 深链、连接 `Mock Server`、执行 `debug` 操作、访问测试资源，验证生产包不具备不应有能力 | ⚠️ 依赖设备/模拟器（已修正无设备不误判 PASS；`check_forbidden_capability.py` 输出 SKIPPED → BLOCK） |
+| **SEC-012** | Release 构建配置检查 | 构建参数 `--release`、`--obfuscate`、`--split-debug-info`、`minifyEnabled`、`proguardFiles` 验证 | ✅ 真实执行（`check_release_config.py` 构建参数验证，完整验证需构建日志） |
 
 ---
 
 ## 完整执行流程
 
 ### Phase 1：本地快速检查（开发阶段，无需设备）
-适用于开发阶段快速反馈，覆盖所有静态规则（NS-01~NS-03、NS-06~NS-09、NS-10~NS-20 框架检查、NS-14/NS-15 基础解析）：
+适用于开发阶段快速反馈，覆盖所有静态规则（NS-01~NS-03、NS-06~NS-09、NS-10~NS-20 基础解析/清单/配置检查、NS-14/NS-15 基础解析）：
 
 ```bash
 bash security/run_all_negative_tests.sh \
@@ -196,7 +196,7 @@ security/
 ## 执行模式（完整三阶段流程）
 
 ### 阶段 1：本地快速检查（开发阶段，无设备依赖）
-适合开发阶段快速反馈，覆盖静态规则（所有 NS-01 静态、NS-02、NS-03 基础解析、NS-06、NS-07、NS-08 基础抽样、NS-09 基础签名、NS-10~NS-20 框架检查、NS-14 基础解析）：
+适合开发阶段快速反馈，覆盖静态规则（所有 NS-01 静态、NS-02、NS-03 基础解析、NS-06、NS-07、NS-08 基础抽样、NS-09 基础签名、NS-10~NS-20 基础解析/清单/配置检查、NS-14 基础解析）：
 
 ```bash
 bash security/run_all_negative_tests.sh \

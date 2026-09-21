@@ -34,3 +34,13 @@ forbidden_patterns:
   - "private_key"
   - "certificate_pinning_disabled"
   - "kTrustAllCertificates"
+# Formal exception approval (required fields)
+# - rule_id
+# - finding_id / pattern
+# - justification
+# - responsible_owner
+# - approver
+# - approval_date
+# - valid_until
+# - compensating_control
+# - retest_build

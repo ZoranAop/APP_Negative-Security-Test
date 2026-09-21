@@ -230,3 +230,7 @@ if __name__ == "__main__":
 # Critical: Bearer token, access_token, refresh_token, password, secret_key
 # High: userId, email, phone
 # Medium: requestBody, responseBody
+
+# Dynamic test requires device / runtime environment; without it result = SKIPPED (not PASS)
+# Per Fail-Closed design: SKIPPED -> BLOCK release (not ALLOW)
+
