@@ -48,4 +48,5 @@ def main():
     sys.exit(0)
 
 if __name__ == "__main__":
-    main()
+    main()# NS-21 增强：禁止能力动态测试清单
+FORBIDDEN_CAPABILITIES = ["Oops_DevMenu_Trigger", "DeepLink_DevHost_Open", "Mock_Server_Connection", "Debug_Log_Leak", "Mock_Resource_Access", "Certificate_Pinning_Bypass"]
