@@ -129,6 +129,18 @@ TEST_SCRIPTS=(
     "check_mock_data_removal.py:NS-07:移除生产包 mock 数据"
     "check_dart_obfuscation.py:NS-08:Flutter Release 启用 Dart 混淆与符号文件留存"
     "check_binary_integrity.py:NS-09:发布前自动校验生产 IPA/APK"
+    "check_secret_context.py:NS-11:Secret/凭证上下文检测"
+    "check_network_security.py:NS-12:网络安全配置"
+    "check_permission_audit.py:NS-13:权限最小化审计"
+    "check_component_exposure.py:NS-14:Android组件暴露检查"
+    "check_intent_injection.py:NS-15:Intent注入安全"
+    "check_webview_security.py:NS-16:WebView安全"
+    "check_local_data_residue.py:NS-17:本地数据残留"
+    "check_screen_privacy.py:NS-18:屏幕隐私"
+    "check_release_inventory.py:NS-20:产物清单/安全库存"
+    "check_dependency_audit.py:NS-10:第三方依赖审计"
+    "check_artifact_consistency.py:NS-19:构建产物一致性"
+    "check_forbidden_capability.py:NS-21:禁止能力动态测试"
 )
 
 FAILED_TESTS=()
@@ -176,6 +188,30 @@ for TEST_SPEC in "${TEST_SCRIPTS[@]}"; do
         if [ -f "build.log" ]; then CMD_ARGS+=(--build-log "build.log"); fi
     elif [[ "$TEST_ID" == "NS-09" ]]; then
         CMD_ARGS+=(--apk "$APK_FILE" --ipa "$IPA_FILE" --manifest "$MANIFEST_FILE" --info-plist "$INFO_PLIST_FILE")
+    elif [[ "$TEST_ID" == "NS-11" ]]; then
+        CMD_ARGS+=(--apk "$APK_FILE" --build-dir "build")
+    elif [[ "$TEST_ID" == "NS-12" ]]; then
+        CMD_ARGS+=(--manifest "$MANIFEST_FILE" --apk "$APK_FILE")
+    elif [[ "$TEST_ID" == "NS-13" ]]; then
+        CMD_ARGS+=(--manifest "$MANIFEST_FILE" --apk "$APK_FILE")
+    elif [[ "$TEST_ID" == "NS-14" ]]; then
+        CMD_ARGS+=(--manifest "$MANIFEST_FILE" --apk "$APK_FILE")
+    elif [[ "$TEST_ID" == "NS-15" ]]; then
+        CMD_ARGS+=(--manifest "$MANIFEST_FILE" --apk "$APK_FILE")
+    elif [[ "$TEST_ID" == "NS-16" ]]; then
+        CMD_ARGS+=(--manifest "$MANIFEST_FILE" --apk "$APK_FILE")
+    elif [[ "$TEST_ID" == "NS-17" ]]; then
+        CMD_ARGS+=(--apk "$APK_FILE" --build-dir "build")
+    elif [[ "$TEST_ID" == "NS-18" ]]; then
+        CMD_ARGS+=(--apk "$APK_FILE" --ipa "$IPA_FILE")
+    elif [[ "$TEST_ID" == "NS-20" ]]; then
+        CMD_ARGS+=(--build-dir "build" --apk "$APK_FILE")
+    elif [[ "$TEST_ID" == "NS-10" ]]; then
+        CMD_ARGS+=(--pubspec "pubspec.yaml" --build-dir "build")
+    elif [[ "$TEST_ID" == "NS-19" ]]; then
+        CMD_ARGS+=(--apk "$APK_FILE" --build-log "build.log")
+    elif [[ "$TEST_ID" == "NS-21" ]]; then
+        CMD_ARGS+=(--apk "$APK_FILE" --device-id "${DEVICE_ID:-none}")
     fi
     
     # 运行测试

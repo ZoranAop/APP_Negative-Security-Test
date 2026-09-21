@@ -93,7 +93,7 @@ def main():
     policy_input = {
         "platforms": platform_list,
         "required_rules": {
-            platform: [f"NS-{i:02d}" for i in range(1, 10)]
+            platform: [f"NS-{i:02d}" for i in list(range(1, 10)) + list(range(10, 22))] + ["SEC-012"]
             for platform in platform_list
         },
         "evidence": {},
