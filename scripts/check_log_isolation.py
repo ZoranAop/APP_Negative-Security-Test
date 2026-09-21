@@ -224,5 +224,9 @@ def main():
     sys.exit(0 if results["status"] == "PASS" else 1)
 
 if __name__ == "__main__":
-    main()# 更新 check_log_isolation.py 添加分级
-# 添加 severity 级别：Critical / High / Medium
+    main()
+
+# 分级定义（Critical / High / Medium）已在敏感模式列表中集成
+# Critical: Bearer token, access_token, refresh_token, password, secret_key
+# High: userId, email, phone
+# Medium: requestBody, responseBody
