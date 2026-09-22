@@ -1,8 +1,0 @@
-{
-  "timestamp": "2026-09-22T14:02:33+08:00",
-  "total_tests": 21,
-  "passed": 9,
-  "failed": 12,
-  "passed_tests": ["NS-01","NS-05","NS-13","NS-14","NS-15","NS-18","NS-10","NS-19","NS-21"],
-  "failed_tests": ["NS-02","NS-03","NS-04","NS-06","NS-07","NS-08","NS-09","NS-11","NS-12","NS-16","NS-17","NS-20"]
-}

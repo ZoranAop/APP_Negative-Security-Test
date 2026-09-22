@@ -1,7 +1,0 @@
-{
-  "test_case": "NS-15",
-  "test_name": "Intent Injection Security",
-  "status": "PASS",
-  "findings": [],
-  "notes": "静态解析已完成；动态注入验证需设备环境执行（adb start -d ...）"
-}

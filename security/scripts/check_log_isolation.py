@@ -51,7 +51,7 @@ def scan_log_file(log_file_path, sensitive_patterns):
     
     return results
 
-def scan_adb_logcat(device_or_emulator, timeout=10, package_name="com.xxai"):
+def scan_adb_logcat(device_or_emulator, timeout=10, package_name="com.target_app"):
     """通过 adb 抓取设备日志并扫描"""
     results = {
         "device_connected": False,
@@ -157,7 +157,7 @@ def main():
     parser.add_argument("--log-dir", default="logs", help="日志目录")
     parser.add_argument("--apk", help="APK 文件路径（可选）")
     parser.add_argument("--adb-device", help="ADB 设备 ID（可选）")
-    parser.add_argument("--package", default="com.xxai.square", help="应用包名")
+    parser.add_argument("--package", default="com.target_app.square", help="应用包名")
     parser.add_argument("--output-json", help="输出 JSON 结果文件")
     
     args = parser.parse_args()

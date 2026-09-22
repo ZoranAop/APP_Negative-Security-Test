@@ -2,6 +2,5 @@ __pycache__/
 pre_浼佺鐢ㄦ埛_850.csv
 
 # 运行时生成的证据/结果（不入库）
-results/
 __pycache__/
 *.pyc

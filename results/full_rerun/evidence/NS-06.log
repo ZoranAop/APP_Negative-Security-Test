@@ -1,4 +1,0 @@
-测试结果: FAIL
-发现 2 个问题:
-  - [backup_encryption_disabled] NSBackupUseEncryption = NO
-  - [invalid_plist_in_artifacts] artifacts\Info.plist

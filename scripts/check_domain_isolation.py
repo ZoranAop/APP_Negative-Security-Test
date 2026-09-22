@@ -156,10 +156,10 @@ def main():
     parser.add_argument("--artifacts-dir", default="results/artifacts", help="输出目录")
     parser.add_argument("--output-json", help="输出 JSON 结果文件")
     parser.add_argument("--production-domains", nargs="*", default=[
-        "api.xxai.com", "feed-api.xxai.com", "auth.xxai.com", "xxai.com"
+        "api.target_app.com", "feed-api.target_app.com", "auth.target_app.com", "target_app.com"
     ], help="生产域名白名单")
     parser.add_argument("--production-associated-domains", nargs="*", default=[
-        "applinks:xxai.com"
+        "applinks:target_app.com"
     ], help="生产 Associated Domains 白名单")
     
     args = parser.parse_args()
