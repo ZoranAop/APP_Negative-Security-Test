@@ -10,7 +10,7 @@ from pathlib import Path
 TRIGGER_ATTEMPTS = [
     ("long_press_logo",  "连续快速点击 Logo 区域 5 次（模拟长按）"),
     ("tap_version",      "快速点击版本号文字区域 7 次"),
-    ("url_scheme_dev",   "触发 ope.ai/dev/ 深链（仅验证能否打开 DevPanel）"),
+    ("url_scheme_dev",   "触发开发深链（验证能否打开 DevPanel）"),
 ]
 
 def adb_available():

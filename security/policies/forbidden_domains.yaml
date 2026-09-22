@@ -8,7 +8,6 @@ forbidden_domains:
     - "dev.api.target_app.com"
     - "dev.auth.target_app.com"
     - "dev.feed-api.target_app.com"
-    - "dev.ope.ai"
     - "dev.staging.target_app.com"
   # 测试环境
   test:
@@ -16,7 +15,6 @@ forbidden_domains:
     - "test.api.target_app.com"
     - "test.auth.target_app.com"
     - "test.feed-api.target_app.com"
-    - "test.ope.ai"
     - "test.staging.target_app.com"
     - "test.local"
     - "test.localhost"
@@ -26,7 +24,6 @@ forbidden_domains:
     - "staging.api.target_app.com"
     - "staging.auth.target_app.com"
     - "staging.feed-api.target_app.com"
-    - "staging.ope.ai"
   # 本地 / 内网
   # 10.x/172.x/192.x 为 RFC1918 私有网段，宽泛前缀匹配误报率高
   # 10. 前缀仅列精确测试 IP（CI/内网常用地址）；172.16-31. 保留前缀匹配
@@ -75,10 +72,8 @@ production_domains:
     - "target_app.com"
     - "www.target_app.com"
   deep_link:
-    - "ope.ai"
 
 # 安全检查分类规则（用于 NS-02A / 门禁策略）
 classification:
   FAIL: [dev, test, staging, localhost, 192.168., 172.16.]
   THIRDPARTY: [flutter.dev, docs.flutter.dev, api.flutter.dev, plugins.flutter.dev, android.google.com, firebase.io, analytics.google.com]
-  ALLOWLIST: [target_app.com, api.target_app.com, ope.ai]

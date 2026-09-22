@@ -256,7 +256,7 @@ python -m pytest security/tests/ --platform android,ios --artifact-dir artifacts
 4. **证据审计**：每条规则生成 `results/evidence/NS-XX.json`，策略决策生成 `results/policy_decision.json`
 5. **缺口追踪**：查看 `test_matrix.md` 和 `docs/pipeline_diagram.md` 了解完整 21 项基线状态与流水线位置
 
-如有疑问、需要新增规则、需要完整 `SBOM` 生成、需要动态能力完整验证环境支持，或需要针对特定业务（如 `ope.ai` 深链、`feature_module` 模块、`flutter_assets` dependencies）的定制检测规则，请联系安全团队。参见完整测试与人工验证矩阵：security/docs/MANUAL_TEST_MATRIX.md
+如有疑问、需要新增规则、需要完整 `SBOM` 生成、需要动态能力完整验证环境支持，或需要针对特定业务（如 、`feature_module` 模块、`flutter_assets` dependencies）的定制检测规则，请联系安全团队。参见完整测试与人工验证矩阵：security/docs/MANUAL_TEST_MATRIX.md
 
 ---
 
