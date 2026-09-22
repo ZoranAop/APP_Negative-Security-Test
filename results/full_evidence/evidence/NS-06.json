@@ -1,0 +1,35 @@
+{
+  "test_case": "NS-06-ios-file-sharing",
+  "test_name": "关闭 iOS Documents 文件共享",
+  "status": "FAIL",
+  "findings": [
+    {
+      "type": "backup_encryption_disabled",
+      "value": "NSBackupUseEncryption = NO",
+      "severity": "MEDIUM",
+      "location": "Info.plist",
+      "description": "禁用备份加密，可能导致 Document 内容在备份中暴露"
+    },
+    {
+      "type": "invalid_plist_in_artifacts",
+      "value": "artifacts\\Info.plist",
+      "severity": "MEDIUM",
+      "details": [
+        {
+          "type": "backup_encryption_disabled",
+          "value": "NSBackupUseEncryption = NO",
+          "severity": "MEDIUM",
+          "location": "Info.plist",
+          "description": "禁用备份加密，可能导致 Document 内容在备份中暴露"
+        }
+      ]
+    }
+  ],
+  "details": {
+    "info_plist_analysis": {
+      "UIFileSharingEnabled": "NO",
+      "total_findings": 1
+    },
+    "total_findings": 2
+  }
+}

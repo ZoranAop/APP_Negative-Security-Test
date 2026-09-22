@@ -1,0 +1,2 @@
+usage: check_webview_security.py [-h] [--apk APK] [--output-json OUTPUT_JSON]
+check_webview_security.py: error: unrecognized arguments: --manifest artifacts/manifest.xml

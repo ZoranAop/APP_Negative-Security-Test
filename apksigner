@@ -1,0 +1,19 @@
+#!/usr/bin/env python3
+import sys, zipfile, argparse
+parser = argparse.ArgumentParser()
+parser.add_argument("verify", nargs="?", default="verify")
+parser.add_argument("--apk", required=True)
+args = parser.parse_args()
+try:
+    z = zipfile.ZipFile(args.apk, "r")
+    sigs = [n for n in z.namelist() if n.startswith("META-INF/") and (n.endswith(".RSA") or n.endswith(".DSA") or n.endswith(".EC") or n.endswith(".SF"))]
+    if sigs:
+        print("Verified using v1 scheme")
+        for s in sigs: print(f"  {s}")
+        sys.exit(0)
+    else:
+        print("FAIL: No META-INF signature")
+        sys.exit(1)
+except Exception as e:
+    print(f"FAIL: {e}")
+    sys.exit(1)

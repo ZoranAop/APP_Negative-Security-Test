@@ -1,0 +1,7 @@
+{
+  "test_case": "NS-12",
+  "test_name": "Network Security Config",
+  "status": "PASS",
+  "findings": [],
+  "notes": "未发现清明文传输/CA 绕过/调试代理异常配置"
+}

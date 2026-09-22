@@ -1,0 +1,16 @@
+{
+  "test_case": "NS-03-android-deep-link-isolation",
+  "test_name": "Android 深链域名按构建环境隔离",
+  "status": "FAIL",
+  "findings": [
+    {
+      "type": "manifest_parse_error",
+      "value": "not well-formed (invalid token): line 1, column 0"
+    }
+  ],
+  "details": {
+    "manifest_package": null,
+    "intent_filters": [],
+    "total_findings": 1
+  }
+}

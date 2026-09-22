@@ -1,0 +1,13 @@
+{
+  "test_case": "NS-05-encryption-storage",
+  "test_name": "登录态迁移至 Keychain/加密存储",
+  "status": "PASS",
+  "findings": [],
+  "details": {
+    "shared_prefs": {
+      "findings": [],
+      "encrypted_prefs_found": false,
+      "plaintext_prefs_found": false
+    }
+  }
+}

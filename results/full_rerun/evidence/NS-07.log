@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "D:\³ÌÐò\xxai-square-publisher\scripts\check_mock_data_removal.py", line 281, in <module>
+    main()
+    ~~~~^^
+  File "D:\³ÌÐò\xxai-square-publisher\scripts\check_mock_data_removal.py", line 223, in main
+    apk_result = scan_apk_resources(apk_path, mock_patterns)
+  File "D:\³ÌÐò\xxai-square-publisher\scripts\check_mock_data_removal.py", line 97, in scan_apk_resources
+    results["details"]["total_findings"] = len(results["findings"])
+    ~~~~~~~^^^^^^^^^^^
+KeyError: 'details'

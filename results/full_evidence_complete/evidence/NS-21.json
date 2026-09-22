@@ -1,0 +1,19 @@
+{
+  "test_case": "NS-21",
+  "test_name": "Forbidden Capability Dynamic Test",
+  "status": "REVIEW",
+  "findings": [
+    {
+      "id": "potential_debug_artifact",
+      "severity": "MEDIUM",
+      "note": "APK 中存在调试/模拟/开发相关文件: DebugProbesKt.bin",
+      "suggest": "需设备动态触发验证是否可用"
+    },
+    {
+      "id": "device_available",
+      "severity": "LOW",
+      "note": "设备已提供（none），建议结合 test_dynamic_debug_trigger.py 执行完整触发并记录证据"
+    }
+  ],
+  "notes": "设备已提供，应执行完整触发验证（尝试触发 Oops/DevMenu、访问 dev 深链、连接 Mock Server、执行 debug）并生成 JUnit JSON + 屏幕录制证据。如触发成功 → FAIL；如无法触发 → PASS（需人工确认）。"
+}
