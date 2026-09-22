@@ -1,0 +1,11 @@
+测试结果: PASS
+APK 分析: {
+  "debug_print_found": false,
+  "kdebug_mode_found": false,
+  "assert_in_release": false,
+  "flutter_tools_found": false,
+  "devtools_found": false,
+  "artifacts": [],
+  "error": "Command '['unzip', '-q', 'C:\\\\Users\\\\zoran\\\\Desktop\\\\app-release.apk', '-d', 'results\\\\apk_artifacts\\\\unzip']' returned non-zero exit status 1."
+}
+IPA 分析: {}

@@ -1,0 +1,213 @@
+{
+  "scan_target": "C:/Users/zoran/Desktop/app-release.apk",
+  "scan_time": "2026-09-22 13:46:24",
+  "total_rules": 22,
+  "completed": 11,
+  "details": {
+    "NS-01": {
+      "script": "scripts/check_debug_isolation.py",
+      "out_file": "results/full_quantified/evidence/check_debug_isolation.json",
+      "status": "PASS",
+      "findings_count": 0,
+      "notes": "",
+      "duration_sec": 1.0,
+      "retcode": 0
+    },
+    "NS-02": {
+      "script": "scripts/check_domain_isolation.py",
+      "out_file": "results/full_quantified/evidence/check_domain_isolation.json",
+      "status": "ERROR",
+      "findings_count": 0,
+      "notes": "MAINS ...]]\n                                 [--production-associated-domains [PRODUCTION_ASSOCIATED_DOMAINS ...]]\ncheck_domain_isolation.py: error: the following arguments are required: --info-plist\n",
+      "duration_sec": 0.1,
+      "retcode": 2
+    },
+    "NS-03": {
+      "script": "scripts/check_deep_link_isolation.py",
+      "out_file": "results/full_quantified/evidence/check_deep_link_isolation.json",
+      "status": "ERROR",
+      "findings_count": 0,
+      "notes": "hosts [PRODUCTION_HOSTS ...]]\n                                    [--output-json OUTPUT_JSON]\ncheck_deep_link_isolation.py: error: unrecognized arguments: --apk C:/Users/zoran/Desktop/app-release.apk\n",
+      "duration_sec": 0.1,
+      "retcode": 2
+    },
+    "NS-04": {
+      "script": "scripts/check_log_isolation.py",
+      "out_file": "results/full_quantified/evidence/check_log_isolation.json",
+      "status": "ERROR",
+      "findings_count": 0,
+      "notes": "  main()\n    ~~~~^^\n  File \"D:\\程序\\xxai-square-publisher\\scripts\\check_log_isolation.py\", line 194, in main\n    results[\"details\"][\"apk_scan_error\"] = str(e)\n    ~~~~~~~^^^^^^^^^^^\nKeyError: 'details'\n",
+      "duration_sec": 3.2,
+      "retcode": 1
+    },
+    "NS-05": {
+      "script": "scripts/check_encryption_storage.py",
+      "out_file": "results/full_quantified/evidence/check_encryption_storage.json",
+      "status": "PASS",
+      "findings_count": 0,
+      "notes": "",
+      "duration_sec": 0.2,
+      "retcode": 0
+    },
+    "NS-06": {
+      "script": "scripts/check_ios_file_sharing.py",
+      "out_file": "results/full_quantified/evidence/check_ios_file_sharing.json",
+      "status": "ERROR",
+      "findings_count": 0,
+      "notes": "    [--artifacts-dir ARTIFACTS_DIR]\n                                 [--output-json OUTPUT_JSON]\ncheck_ios_file_sharing.py: error: unrecognized arguments: --apk C:/Users/zoran/Desktop/app-release.apk\n",
+      "duration_sec": 0.2,
+      "retcode": 2
+    },
+    "NS-07": {
+      "script": "scripts/check_mock_data_removal.py",
+      "out_file": "results/full_quantified/evidence/check_mock_data_removal.json",
+      "status": "ERROR",
+      "findings_count": 0,
+      "notes": "xai-square-publisher\\scripts\\check_mock_data_removal.py\", line 97, in scan_apk_resources\n    results[\"details\"][\"total_findings\"] = len(results[\"findings\"])\n    ~~~~~~~^^^^^^^^^^^\nKeyError: 'details'\n",
+      "duration_sec": 0.8,
+      "retcode": 1
+    },
+    "NS-08": {
+      "script": "scripts/check_dart_obfuscation.py",
+      "out_file": "results/full_quantified/evidence/check_dart_obfuscation.json",
+      "status": "FAIL",
+      "findings_count": 2,
+      "notes": "",
+      "duration_sec": 0.1,
+      "retcode": 1
+    },
+    "NS-09": {
+      "script": "scripts/check_binary_integrity.py",
+      "out_file": "results/full_quantified/evidence/check_binary_integrity.json",
+      "status": "FAIL",
+      "findings_count": 1,
+      "notes": "",
+      "duration_sec": 0.2,
+      "retcode": 1
+    },
+    "NS-10": {
+      "script": "scripts/check_dependency_audit.py",
+      "out_file": "results/full_quantified/evidence/check_dependency_audit.json",
+      "status": "ERROR",
+      "findings_count": 0,
+      "notes": "            [--build-dir BUILD_DIR]\n                                 [--output-json OUTPUT_JSON]\ncheck_dependency_audit.py: error: unrecognized arguments: --apk C:/Users/zoran/Desktop/app-release.apk\n",
+      "duration_sec": 0.1,
+      "retcode": 2
+    },
+    "NS-11": {
+      "script": "scripts/check_secret_context.py",
+      "out_file": "results/full_quantified/evidence/check_secret_context.json",
+      "status": "ERROR",
+      "findings_count": 0,
+      "notes": "usage: check_secret_context.py [-h] [--apk APK] [--output-json OUTPUT_JSON]\ncheck_secret_context.py: error: unrecognized arguments: --build-dir .\n",
+      "duration_sec": 0.2,
+      "retcode": 2
+    },
+    "NS-12": {
+      "script": "scripts/check_network_security.py",
+      "out_file": "results/full_quantified/evidence/check_network_security.json",
+      "status": "ERROR",
+      "findings_count": 0,
+      "notes": "usage: check_network_security.py [-h] [--apk APK] [--output-json OUTPUT_JSON]\ncheck_network_security.py: error: unrecognized arguments: --manifest /tmp/apk_extract/AndroidManifest.xml\n",
+      "duration_sec": 0.2,
+      "retcode": 2
+    },
+    "NS-13": {
+      "script": "scripts/check_permission_audit.py",
+      "out_file": "results/full_quantified/evidence/check_permission_audit.json",
+      "status": "REVIEW",
+      "findings_count": 1,
+      "notes": "ȡʵȨ嵥ȱҵӳǩ  REVIEW",
+      "duration_sec": 0.2,
+      "retcode": 0
+    },
+    "NS-14": {
+      "script": "scripts/check_component_exposure.py",
+      "out_file": "results/full_quantified/evidence/check_component_exposure.json",
+      "status": "PASS",
+      "findings_count": 0,
+      "notes": "完整检查建议配合 aapt2 使用；未安装时 fallback 到 strings 粗扫描。",
+      "duration_sec": 0.2,
+      "retcode": 0
+    },
+    "NS-15": {
+      "script": "scripts/check_intent_injection.py",
+      "out_file": "results/full_quantified/evidence/check_intent_injection.json",
+      "status": "PASS",
+      "findings_count": 0,
+      "notes": "̬ɣ̬ע֤豸ִУadb start -d ...",
+      "duration_sec": 0.1,
+      "retcode": 0
+    },
+    "NS-16": {
+      "script": "scripts/check_webview_security.py",
+      "out_file": "results/full_quantified/evidence/check_webview_security.json",
+      "status": "ERROR",
+      "findings_count": 0,
+      "notes": "usage: check_webview_security.py [-h] [--apk APK] [--output-json OUTPUT_JSON]\ncheck_webview_security.py: error: unrecognized arguments: --manifest /tmp/apk_extract/AndroidManifest.xml\n",
+      "duration_sec": 0.2,
+      "retcode": 2
+    },
+    "NS-17": {
+      "script": "scripts/check_local_data_residue.py",
+      "out_file": "results/full_quantified/evidence/check_local_data_residue.json",
+      "status": "REVIEW",
+      "findings_count": 8,
+      "notes": "̬ɨȡܲ洢ļ/ݣʱ֤¼˳ټ飩豸",
+      "duration_sec": 0.2,
+      "retcode": 0
+    },
+    "NS-18": {
+      "script": "scripts/check_screen_privacy.py",
+      "out_file": "results/full_quantified/evidence/check_screen_privacy.json",
+      "status": "REVIEW",
+      "findings_count": 1,
+      "notes": "̬ɣ֤˹ִҳ̨App Switcherͼȷ̡豸ʱ SKIPPED  BLOCK",
+      "duration_sec": 0.3,
+      "retcode": 0
+    },
+    "NS-19": {
+      "script": "scripts/check_artifact_consistency.py",
+      "out_file": "results/full_quantified/evidence/check_artifact_consistency.json",
+      "status": "PASS",
+      "findings_count": 2,
+      "notes": "Ѽ㹹 SHA 鹹־һԡSKIPPED Ϊ PASS",
+      "duration_sec": 0.3,
+      "retcode": 0
+    },
+    "NS-20": {
+      "script": "scripts/check_release_inventory.py",
+      "out_file": "results/full_quantified/evidence/check_release_inventory.json",
+      "status": "ERROR",
+      "findings_count": 0,
+      "notes": "nventory.py [-h] [--build-dir BUILD_DIR] [--apk APK]\n                                  [--output-json OUTPUT_JSON]\ncheck_release_inventory.py: error: unrecognized arguments: --artifacts-dir artifacts\n",
+      "duration_sec": 0.1,
+      "retcode": 2
+    },
+    "SEC-012": {
+      "script": "scripts/check_release_config.py",
+      "out_file": "results/full_quantified/evidence/check_release_config.json",
+      "status": "ERROR",
+      "findings_count": 0,
+      "notes": "radle BUILD_GRADLE]\n                               [--pubspec PUBSPEC] [--output-json OUTPUT_JSON]\ncheck_release_config.py: error: unrecognized arguments: --apk C:/Users/zoran/Desktop/app-release.apk\n",
+      "duration_sec": 0.1,
+      "retcode": 2
+    },
+    "NS-21": {
+      "script": "scripts/check_forbidden_capability.py",
+      "out_file": "results/full_quantified/evidence/check_forbidden_capability.json",
+      "status": "SKIPPED",
+      "findings_count": 2,
+      "notes": "ִо̬Ԥ죻̬ԣOops/DevMenu/Mock Server/Debug Ҫģ/̲֤ݣ¼+豸Ϣ+Ļ¼+",
+      "duration_sec": 0.1,
+      "retcode": 0
+    }
+  },
+  "summary": {
+    "PASS": 5,
+    "FAIL": 2,
+    "SKIPPED": 1,
+    "ERROR": 11,
+    "REVIEW": 3
+  }
+}

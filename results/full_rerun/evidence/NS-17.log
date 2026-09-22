@@ -1,0 +1,3 @@
+usage: check_local_data_residue.py [-h] [--apk APK]
+                                   [--output-json OUTPUT_JSON]
+check_local_data_residue.py: error: unrecognized arguments: --build-dir build

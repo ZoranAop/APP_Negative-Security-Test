@@ -1,0 +1,20 @@
+{
+  "test_case": "NS-09-binary-integrity",
+  "test_name": "发布前自动校验生产 IPA/APK",
+  "status": "FAIL",
+  "findings": [
+    {
+      "type": "verification_exception",
+      "value": "[WinError 2] 系统找不到指定的文件。",
+      "severity": "MEDIUM"
+    }
+  ],
+  "details": {
+    "apk_signature": {
+      "signature_verified": false,
+      "certificate_fingerprint": null,
+      "expected_fingerprint": null
+    },
+    "total_findings": 1
+  }
+}

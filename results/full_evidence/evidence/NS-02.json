@@ -1,0 +1,26 @@
+{
+  "test_case": "NS-02-domain-isolation",
+  "test_name": "接口/域名/Associated Domains 隔离",
+  "status": "FAIL",
+  "details": {
+    "android_manifest": {
+      "domains": [],
+      "urls": [],
+      "net_config": {}
+    },
+    "ios_associated_domains": {
+      "has_associated_domains": false,
+      "applinks": [],
+      "activities": [],
+      "errors": []
+    },
+    "total_findings": 1
+  },
+  "findings": [
+    {
+      "type": "unexpected_domain_in_assets",
+      "value": "www.apple.com",
+      "file": "artifacts\\Info.plist"
+    }
+  ]
+}

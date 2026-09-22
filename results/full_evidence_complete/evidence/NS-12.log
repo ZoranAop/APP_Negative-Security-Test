@@ -1,0 +1,2 @@
+usage: check_network_security.py [-h] [--apk APK] [--output-json OUTPUT_JSON]
+check_network_security.py: error: unrecognized arguments: --manifest artifacts/manifest.xml

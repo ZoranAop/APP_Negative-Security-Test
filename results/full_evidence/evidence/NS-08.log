@@ -1,0 +1,4 @@
+测试结果: FAIL
+发现 2 个问题:
+  - [analysis_error] 
+  - [symbol_file_missing] APK 构建产物中未找到符号文件，无法还原崩溃堆栈

@@ -30,6 +30,10 @@ log_error() {
 }
 
 # 默认值
+MANIFEST_FILE=""
+INFO_PLIST_FILE=""
+IPA_FILE=""
+APK_FILE=""
 OUTPUT_DIR="results"
 ARTIFACTS_DIR="artifacts"
 PLATFORM="android,ios"

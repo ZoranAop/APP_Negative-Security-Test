@@ -1,0 +1,3 @@
+测试结果: FAIL
+发现 1 个问题:
+  - [manifest_parse_error] not well-formed (invalid token): line 1, column 0

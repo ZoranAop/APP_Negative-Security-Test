@@ -1,0 +1,2 @@
+usage: check_secret_context.py [-h] [--apk APK] [--output-json OUTPUT_JSON]
+check_secret_context.py: error: unrecognized arguments: --build-dir build

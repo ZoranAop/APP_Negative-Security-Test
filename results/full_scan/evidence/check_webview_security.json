@@ -1,0 +1,43 @@
+{
+  "test_case": "NS-16",
+  "test_name": "WebView Security",
+  "status": "FAIL",
+  "findings": [
+    {
+      "id": "js_interface_exposed",
+      "severity": "HIGH",
+      "note": "发现 addJavascriptInterface 调用: classes.dex"
+    },
+    {
+      "id": "js_enabled",
+      "severity": "MEDIUM",
+      "note": "WebView JavaScript 启用: classes.dex"
+    },
+    {
+      "id": "debug_universal_access",
+      "severity": "HIGH",
+      "note": "WebView 调试/全域访问启用: classes.dex"
+    },
+    {
+      "id": "js_interface_exposed",
+      "severity": "HIGH",
+      "note": "发现 addJavascriptInterface 调用: classes3.dex"
+    },
+    {
+      "id": "js_enabled",
+      "severity": "MEDIUM",
+      "note": "WebView JavaScript 启用: lib/arm64-v8a/libapp.so"
+    },
+    {
+      "id": "unsafe_url_load",
+      "severity": "HIGH",
+      "note": "发现 file:// / javascript: URL 加载风险: lib/arm64-v8a/libapp.so"
+    },
+    {
+      "id": "debug_universal_access",
+      "severity": "HIGH",
+      "note": "WebView 调试/全域访问启用: lib/arm64-v8a/libapp.so"
+    }
+  ],
+  "notes": "静态扫描已提取 WebView 配置；运行时验证（打开 WebView 测试混合内容/mixed content）需设备环境"
+}
