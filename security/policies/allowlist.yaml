@@ -1,0 +1,46 @@
+# 安全白名单（Allowlist）
+# 规则：任何在白名单中的字符串/模式，可被静态扫描忽略（视为已审计通过）
+# 审批流程：必须由安全负责人在 Git 提交信息中签名（如 Signed-off-by）后生效
+# 更新频率：每季度审查一次，或在引入新第三方 SDK 时立即审查
+
+whitelist:
+  # 第三方 SDK 仍使用的调试符号（已通过安全审计，非生产暴露）
+  - pattern: "DEBUG_MODE"
+    source: "ThirdPartyAnalyticsSDK v3.2.1"
+    review_date: "2025-01-15"
+    approved_by: "security-team"
+    reason: "SDK 内部仅用于内部遥测，不暴露给终端用户；已在构建时通过 ProGuard 移除"
+
+  # 已知的非生产资源文件名（已从生产包中移除，仅保留白名单记录）
+  - pattern: "mock_news_\d+\\.json"
+    source: "LegacyMockDataModule"
+    review_date: "2025-01-15"
+    approved_by: "security-team"
+    reason: "已在构建脚本中通过条件编译排除；白名单用于防止误报"
+
+  # 允许在测试环境中使用但不应出现在生产包中的深链 host（仅用于 CI 测试验证）
+  - pattern: "test\.example\.com"
+    source: "CI-Test-Environment"
+    review_date: "2025-01-15"
+    approved_by: "security-team"
+    reason: "仅在 CI 模拟器中使用，生产构建已完全移除"
+
+# 严禁条目：以下模式即使出现在白名单申请中也不被接受（安全底线）
+forbidden_patterns:
+  - "token"
+  - "password"
+  - "secret_key"
+  - "auth_credential"
+  - "private_key"
+  - "certificate_pinning_disabled"
+  - "kTrustAllCertificates"
+# Formal exception approval (required fields)
+# - rule_id
+# - finding_id / pattern
+# - justification
+# - responsible_owner
+# - approver
+# - approval_date
+# - valid_until
+# - compensating_control
+# - retest_build
