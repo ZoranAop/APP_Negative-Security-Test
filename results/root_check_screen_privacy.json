@@ -1,0 +1,11 @@
+{
+  "test_case": "NS-18",
+  "status": "SKIPPED",
+  "findings": [
+    {
+      "id": "no_input",
+      "note": "无 APK/IPA 输入，无法执行静态解析"
+    }
+  ],
+  "notes": "Fail-Closed：无输入 → SKIPPED → BLOCK"
+}

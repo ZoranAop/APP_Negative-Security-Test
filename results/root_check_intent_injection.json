@@ -1,0 +1,10 @@
+{
+  "test_case": "NS-15",
+  "status": "SKIPPED",
+  "findings": [
+    {
+      "id": "no_input",
+      "note": "无法解析 manifest/APK: 无输入"
+    }
+  ]
+}

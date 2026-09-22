@@ -1,0 +1,15 @@
+{
+  "test_case": "NS-21",
+  "test_name": "Forbidden Capability Dynamic Test",
+  "status": "SKIPPED",
+  "findings": [
+    {
+      "capability": "Oops_DevMenu_Trigger",
+      "expected": "不可用",
+      "actual": "未执行（无设备）",
+      "severity": "CRITICAL"
+    }
+  ],
+  "notes": "动态能力测试需要连接模拟器/真机执行完整触发流程。缺少设备应为 SKIPPED → BLOCK。",
+  "source": "无设备"
+}

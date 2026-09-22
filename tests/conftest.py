@@ -48,6 +48,7 @@ def build_artifacts(project_root, security_root):
     pubspec_candidates = list(artifact_dir.glob("**/pubspec.yaml"))
     dart_lib_candidates = [p for p in artifact_dir.glob("**/lib") if p.is_dir()]
     assets_dir_candidates = [p for p in artifact_dir.glob("**/assets") if p.is_dir()]
+    build_gradle_candidates = list(artifact_dir.glob("**/build.gradle"))
 
     return {
         "apk": apk_candidates[0] if apk_candidates else None,
@@ -57,6 +58,7 @@ def build_artifacts(project_root, security_root):
         "manifest": manifest_candidates[0] if manifest_candidates else None,
         "build_log": build_log_candidates[0] if build_log_candidates else None,
         "pubspec": pubspec_candidates[0] if pubspec_candidates else None,
+        "build_gradle": build_gradle_candidates[0] if build_gradle_candidates else None,
         "dart_lib": dart_lib_candidates[0] if dart_lib_candidates else None,
         "assets_dir": assets_dir_candidates[0] if assets_dir_candidates else None,
         "expected_cert_fingerprint": os.environ.get("EXPECTED_CERT_FINGERPRINT"),

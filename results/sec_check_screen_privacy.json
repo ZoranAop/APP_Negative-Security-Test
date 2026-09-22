@@ -1,0 +1,23 @@
+{
+  "test_case": "NS-18",
+  "test_name": "Screen / Snapshot Privacy",
+  "status": "SKIPPED",
+  "checks": [
+    {
+      "id": "flag_secure",
+      "desc": "FLAG_SECURE 是否启用（Android）",
+      "severity": "MEDIUM"
+    },
+    {
+      "id": "app_switcher_snapshot",
+      "desc": "iOS App Switcher 快照是否受保护",
+      "severity": "LOW"
+    },
+    {
+      "id": "screenshot_protection",
+      "desc": "截图保护配置（运行时检查）",
+      "severity": "LOW"
+    }
+  ],
+  "notes": "Fail-Closed：无 apk/ipa 输入，无法执行屏幕隐私检查。SKIPPED → BLOCK，绝不视为 PASS。"
+}

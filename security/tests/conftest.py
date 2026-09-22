@@ -50,6 +50,7 @@ def build_artifacts(project_root, security_root):
         "manifest": artifact_dir / "AndroidManifest.xml",
         "info_plist": artifact_dir / "Info.plist",
         "pubspec": artifact_dir / "pubspec.yaml",
+        "build_gradle": artifact_dir / "build.gradle",
         "dart_lib": artifact_dir / "lib",
         "assets_dir": artifact_dir / "assets",
         "build_log": artifact_dir / "build.log",

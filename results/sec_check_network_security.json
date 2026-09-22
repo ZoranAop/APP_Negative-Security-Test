@@ -1,0 +1,38 @@
+{
+  "test_case": "NS-12",
+  "test_name": "Network Security Configuration",
+  "status": "SKIPPED",
+  "checks": [
+    {
+      "id": "cleartext_traffic",
+      "desc": "usesCleartextTraffic=true / NSAllowsArbitraryLoads",
+      "severity": "CRITICAL",
+      "method": "解析 manifest / plist"
+    },
+    {
+      "id": "ca_trust_all",
+      "desc": "trust-all CA / debug CA / certificate pinning disabled",
+      "severity": "CRITICAL",
+      "method": "搜索 kTrustAllCertificates / NSExceptionDomains"
+    },
+    {
+      "id": "hostname_verifier_bypass",
+      "desc": "hostname verifier bypass / SSL bypass",
+      "severity": "HIGH",
+      "method": "代码/资源搜索"
+    },
+    {
+      "id": "debug_proxy",
+      "desc": "Debug proxy / MITM 配置残留",
+      "severity": "HIGH",
+      "method": "配置文件扫描"
+    },
+    {
+      "id": "network_config_file",
+      "desc": "Android NetworkSecurityConfig / iOS ATS 配置完整性",
+      "severity": "MEDIUM",
+      "method": "检查配置文件存在与内容"
+    }
+  ],
+  "notes": "Fail-Closed：无 manifest/apk 输入，无法执行网络安全配置检查。SKIPPED → BLOCK，绝不视为 PASS。"
+}

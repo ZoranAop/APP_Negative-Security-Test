@@ -18,7 +18,22 @@ def check_build_config(build_log_path, build_gradle_path, pubspec_path):
         "findings": [],
         "details": {}
     }
-    
+
+    # 无任何构建输入 → SKIPPED（Fail-Closed：不得默认 PASS）
+    has_any_input = any(
+        p and Path(p).exists()
+        for p in (build_log_path, build_gradle_path, pubspec_path)
+    )
+    if not has_any_input:
+        result["status"] = "SKIPPED"
+        result["findings"].append({
+            "type": "no_build_input",
+            "severity": "CRITICAL",
+            "value": "未提供 build.log / build.gradle / pubspec.yaml，无法验证 Release 构建配置"
+        })
+        result["details"]["note"] = "Fail-Closed: 无构建输入 → SKIPPED → BLOCK，绝不视为 PASS。"
+        return result
+
     # 检查构建日志参数
     if build_log_path and Path(build_log_path).exists():
         content = Path(build_log_path).read_text(errors='ignore')
