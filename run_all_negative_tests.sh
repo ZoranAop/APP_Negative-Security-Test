@@ -141,6 +141,11 @@ TEST_SCRIPTS=(
     "check_dependency_audit.py:NS-10:第三方依赖审计"
     "check_artifact_consistency.py:NS-19:构建产物一致性"
     "check_forbidden_capability.py:NS-21:禁止能力动态测试"
+    "check_ns22_entitlements.py:NS-22:iOS Entitlements / 系统权限专项"
+    "check_ns23_aasa.py:NS-23:Universal Link / AASA 专项"
+    "check_ns24_custom_url.py:NS-24:Custom URL Scheme / OAuth 专项"
+    "check_ns28_ats_tls.py:NS-28:iOS ATS / TLS 专项"
+    "check_ns29_authz_negative.py:NS-29:Authentication & Authorization 负向测试"
 )
 
 FAILED_TESTS=()
@@ -212,6 +217,16 @@ for TEST_SPEC in "${TEST_SCRIPTS[@]}"; do
         CMD_ARGS+=(--apk "$APK_FILE" --build-log "build.log")
     elif [[ "$TEST_ID" == "NS-21" ]]; then
         CMD_ARGS+=(--apk "$APK_FILE" --device-id "${DEVICE_ID:-none}")
+    elif [[ "$TEST_ID" == "NS-22" ]]; then
+        CMD_ARGS+=(--ipa "$IPA_FILE" --info-plist "$INFO_PLIST_FILE" --output-dir "$OUTPUT_DIR/NS-22" --artifacts-dir "$ARTIFACTS_DIR")
+    elif [[ "$TEST_ID" == "NS-23" ]]; then
+        CMD_ARGS+=(--ipa "$IPA_FILE" --info-plist "$INFO_PLIST_FILE" --domain "xxai.com" --output-dir "$OUTPUT_DIR/NS-23")
+    elif [[ "$TEST_ID" == "NS-24" ]]; then
+        CMD_ARGS+=(--ipa "$IPA_FILE" --info-plist "$INFO_PLIST_FILE" --output-dir "$OUTPUT_DIR/NS-24")
+    elif [[ "$TEST_ID" == "NS-28" ]]; then
+        CMD_ARGS+=(--info-plist "$INFO_PLIST_FILE" --output-dir "$OUTPUT_DIR/NS-28")
+    elif [[ "$TEST_ID" == "NS-29" ]]; then
+        CMD_ARGS+=(--output-dir "$OUTPUT_DIR/NS-29" --platform "$PLATFORM")
     fi
     
     # 运行测试
