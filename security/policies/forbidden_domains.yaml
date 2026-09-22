@@ -1,0 +1,84 @@
+# 禁止域名列表（反向安全测试）
+# 任何出现在生产构建包中的域名，必须不在此列表中
+# 更新此文件必须由安全负责人审批（Signed-off-by）
+forbidden_domains:
+  # 开发环境
+  dev:
+    - "dev.xxai.com"
+    - "dev.api.xxai.com"
+    - "dev.auth.xxai.com"
+    - "dev.feed-api.xxai.com"
+    - "dev.ope.ai"
+    - "dev.staging.xxai.com"
+  # 测试环境
+  test:
+    - "test.xxai.com"
+    - "test.api.xxai.com"
+    - "test.auth.xxai.com"
+    - "test.feed-api.xxai.com"
+    - "test.ope.ai"
+    - "test.staging.xxai.com"
+    - "test.local"
+    - "test.localhost"
+  # 预发布 / 灰度
+  staging:
+    - "staging.xxai.com"
+    - "staging.api.xxai.com"
+    - "staging.auth.xxai.com"
+    - "staging.feed-api.xxai.com"
+    - "staging.ope.ai"
+  # 本地 / 内网
+  # 10.x/172.x/192.x 为 RFC1918 私有网段，宽泛前缀匹配误报率高
+  # 10. 前缀仅列精确测试 IP（CI/内网常用地址）；172.16-31. 保留前缀匹配
+  local:
+    - "localhost"
+    - "127.0.0.1"
+    - "0.0.0.0"
+    - "192.168."
+    - "10.0.0.1"
+    - "10.1.1.1"
+    - "10.0.0.0"
+    - "172.16."
+    - "172.17."
+    - "172.18."
+    - "172.19."
+    - "172.20."
+    - "172.21."
+    - "172.22."
+    - "172.23."
+    - "172.24."
+    - "172.25."
+    - "172.26."
+    - "172.27."
+    - "172.28."
+    - "172.29."
+    - "172.30."
+    - "172.31."
+  # 通用测试模式
+  patterns:
+    - ".test."
+    - ".dev."
+    - ".local"
+    - "-test"
+    - "-dev"
+    - ".staging."
+    - ".preprod."
+
+# 生产允许白名单（用于对比确认）
+production_domains:
+  api:
+    - "api.xxai.com"
+    - "api.feed-api.xxai.com"
+  auth:
+    - "auth.xxai.com"
+  web:
+    - "xxai.com"
+    - "www.xxai.com"
+  deep_link:
+    - "ope.ai"
+
+# 安全检查分类规则（用于 NS-02A / 门禁策略）
+classification:
+  FAIL: [dev, test, staging, localhost, 192.168., 172.16.]
+  THIRDPARTY: [flutter.dev, docs.flutter.dev, api.flutter.dev, plugins.flutter.dev, android.google.com, firebase.io, analytics.google.com]
+  ALLOWLIST: [xxai.com, api.xxai.com, ope.ai]

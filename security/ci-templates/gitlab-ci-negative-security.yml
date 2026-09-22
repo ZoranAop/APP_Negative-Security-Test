@@ -1,0 +1,145 @@
+# GitLab CI 反向安全测试流水线
+# 用法：复制本文件到项目根目录，按实际情况调整 build 命令和路径
+# 依赖：python3, apktool, jadx, aapt2, apksigner (Android), xcrun (iOS)
+
+image: python:3.11
+
+stages:
+  - build
+  - security-test
+  - gate
+
+variables:
+  ARTIFACTS_DIR: "artifacts"
+  RESULTS_DIR: "results"
+
+default:
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq apktool unzip
+    - pip install pyyaml
+    # 根据 CI Runner 实际路径调整以下工具
+    # - export AAPT2=$ANDROID_HOME/build-tools/34.0.0/aapt2
+    # - export APKSIGNER=$ANDROID_HOME/build-tools/34.0.0/apksigner
+
+# ---------------------------------------------------------------------------
+# 构建阶段（示例，请按实际 Flutter 构建命令替换）
+# ---------------------------------------------------------------------------
+build-android:
+  stage: build
+  tags: [macos, flutter]   # 需要 macOS runner（iOS）或 Linux runner（Android）
+  script:
+    - flutter pub get
+    - flutter build apk --release --obfuscate --split-debug-info=build/symbols/android
+    - flutter build ios --release --obfuscate --split-debug-info=build/symbols/ios
+    - mkdir -p ${ARTIFACTS_DIR}
+    - cp build/app/outputs/flutter-apk/app-release.apk ${ARTIFACTS_DIR}/ 2>/dev/null || true
+    - cp build/ios/iphoneos/*.ipa ${ARTIFACTS_DIR}/ 2>/dev/null || true
+    - cp -r build/symbols ${ARTIFACTS_DIR}/ 2>/dev/null || true
+    # 将 build.log 保存（SEC-012 需要）
+    - cat build.log > ${ARTIFACTS_DIR}/build.log 2>/dev/null || echo "build not logged" > ${ARTIFACTS_DIR}/build.log
+  artifacts:
+    paths:
+      - ${ARTIFACTS_DIR}/
+    expire_in: 7d
+
+build-logs:
+  stage: build
+  tags: [flutter]
+  script:
+    # 如果 build 命令本身没有输出到文件，手动生成
+    - echo "placeholder build log" > ${ARTIFACTS_DIR}/build.log
+  artifacts:
+    paths:
+      - ${ARTIFACTS_DIR}/build.log
+    expire_in: 7d
+
+# ---------------------------------------------------------------------------
+# 安全测试阶段（反向测试 + 静态扫描）
+# ---------------------------------------------------------------------------
+negative-tests-android:
+  stage: security-test
+  needs: [build-android]
+  tags: [linux, security]
+  script:
+    - export NEGATIVE_TEST_ARTIFACTS_DIR=${ARTIFACTS_DIR}
+    - python3 -m pytest tests/test_negative_security.py
+        --platform android
+        --junitxml=${RESULTS_DIR}/android.xml
+        -v
+    # 运行各脚本（可选，pytest 已覆盖）
+    # - python3 scripts/check_debug_isolation.py  --apk ${ARTIFACTS_DIR}/app-release.apk --output-json ${RESULTS_DIR}/NS-01.json
+    # - python3 scripts/check_domain_isolation.py --manifest ${ARTIFACTS_DIR}/AndroidManifest.xml --info-plist ${ARTIFACTS_DIR}/Info.plist --artifacts-dir ${ARTIFACTS_DIR} --output-json ${RESULTS_DIR}/NS-02.json
+    # - python3 scripts/check_mock_data_removal.py --apk ${ARTIFACTS_DIR}/app-release.apk --output-json ${RESULTS_DIR}/NS-07.json
+    # - python3 scripts/check_dart_obfuscation.py --apk ${ARTIFACTS_DIR}/app-release.apk --artifacts-dir ${ARTIFACTS_DIR} --build-log ${ARTIFACTS_DIR}/build.log --output-json ${RESULTS_DIR}/NS-08.json
+    # - python3 scripts/check_binary_integrity.py --apk ${ARTIFACTS_DIR}/app-release.apk --output-json ${RESULTS_DIR}/NS-09.json
+    # - python3 scripts/check_secret_context.py --apk ${ARTIFACTS_DIR}/app-release.apk --output-json ${RESULTS_DIR}/NS-11.json
+    # - python3 scripts/check_component_exposure.py --apk ${ARTIFACTS_DIR}/app-release.apk --output-json ${RESULTS_DIR}/NS-14.json
+  artifacts:
+    paths:
+      - ${RESULTS_DIR}/
+    expire_in: 14d
+    when: always
+
+negative-tests-ios:
+  stage: security-test
+  needs: [build-android]
+  tags: [macos, security]
+  script:
+    - export NEGATIVE_TEST_ARTIFACTS_DIR=${ARTIFACTS_DIR}
+    - python3 -m pytest tests/test_negative_security.py
+        --platform ios
+        --junitxml=${RESULTS_DIR}/ios.xml
+        -v
+  artifacts:
+    paths:
+      - ${RESULTS_DIR}/
+    expire_in: 14d
+    when: always
+
+# ---------------------------------------------------------------------------
+# 门禁阶段（OPA 策略评估）
+# ---------------------------------------------------------------------------
+release-gate:
+  stage: gate
+  needs: [negative-tests-android, negative-tests-ios]
+  tags: [linux, security]
+  script:
+    # 安装 OPA（可选，未安装时 gate_decision.py 自动降级）
+    - |
+      if ! command -v opa &>/dev/null; then
+        echo "OPA 未安装，使用简化 fallback 策略"
+      else
+        echo "OPA 可用，执行完整策略评估"
+      fi
+    - python3 scripts/gate_decision.py
+        --evidence-dir ${RESULTS_DIR}
+        --policy-dir policies
+        --platform android,ios
+        --output-json ${RESULTS_DIR}/gate_decision.json
+    - |
+      DECISION=$(python3 -c "import json; print(json.load(open('${RESULTS_DIR}/gate_decision.json'))['decision'])")
+      echo "发布门禁决策: ${DECISION}"
+      if [ "${DECISION}" = "BLOCK" ]; then
+        echo "::error:: 负向安全测试未通过，发布已阻断"
+        exit 1
+      fi
+      echo "::success:: 所有负向测试通过，允许发布"
+  artifacts:
+    paths:
+      - ${RESULTS_DIR}/gate_decision.json
+    expire_in: 30d
+
+# ---------------------------------------------------------------------------
+# 可选：SARIF 生成（导入 GitHub Security / DefectDojo）
+# ---------------------------------------------------------------------------
+generate-sarif:
+  stage: gate
+  needs: [release-gate]
+  tags: [linux, security]
+  script:
+    - python3 scripts/generate_sarif.py --results-dir ${RESULTS_DIR} --output ${RESULTS_DIR}/negative.sarif 2>/dev/null || \
+      echo "SARIF 生成跳过（脚本未实现）"
+  artifacts:
+    paths:
+      - ${RESULTS_DIR}/negative.sarif
+    expire_in: 90d
