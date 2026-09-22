@@ -245,14 +245,14 @@ def main():
     
     # 3. 检查 SharedPreferences
     if args.apk:
-        sp_result = scan_shared_preferences(Path(args.apk).parent, "com.xxai")
+        sp_result = scan_shared_preferences(Path(args.apk).parent, "com.target_app")
         if sp_result.get("findings"):
             results["findings"].extend(sp_result["findings"])
         results["details"]["shared_prefs"] = sp_result
     
     # 4. 检查 iOS Keychain
     if args.ipa:
-        keychain_result = scan_keychain_usage(Path(args.ipa), "com.xxai")
+        keychain_result = scan_keychain_usage(Path(args.ipa), "com.target_app")
         if keychain_result.get("findings"):
             results["findings"].extend(keychain_result["findings"])
         results["details"]["keychain"] = keychain_result

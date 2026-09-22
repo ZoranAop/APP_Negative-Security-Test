@@ -69,10 +69,10 @@ def build_config():
         "platform": os.environ.get("TARGET_PLATFORM", "android,ios"),
         "production_domains": os.environ.get(
             "PRODUCTION_DOMAINS",
-            "api.xxai.com,feed-api.xxai.com,auth.xxai.com",
+            "api.target_app.com,feed-api.target_app.com,auth.target_app.com",
         ).split(","),
         "production_associated_domains": os.environ.get(
-            "PRODUCTION_ASSOCIATED_DOMAINS", "applinks:xxai.com"
+            "PRODUCTION_ASSOCIATED_DOMAINS", "applinks:target_app.com"
         ).split(","),
     }
 
@@ -264,7 +264,7 @@ def sarif_builder():
                 "tool": {
                     "driver": {
                         "name": "Negative Security Test",
-                        "informationUri": "http://<INTERNAL_GIT_URL>/<INTERNAL_USER>/xxai_app_negative-security-test",
+                        "informationUri": "http://<INTERNAL_GIT_URL>/<INTERNAL_USER>/APP_Negative-Security-Test",
                         "rules": [
                             {
                                 "id": r["id"],

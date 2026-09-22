@@ -32,13 +32,13 @@ class Config:
     # 登录 API
     LOGIN_URL: str = os.getenv(
         "LOGIN_URL",
-        "https://api.xxai.com/login"
+        "https://api.target_app.com/login"
     )
 
     # 朋友圈发布 API
     MOMENTS_API_URL: str = os.getenv(
         "MOMENTS_API_URL",
-        "https://feed-api.xxai.com/api/v1/moments/"
+        "https://feed-api.target_app.com/api/v1/moments/"
     )
 
 
@@ -114,7 +114,7 @@ class Config:
     # S3 临时凭证接口
     UPLOAD_CREDENTIALS_URL: str = os.getenv(
         "UPLOAD_CREDENTIALS_URL",
-        "https://api.xxai.com/file/upload/credentials"
+        "https://api.target_app.com/file/upload/credentials"
     )
 
     # OpenNana 素材源

@@ -4,28 +4,28 @@
 forbidden_domains:
   # 开发环境
   dev:
-    - "dev.xxai.com"
-    - "dev.api.xxai.com"
-    - "dev.auth.xxai.com"
-    - "dev.feed-api.xxai.com"
+    - "dev.target_app.com"
+    - "dev.api.target_app.com"
+    - "dev.auth.target_app.com"
+    - "dev.feed-api.target_app.com"
     - "dev.ope.ai"
-    - "dev.staging.xxai.com"
+    - "dev.staging.target_app.com"
   # 测试环境
   test:
-    - "test.xxai.com"
-    - "test.api.xxai.com"
-    - "test.auth.xxai.com"
-    - "test.feed-api.xxai.com"
+    - "test.target_app.com"
+    - "test.api.target_app.com"
+    - "test.auth.target_app.com"
+    - "test.feed-api.target_app.com"
     - "test.ope.ai"
-    - "test.staging.xxai.com"
+    - "test.staging.target_app.com"
     - "test.local"
     - "test.localhost"
   # 预发布 / 灰度
   staging:
-    - "staging.xxai.com"
-    - "staging.api.xxai.com"
-    - "staging.auth.xxai.com"
-    - "staging.feed-api.xxai.com"
+    - "staging.target_app.com"
+    - "staging.api.target_app.com"
+    - "staging.auth.target_app.com"
+    - "staging.feed-api.target_app.com"
     - "staging.ope.ai"
   # 本地 / 内网
   # 10.x/172.x/192.x 为 RFC1918 私有网段，宽泛前缀匹配误报率高
@@ -67,13 +67,13 @@ forbidden_domains:
 # 生产允许白名单（用于对比确认）
 production_domains:
   api:
-    - "api.xxai.com"
-    - "api.feed-api.xxai.com"
+    - "api.target_app.com"
+    - "api.feed-api.target_app.com"
   auth:
-    - "auth.xxai.com"
+    - "auth.target_app.com"
   web:
-    - "xxai.com"
-    - "www.xxai.com"
+    - "target_app.com"
+    - "www.target_app.com"
   deep_link:
     - "ope.ai"
 
@@ -81,4 +81,4 @@ production_domains:
 classification:
   FAIL: [dev, test, staging, localhost, 192.168., 172.16.]
   THIRDPARTY: [flutter.dev, docs.flutter.dev, api.flutter.dev, plugins.flutter.dev, android.google.com, firebase.io, analytics.google.com]
-  ALLOWLIST: [xxai.com, api.xxai.com, ope.ai]
+  ALLOWLIST: [target_app.com, api.target_app.com, ope.ai]

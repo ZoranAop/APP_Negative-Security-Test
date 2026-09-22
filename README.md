@@ -1,4 +1,4 @@
-# xxai_app_negative-security-test
+# APP_Negative-Security-Test
 
 App 生产构建 **反向安全测试（Negative Security Test）+ CI 发布门禁（Release Gate）** 完整机制。
 
@@ -292,4 +292,4 @@ OPA 策略评估（negative.rego）
 - **CI 管理员**：维护流水线配置（`ci-templates/gitlab-ci-negative-security.yml`）、监控门禁状态、确保构建产物与构建日志完整可追溯
 - **业务团队**：确认 `THIRDPARTY` 分类中的第三方 SDK 是否为业务必需、提供业务功能与权限映射关系（支持 `NS-13` 完整审计）
 
-如有疑问、需要新增规则、需要完整 `SBOM` 生成、需要动态能力完整验证环境支持，或需要针对特定业务（如 `ope.ai` 深链、`xxai_feature_square` 模块、`flutter_assets` 第三方依赖）的定制检测规则，请联系安全团队。参见完整测试与人工验证矩阵：`docs/MANUAL_TEST_MATRIX.md`
+如有疑问、需要新增规则、需要完整 `SBOM` 生成、需要动态能力完整验证环境支持，或需要针对特定业务（如 `ope.ai` 深链、`feature_module` 模块、`flutter_assets` dependencies）的定制检测规则，请联系安全团队。参见完整测试与人工验证矩阵：`docs/MANUAL_TEST_MATRIX.md`

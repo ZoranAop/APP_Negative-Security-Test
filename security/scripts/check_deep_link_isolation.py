@@ -115,7 +115,7 @@ def check_deep_link_config(manifest_path, production_hosts):
             scheme = data.get("scheme")
             if scheme and not scheme.startswith(("com.", "org.")):
                 # 自定义 scheme 应该是 app 的包名形式
-                if not scheme.startswith(("myapp", "xxai")):
+                if not scheme.startswith(("myapp", "target_app")):
                     result["findings"].append({
                         "type": "unexpected_scheme",
                         "value": scheme,
@@ -144,7 +144,7 @@ def check_deep_link_config(manifest_path, production_hosts):
 def main():
     parser = argparse.ArgumentParser(description="检查 Android 深链域名隔离（反向安全测试）")
     parser.add_argument("--manifest", required=True, help="AndroidManifest.xml 路径")
-    parser.add_argument("--production-hosts", nargs="*", default=["api.xxai.com", "feed-api.xxai.com", "auth.xxai.com"])
+    parser.add_argument("--production-hosts", nargs="*", default=["api.target_app.com", "feed-api.target_app.com", "auth.target_app.com"])
     parser.add_argument("--output-json", help="输出 JSON 结果文件")
     
     args = parser.parse_args()
