@@ -1,5 +1,9 @@
 # APP_Negative-Security-Test
 
+> **正式发布版本 v1.0.0** · 通用化反向安全测试框架 · 标准化呈现
+>
+> **渲染标准**：本仓库按通用化负面安全测试（Negative Security Test）规范进行标准呈现，支持 CI 门禁（Release Gate）与 OPA 策略即代码（Policy-as-Code）集成。所有字段、域名、包名、模块引用均已泛化，适用于任意业务应用的安全基线验证。
+
 App 生产构建 **反向安全测试（Negative Security Test）+ CI 发布门禁（Release Gate）** 完整机制。
 
 > 核心思想：把生产包安全要求转化为 **反向断言（必须为 FALSE 才算 PASS）的自动化测试**，在 CI 流水线中做强制门禁——任意一条红线被触碰，构建直接阻断，不允许发布。
