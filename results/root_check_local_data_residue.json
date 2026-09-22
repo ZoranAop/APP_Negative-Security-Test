@@ -1,0 +1,10 @@
+{
+  "test_case": "NS-17",
+  "status": "SKIPPED",
+  "findings": [
+    {
+      "id": "no_apk",
+      "note": "нч APK"
+    }
+  ]
+}

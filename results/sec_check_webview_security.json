@@ -1,0 +1,38 @@
+{
+  "test_case": "NS-16",
+  "test_name": "WebView Security",
+  "status": "SKIPPED",
+  "checks": [
+    {
+      "id": "javascript_enabled",
+      "desc": "JavaScript 是否不必要启用",
+      "severity": "MEDIUM"
+    },
+    {
+      "id": "javascript_interface",
+      "desc": "addJavascriptInterface 是否暴露敏感接口",
+      "severity": "CRITICAL"
+    },
+    {
+      "id": "file_access",
+      "desc": "setAllowFileAccess / setAllowUniversalAccessFromFileURLs",
+      "severity": "HIGH"
+    },
+    {
+      "id": "debug_webview",
+      "desc": "setWebContentsDebuggingEnabled(true)",
+      "severity": "HIGH"
+    },
+    {
+      "id": "mixed_content",
+      "desc": "混合内容策略（HTTP/HTTPS 混合）",
+      "severity": "MEDIUM"
+    },
+    {
+      "id": "url_whitelist",
+      "desc": "WebView 加载 URL 是否有白名单控制",
+      "severity": "HIGH"
+    }
+  ],
+  "notes": "Fail-Closed：无 manifest/apk 输入，无法执行 WebView 安全检查。SKIPPED → BLOCK，绝不视为 PASS。"
+}

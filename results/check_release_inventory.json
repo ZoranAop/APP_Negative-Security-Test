@@ -1,0 +1,21 @@
+{
+  "test_case": "NS-20",
+  "test_name": "Release Artifact Inventory",
+  "status": "FAIL",
+  "findings": [
+    {
+      "type": "empty_build_directory",
+      "file": "build",
+      "severity": "MEDIUM",
+      "description": "构建目录为空或未提供"
+    }
+  ],
+  "inventory": {
+    "build": {
+      "categories": {},
+      "forbidden_paths": [],
+      "total_files": 0
+    }
+  },
+  "notes": "检查禁止路径（mock_/test_/debug_/fixture_）及资源类别统计。"
+}

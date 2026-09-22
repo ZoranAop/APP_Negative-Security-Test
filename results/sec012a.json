@@ -1,0 +1,15 @@
+{
+  "test_case": "SEC-012",
+  "test_name": "Release \u6784\u5efa\u914d\u7f6e\u68c0\u67e5",
+  "status": "SKIPPED",
+  "findings": [
+    {
+      "type": "no_build_input",
+      "severity": "CRITICAL",
+      "value": "\u672a\u63d0\u4f9b build.log / build.gradle / pubspec.yaml\uff0c\u65e0\u6cd5\u9a8c\u8bc1 Release \u6784\u5efa\u914d\u7f6e"
+    }
+  ],
+  "details": {
+    "note": "Fail-Closed: \u65e0\u6784\u5efa\u8f93\u5165 \u2192 SKIPPED \u2192 BLOCK\uff0c\u7edd\u4e0d\u89c6\u4e3a PASS\u3002"
+  }
+}
