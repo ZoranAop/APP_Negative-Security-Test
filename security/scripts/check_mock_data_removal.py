@@ -20,7 +20,8 @@ def scan_apk_resources(apk_path, mock_patterns):
         "status": "PASS",
         "findings": [],
         "mock_files": [],
-        "mock_strings": []
+        "mock_strings": [],
+        "details": {}
     }
     
     try:
@@ -82,7 +83,7 @@ def scan_apk_resources(apk_path, mock_patterns):
             
             results["details"]["asset_subdirs"] = list(asset_dirs)
             results["details"]["total_asset_files"] = len(all_files)
-    
+
     except Exception as e:
         results["error"] = str(e)
         results["findings"].append({

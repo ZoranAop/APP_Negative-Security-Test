@@ -37,7 +37,8 @@ def main():
     else:
         with open(args.output_json or "/tmp/NS-19.json","w") as f: json.dump({"test_case":"NS-19","status":"SKIPPED","findings":[{"note":"无构建产物或构建日志","severity":"SKIPPED"}],"reason":"缺少构建输入 → SKIPPED → BLOCK（Fail-Closed）","source":"无输入"}, f, indent=2)
         print("NS-19 SKIPPED — 无构建输入（Fail-Closed）")
-        sys.exit(0)
+        sys.exit(1)
+    has_fail = any(isinstance(f, dict) and f.get("severity") == "FAIL" for f in findings)
     status = "FAIL" if has_fail else ("PASS" if any(isinstance(f, dict) and f.get("sha256") for f in findings) else "REVIEW")
     with open(args.output_json or "/tmp/NS-19.json","w") as f:
         json.dump({"test_case":"NS-19","test_name":"Artifact Consistency","status":status,"findings":findings,"notes":"已计算构建产物 SHA 并检查构建日志一致性。SKIPPED 不得视为 PASS。","source":source}, f, indent=2, ensure_ascii=False)

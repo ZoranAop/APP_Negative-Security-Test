@@ -20,7 +20,8 @@ def scan_apk_resources(apk_path, mock_patterns):
         "status": "PASS",
         "findings": [],
         "mock_files": [],
-        "mock_strings": []
+        "mock_strings": [],
+        "details": {}
     }
     
     try:
@@ -82,7 +83,7 @@ def scan_apk_resources(apk_path, mock_patterns):
             
             results["details"]["asset_subdirs"] = list(asset_dirs)
             results["details"]["total_asset_files"] = len(all_files)
-    
+
     except Exception as e:
         results["error"] = str(e)
         results["findings"].append({
@@ -192,6 +193,14 @@ def main():
     parser.add_argument("--output-json", help="输出 JSON 结果文件")
     
     args = parser.parse_args()
+    
+    # FAIL-CLOSED: 无构建输入必须不返回 PASS
+    if not args.apk and not args.ipa and not args.pubspec:
+        results = {"test_case":"NS-07","status":"SKIPPED","findings":[{"note":"缺少 --apk/--ipa/--pubspec 输入","severity":"SKIPPED"}],"reason":"Fail-Closed: 无输入 → SKIPPED → BLOCK"}
+        if args.output_json:
+            with open(args.output_json, 'w', encoding='utf-8') as f: json.dump(results, f, indent=2)
+        print("NS-07 SKIPPED — 无构建输入（Fail-Closed → BLOCK）")
+        sys.exit(1)
     
     results = {
         "test_case": "NS-07-mock-data-removal",

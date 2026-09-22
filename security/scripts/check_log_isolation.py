@@ -191,7 +191,7 @@ def main():
                             "line": finding["line"]
                         } for finding in file_result["findings"]])
         except Exception as e:
-            results["details"]["apk_scan_error"] = str(e)
+            results.setdefault("details", {})["apk_scan_error"] = str(e)
     
     # 执行 ADB 动态日志抓取（如果提供设备 ID）
     if args.adb_device:
@@ -209,7 +209,7 @@ def main():
     # 判断结果
     if results["findings"]:
         results["status"] = "FAIL"
-        results["details"]["total_findings"] = len(results["findings"])
+        results.setdefault("details", {})["total_findings"] = len(results["findings"])
     
     # 保存结果
     if args.output_json:
