@@ -185,22 +185,6 @@ def pytest_configure(config):
 
 
 @pytest.fixture(scope="session")
-def all_negative_test_cases():
-    """所有负向测试用例"""
-    return [
-        {"id": "NS-01", "name": "调试面板/抓包隔离"},
-        {"id": "NS-02", "name": "接口/域名/Associated Domains 隔离"},
-        {"id": "NS-03", "name": "Android 深链域名按构建环境隔离"},
-        {"id": "NS-04", "name": "日志输出按构建环境隔离"},
-        {"id": "NS-05", "name": "登录态迁移至 Keychain/加密存储"},
-        {"id": "NS-06", "name": "关闭 iOS Documents 文件共享"},
-        {"id": "NS-07", "name": "移除生产包 mock 数据"},
-        {"id": "NS-08", "name": "Flutter Release 启用 Dart 混淆与符号文件留存"},
-        {"id": "NS-09", "name": "发布前自动校验生产 IPA/APK"}
-    ]
-
-
-@pytest.fixture(scope="session")
 def security_test_summary(test_report_dir):
     """安全测试汇总结果"""
     summary = {

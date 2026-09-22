@@ -38,7 +38,6 @@ def main():
         with open(args.output_json or "/tmp/NS-19.json","w") as f: json.dump({"test_case":"NS-19","status":"SKIPPED","findings":[{"note":"无构建产物或构建日志","severity":"SKIPPED"}],"reason":"缺少构建输入 → SKIPPED → BLOCK（Fail-Closed）","source":"无输入"}, f, indent=2)
         print("NS-19 SKIPPED — 无构建输入（Fail-Closed）")
         sys.exit(0)
-    status = "FAIL" if any(f.get("severity") == "FAIL" for f in findings if isinstance(f, dict)) else ("PASS" if all(isinstance(f.get("status"), str) and f.get("status")=="PASS" for f in findings if isinstance(f, dict)) else "REVIEW")
     # 简化：如果有 FAIL 条目则 FAIL；否则如果有 sha 则 PASS，否则 REVIEW
     has_fail = any(isinstance(f, dict) and f.get("severity") == "FAIL" for f in findings)
     status = "FAIL" if has_fail else ("PASS" if any(isinstance(f, dict) and f.get("sha256") for f in findings) else "REVIEW")

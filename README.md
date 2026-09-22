@@ -31,25 +31,26 @@ App 生产构建 **反向安全测试（Negative Security Test）+ CI 发布门�
 | 编号 | 安全目标 | 检测内容 | 完整状态 |
 |---|---|---|---|
 | **NS-10** | 第三方依赖 / SDK 安全 | Flutter Plugin、Native Library、SDK 扫描 + `SBOM` 对比 | ✅ 真实执行（`check_dependency_audit.py` 解析 `pubspec.yaml`/`build.gradle`，上下文分类已修正） |
-| **NS-11** | Secret / 凭证泄漏上下文检测 | 提取 `token`、`password`、`secret_key`、`private_key`、`auth_credential`，根据上下文（第三方参考 / 真实凭证 / 需人工确认）分类判断 | ✅ 真实执行（`check_secret_context.py` 熵值/PEM/JWT/上下文分类，非 FRAMEWORK_READY） |
-| **NS-12** | 网络安全配置 | `cleartextTraffic`、`trust-all CA`、`certificate pinning disabled`、`hostname verifier bypass`、`debug proxy` | ✅ 真实执行（`check_network_security.py` 文件/APK 扫描 `cleartext`/`CA bypass`，输出 PASS/FAIL/REVIEW） |
-| **NS-13** | 权限最小化审计 | `CAMERA`、`RECORD_AUDIO`、`LOCATION`、`REQUEST_INSTALL_PACKAGES`、`QUERY_ALL_PACKAGES` 等与业务映射检查 | ✅ 真实执行（`check_permission_audit.py` 解析 manifest 提取高风险权限 → PASS/FAIL/REVIEW） |
-| **NS-14** | Android 组件暴露检查 | `exported` `Activity`、`Service`、`Receiver`、`Provider`、`DebugActivity`、`MockServer` 暴露检测 | ✅ 真实执行（`check_component_exposure.py` 真实解析 `exported` 组件，检测 `DebugActivity`/`MockServer`） |
-| **NS-15** | Deep Link / Intent 注入安全 | `open redirect`、`javascript:` 注入、`intent:` 注入、未登录访问敏感页面、参数绕过 | ✅ 真实执行（`check_intent_injection.py` 真实解析深链暴露 → PASS/FAIL/REVIEW，动态需设备） |
-| **NS-16** | WebView 安全 | `JavaScript` 接口暴露、`file://` 访问、`debugging`、`mixed content`、`URL allowlist` | ✅ 基础真实执行（`check_webview_security.py` APK/资源扫描 WebView 配置，运行时验证仍需设备） |
-| **NS-17** | 本地敏感数据残留 | `SharedPreferences`、`Hive`、`SQLite`、`Cache`、`Clipboard`、`Crash dump` 中敏感内容残留检查 | ✅ 基础真实执行（`check_local_data_residue.py` 扫描 APK 本地存储文件，运行时内容验证仍需执行） |
-| **NS-18** | 屏幕隐私 / 截图保护 | `FLAG_SECURE`、`App Switcher` 快照保护、截图保护配置记录 | ✅ 基础真实执行（`check_screen_privacy.py` APK/IPA 配置扫描，完整运行时验证需设备） |
-| **NS-19** | 产物完整性 / SBOM 对比 | 构建清单与实际 APK 内容逐项比对，确保构建一致性 | ✅ 真实执行（`check_release_inventory.py` 构建清单 + 禁止路径检测，完整 SBOM 仍需构建环境） |
-| **NS-20** | 发布产物清单 / 安全库存 | 自动列出 `dex`、`native .so`、`assets`、`flutter_assets`、`config`、`test/mock/debug resources` 等类型，生成安全库存报告 | ✅ 真实执行（`check_release_inventory.py` 清单 + 禁止路径检测，完整 SBOM 仍需构建环境） |
-| **NS-21** | 禁止能力动态测试 | 实际尝试触发 `Oops/DevMenu`、访问 `dev` 深链、连接 `Mock Server`、执行 `debug` 操作、访问测试资源，验证生产包不具备不应有能力 | ⚠️ 依赖设备/模拟器（已修正无设备不误判 PASS；`check_forbidden_capability.py` 输出 SKIPPED → BLOCK） |
+| **NS-11** | Secret / 凭证泄漏上下文检测 | 提取 `token`、`password`、`secret_key`、`private_key`、`auth_credential`，根据上下文分类判断 | ✅ 真实执行（`check_secret_context.py` 熵值/PEM/JWT/上下文分类） |
+| **NS-12** | 网络安全配置 | `cleartextTraffic`、`trust-all CA`、`certificate pinning disabled`、`hostname verifier bypass`、`debug proxy` | ✅ 框架（`check_network_security.py` 文件/APK 扫描 `cleartext`/`CA bypass`，输出 PASS/FAIL/REVIEW） |
+| **NS-13** | 权限最小化审计 | `CAMERA`、`RECORD_AUDIO`、`LOCATION`、`REQUEST_INSTALL_PACKAGES`、`QUERY_ALL_PACKAGES` 等与业务映射检查 | ✅ 框架（`check_permission_audit.py` 解析 manifest 提取高风险权限） |
+| **NS-14** | Android 组件暴露检查 | `exported` `Activity`、`Service`、`Receiver`、`Provider`、`DebugActivity`、`MockServer` 暴露检测 | ✅ 真实执行（`check_component_exposure.py` 真实解析 `exported` 组件） |
+| **NS-15** | Deep Link / Intent 注入安全 | `open redirect`、`javascript:` 注入、`intent:` 注入、未登录访问敏感页面、参数绕过 | ✅ 框架（`check_intent_injection.py` 深链暴露解析，动态需设备） |
+| **NS-16** | WebView 安全 | `JavaScript` 接口暴露、`file://` 访问、`debugging`、`mixed content`、`URL allowlist` | ✅ 框架（`check_webview_security.py` APK/资源扫描 WebView 配置，运行时验证需设备） |
+| **NS-17** | 本地敏感数据残留 | `SharedPreferences`、`Hive`、`SQLite`、`Cache`、`Clipboard`、`Crash dump` 中敏感内容残留检查 | ✅ 框架（`check_local_data_residue.py` 扫描 APK 本地存储文件，运行时验证需执行） |
+| **NS-18** | 屏幕隐私 / 截图保护 | `FLAG_SECURE`、`App Switcher` 快照保护、截图保护配置记录 | ✅ 框架（`check_screen_privacy.py` APK/IPA 配置扫描，完整运行时验证需设备） |
+| **NS-19** | 产物完整性 / SBOM 对比 | 构建清单与实际 APK 内容逐项比对，确保构建一致性 | ✅ 真实执行（`check_artifact_consistency.py` SHA256 + 构建日志 + 版本/包名/签名对比） |
+| **NS-20** | 发布产物清单 / 安全库存 | 自动列出 `dex`、`native .so`、`assets`、`flutter_assets`、`config`、`test/mock/debug resources` 等类型，生成安全库存报告 | ✅ 真实执行（`check_release_inventory.py` 清单 + 禁止路径检测） |
+| **NS-21** | 禁止能力动态测试 | 实际尝试触发 `Oops/DevMenu`、访问 `dev` 深链、连接 `Mock Server`、执行 `debug` 操作，验证生产包不具备不应有能力 | ⚠️ 依赖设备/模拟器（`check_forbidden_capability.py` 输出 SKIPPED → BLOCK） |
 | **SEC-012** | Release 构建配置检查 | 构建参数 `--release`、`--obfuscate`、`--split-debug-info`、`minifyEnabled`、`proguardFiles` 验证 | ✅ 真实执行（`check_release_config.py` 构建参数验证，完整验证需构建日志） |
 
 ---
 
-## 完整执行流程
+## 完整执行流程（三阶段）
 
 ### Phase 1：本地快速检查（开发阶段，无需设备）
-适用于开发阶段快速反馈，覆盖所有静态规则（NS-01~NS-03、NS-06~NS-09、NS-10~NS-20 基础解析/清单/配置检查、NS-14/NS-15 基础解析）：
+
+适用于开发阶段快速反馈，覆盖所有静态规则（NS-01~NS-03、NS-06~NS-09、NS-10~NS-20 基础解析/清单/配置检查）：
 
 ```bash
 bash run_all_negative_tests.sh \
@@ -60,179 +61,32 @@ bash run_all_negative_tests.sh \
 输出：每条规则的 `results/evidence/NS-XX.json` 证据文件。
 
 ### Phase 2：完整反向测试（CI 阶段，含动态验证）
+
 在 `macos-latest`（构建 + iOS 测试）和 `ubuntu-latest`（Android 测试 + 门禁）环境执行完整流水线：
 
 ```bash
-python -m pytest security/tests/test_negative_security.py -v \
-  --junitxml=results/test.xml --sarif=results/test.sarif
-```
-
-动态测试（需要模拟器/真机）：
-```bash
-# NS-01 动态触发验证
-python security/tests/test_dynamic_debug_trigger.py --apk ... --device-id ...
-
-# NS-04 日志隔离动态验证（执行业务流程后抓取 logcat）
-python security/scripts/check_log_isolation.py --apk ... --log-dir logs/
-
-# NS-05 登录态动态验证（执行登录后检查本地存储）
-```
-
-### Phase 3：CI 门禁（Gate Only — 最终阻断决策）
-
-```bash
-python security/scripts/gate_decision.py \
-  --evidence-dir results/ \
-  --policy-dir security/policies/ \
-  --platform android,ios
-```
-
-门禁决策逻辑：
-
-```
-所有平台（android + ios）
-  ↓
-全部规则（NS-01~NS-21 + SEC-012）
-  ↓
-每条规则状态评估（PASS / FAIL / REVIEW / THIRDPARTY / ALLOWLIST）
-  ↓
-OPA 评估（negative.rego）
-  ↓
-默认拒绝（default allow = false）
-  ↓
-只有全部 PASS 且无 CRITICAL / HIGH FAIL → ALLOW
-任意一条 FAIL（Critical/High 级别违规）→ BLOCK
-```
-
----
-
-## 证据、可追溯性与审计要求
-
-每次执行必须产出以下可审计文件，用于安全团队复核、CI 门禁评估、外部审计追溯：
-
-| 文件类型 | 路径示例 | 用途 | 生成方式 |
-|---|---|---|---|
-| JUnit XML | `results/android.xml` / `results/ios.xml` | CI 解析 PASS/FAIL 数量 | `pytest --junitxml` |
-| SARIF | `results/android.sarif` | 安全扫描标准格式（可导入 GitHub Security / DefectDojo） | 测试框架生成 |
-| JSON 证据（每条规则） | `results/evidence/NS-01.json` ... `NS-21.json` | 机器可读的每条规则检测结果 | 每个 `check_*.py` 输出 |
-| 策略评估结果 | `results/policy_decision.json` | OPA 评估 `data.release.allow` 结果 | `gate_decision.py` 生成 |
-| 执行日志 | `results/run_YYYYMMDD_HHMMSS.log` | 完整脚本执行过程（stdout/stderr） | `run_all_negative_tests.sh` |
-| 安全测试矩阵 | `security/test_matrix.md` | 12 项基线规则与状态映射 | 文档 |
-| 流水线架构图 | `docs/pipeline_diagram.md` | CI 流程可视化 | 文档 |
-| 测试报告（APK 扫描示例） | `results/evidence/DESKTOP_APK_SCAN/APK_SCAN_REPORT.md` | 实际构建包反向检测完整报告（含发现、结论、修复建议） | 手动 + 脚本混合生成 |
-
----
-
-## 完整目录结构（集成所有内容）
-
-```
-security/
-├── README.md                    # 完整机制说明（本文件，含全部规则、执行模式、依赖、CI 模板、补充内容、阶段说明）
-├── docs/
-│   ├── NEGATIVE_TEST_GUIDE.md  # 英文技术设计文档
-│   └── pipeline_diagram.md     # 流水线架构图
-├── policies/
-│   ├── negative.rego           # OPA 策略（Policy-as-Code，Fail-Closed 默认拒绝）
-│   ├── allowlist.yaml          # 白名单（已审计第三方 SDK 字符串，严禁条目明确）
-│   └── forbidden_domains.yaml  # 禁止域名列表（FAIL / THIRDPARTY / ALLOWLIST 分类）
-├── scripts/
-│   ├── gate_decision.py        # 发布门禁决策脚本（读取证据 → 评估策略 → 输出 ALLOW/BLOCK）
-│   ├── check_binary_integrity.py    # NS-09 签名/完整性
-│   ├── check_component_exposure.py  # NS-14 Android 组件暴露（新增）
-│   ├── check_dart_obfuscation.py    # NS-08 混淆 + 符号
-│   ├── check_debug_isolation.py     # NS-01 Debug 隔离
-│   ├── check_deep_link_isolation.py # NS-03 深链白名单
-│   ├── check_domain_isolation.py    # NS-02 域名隔离（增强）
-│   ├── check_encryption_storage.py  # NS-05 加密存储
-│   ├── check_intent_injection.py    # NS-15 Intent 注入（新增）
-│   ├── check_ios_file_sharing.py    # NS-06 iOS 文件共享
-│   ├── check_local_data_residue.py  # NS-17 本地数据残留（新增，扩展 NS-05）
-│   ├── check_log_isolation.py       # NS-04 日志隔离（含分级规则）
-│   ├── check_mock_data_removal.py   # NS-07 Mock 数据
-│   ├── check_network_security.py    # NS-12 网络安全配置（新增）
-│   ├── check_permission_audit.py    # NS-13 权限审计（新增）
-│   ├── check_release_config.py      # SEC-012 构建配置
-│   ├── check_release_inventory.py   # NS-20 产物清单（新增）
-│   ├── check_screen_privacy.py      # NS-18 屏幕隐私（新增）
-│   ├── check_secret_context.py      # NS-11 Secret 上下文检测（新增）
-│   └── check_webview_security.py    # NS-16 WebView 安全（新增）
-├── tests/
-│   ├── conftest.py                 # pytest fixtures（构建产物、规则、断言工具）
-│   ├── test_negative_security.py   # 主测试用例（静态 + 动态映射）
-│   └── test_dynamic_debug_trigger.py # NS-01 动态触发 + NS-21 禁止能力清单
-├── test_matrix.md                  # 21 项安全基线矩阵（SEC-001~SEC-021 + SEC-012）
-├── docs/pipeline_diagram.md        # CI 流程可视化图
-└── run_all_negative_tests.sh       # 一键执行脚本（本地 / CI 统一入口）
-```
-
----
-
-## 完整规则映射（从原始 9 条到 21 项扩展）
-
-| 原始编号 | 扩展编号 | 完整名称 | 当前状态 | 完整验证依赖 |
-|---|---|---|---|---|
-| NS-01 | NS-01 | Debug 隔离（静态 + 动态触发） | ✅ 框架完整 | 设备/模拟器 |
-| — | NS-10 | 第三方依赖/SDK 扫描 | 🆕 框架已建 | 构建环境（`pubspec.yaml`、`build.gradle`、`SBOM`） |
-| NS-02 | NS-02 + NS-02A | 域名隔离 + 端点验证 + 第三方分类 | ✅ 增强（含 `THIRDPARTY` 分类） | 构建配置文件 |
-| NS-03 | NS-03 | 深链白名单 | ✅ 框架完整 | `aapt2`（构建环境） |
-| NS-04 | NS-04 | 日志隔离（含分级规则） | ⚠️ 静态完整，动态缺设备 | 设备运行 |
-| NS-05 | NS-05 + NS-17 | 加密存储 + 本地数据残留 | ✅ 基础完整，增强已建 | 运行时验证 |
-| NS-06 | NS-06 | iOS 文件共享 | ✅ 完整 | — |
-| NS-07 | NS-07 | Mock 数据移除 | ✅ 完整（已发现真实 FAIL 案例） | — |
-| NS-08 | NS-08 | Dart 混淆 + 符号文件 | ⚠️ 框架完整，验证需构建产物 | 构建环境 |
-| NS-09 | NS-09 + NS-19/20 | 签名完整性 + 产物完整性/清单 | ⚠️ 基础完整，`SBOM` 缺构建环境 | 构建环境 |
-| — | NS-11 | Secret 上下文检测（上下文 + 熵值 + 分类） | 🆕 框架已建（基础分类规则已定义） | 真实构建样本验证熵值/PEM/JWT |
-| — | NS-12 | 网络安全配置（SSL/ATS/CA/Pinning） | 🆕 框架已建 | 构建配置文件解析 |
-| — | NS-13 | 权限审计 | 🆕 框架已建 | `manifest` 深度解析 |
-| — | NS-14 | Android 组件暴露（`exported` 检查） | 🆕 框架已建 | `aapt2` 解析 |
-| — | NS-15 | Intent 注入安全 | 🆕 框架已建 | 动态触发验证 |
-| — | NS-16 | WebView 安全 | 🆕 框架已建 | 运行时验证 |
-| — | NS-18 | 屏幕隐私 | 🆕 框架已建 | 构建/设备配置检查 |
-| — | NS-21 | 禁止能力动态测试（完整反向能力验证） | 🆕 增强（清单已定义） | 完整动态执行需设备 |
-| — | SEC-012 | Release 构建配置检查（`--obfuscate`、`minifyEnabled`、参数验证） | ✅ 框架已建，验证缺构建日志 | 构建环境 |
-
----
-
-## 执行模式（完整三阶段流程）
-
-### 阶段 1：本地快速检查（开发阶段，无设备依赖）
-适合开发阶段快速反馈，覆盖静态规则（所有 NS-01 静态、NS-02、NS-03 基础解析、NS-06、NS-07、NS-08 基础抽样、NS-09 基础签名、NS-10~NS-20 基础解析/清单/配置检查、NS-14 基础解析）：
-
-```bash
-bash run_all_negative_tests.sh \
-  --apk build/app/outputs/flutter-apk/app-release.apk \
-  --platform android \
-  --output-dir results/
-```
-
-输出：每条规则的 JSON 证据（`results/evidence/NS-XX.json`）。
-
-### 阶段 2：完整反向测试（CI 阶段，含动态验证 + 构建检查）
-在 `macos-latest`（构建 + iOS 测试 + 符号文件验证）和 `ubuntu-latest`（Android 测试 + 门禁 + 动态测试 + `aapt2` 解析）环境执行：
-
-```bash
 # 完整流水线执行
-python -m pytest security/tests/test_negative_security.py -v \
+python -m pytest tests/test_negative_security.py -v \
   --junitxml=results/test.xml --sarif=results/test.sarif
 
 # 动态触发验证（需模拟器/真机环境）
-python security/tests/test_dynamic_debug_trigger.py \
+python tests/test_dynamic_debug_trigger.py \
   --apk build/app/outputs/flutter-apk/app-release.apk \
   --device-id $DEVICE_ID \
   --output-json results/evidence/NS-01-dynamic.json
 
 # 构建配置检查（需构建日志）
-python security/scripts/check_release_config.py \
+python scripts/check_release_config.py \
   --build-log build.log \
   --output-json results/evidence/SEC-012.json
 ```
 
-### 阶段 3：发布门禁（Gate Only — 最终阻断决策）
+### Phase 3：CI 门禁（Gate Only — 最终阻断决策）
 
 ```bash
-python security/scripts/gate_decision.py \
+python scripts/gate_decision.py \
   --evidence-dir results/ \
-  --policy-dir security/policies/ \
+  --policy-dir policies/ \
   --platform android,ios
 ```
 
@@ -256,18 +110,72 @@ OPA 策略评估（negative.rego）
 
 ## 证据、可追溯性与审计体系
 
-每次执行必须产出可审计文件，用于安全团队复核、外部审计、漏洞追溯、合规证明：
+每次执行必须产出以下可审计文件，用于安全团队复核、CI 门禁评估、外部审计追溯：
 
 | 文件类型 | 路径示例 | 生成方式 | 用途 |
 |---|---|---|---|
-| JUnit XML | `results/android.xml` | `pytest --junitxml` | CI 解析 PASS/FAIL 数量 |
-| SARIF | `results/android.sarif` | 测试框架生成 | 安全工具标准格式（GitHub Security / DefectDojo 导入） |
-| 规则 JSON 证据 | `results/evidence/NS-01.json` ... `NS-21.json` | 每个 `check_*.py` 输出 | 机器可读每条规则检测结果 |
-| 策略决策结果 | `results/policy_decision.json` | `gate_decision.py` 生成 | `ALLOW` / `BLOCK` 最终决策 |
-| 执行日志 | `results/run_YYYYMMDD_HHMMSS.log` | `run_all_negative_tests.sh` 产生 | 完整执行过程（stdout/stderr） |
-| 测试矩阵 | `security/test_matrix.md` | 静态文档 | 21 项基线规则状态映射 |
-| 流水线图 | `docs/pipeline_diagram.md` | 静态文档 | CI 流程可视化 |
+| JUnit XML | `results/android.xml` / `results/ios.xml` | `pytest --junitxml` | CI 解析 PASS/FAIL 数量 |
+| SARIF | `results/android.sarif` | 测试框架生成 | 安全扫描标准格式（可导入 GitHub Security / DefectDojo） |
+| JSON 证据（每条规则） | `results/evidence/NS-01.json` ... `NS-21.json` | 每个 `check_*.py` 输出 | 机器可读的每条规则检测结果 |
+| 策略评估结果 | `results/policy_decision.json` | `gate_decision.py` 生成 | OPA 评估 `data.release.allow` 结果 |
+| 执行日志 | `results/run_YYYYMMDD_HHMMSS.log` | `run_all_negative_tests.sh` 产生 | 完整脚本执行过程（stdout/stderr） |
+| 安全测试矩阵 | `test_matrix.md` | 静态文档 | 21 项基线规则状态映射 |
+| 流水线架构图 | `docs/pipeline_diagram.md` | 静态文档 | CI 流程可视化 |
 | 完整报告模板 | `results/evidence/DESKTOP_APK_SCAN/APK_SCAN_REPORT.md` | 扫描报告示例 | 实际构建包反向检测完整报告格式 |
+
+---
+
+## 完整目录结构
+
+```
+.
+├── README.md                    # 完整机制说明（本文件）
+├── run_all_negative_tests.sh    # 一键执行脚本（本地 / CI 统一入口）
+├── test_matrix.md               # 21 项安全基线矩阵
+├── docs/
+│   ├── NEGATIVE_TEST_GUIDE.md   # 英文技术设计文档
+│   ├── MANUAL_TEST_MATRIX.md    # 动态/人工辅助验证矩阵（Fail-Closed 补充）
+│   ├── pipeline_diagram.md      # 流水线架构图
+│   ├── environment_limitations.md # 环境限制说明
+│   └── retest_tracking.md       # 复测跟踪表
+├── policies/
+│   ├── negative.rego            # OPA 策略（Policy-as-Code，Fail-Closed 默认拒绝）
+│   ├── allowlist.yaml           # 白名单（已审计第三方 SDK 字符串，严禁条目明确）
+│   └── forbidden_domains.yaml   # 禁止域名列表（FAIL / THIRDPARTY / ALLOWLIST 分类）
+├── scripts/
+│   ├── gate_decision.py         # 发布门禁决策脚本（读取证据 → 评估策略 → 输出 ALLOW/BLOCK）
+│   ├── validate_evidence_bundle.py # 证据完整性校验（拒绝 FRAMEWORK_READY/SKIPPED/UNKNOWN/缺失）
+│   ├── evidence_adapter.py      # 逐规则证据 → 平台聚合 bundle 适配器
+│   ├── check_binary_integrity.py    # NS-09 签名/完整性
+│   ├── check_component_exposure.py  # NS-14 Android 组件暴露
+│   ├── check_dart_obfuscation.py    # NS-08 混淆 + 符号
+│   ├── check_debug_isolation.py     # NS-01 Debug 隔离
+│   ├── check_deep_link_isolation.py # NS-03 深链白名单
+│   ├── check_domain_isolation.py    # NS-02 域名隔离（增强）
+│   ├── check_encryption_storage.py  # NS-05 加密存储
+│   ├── check_intent_injection.py    # NS-15 Intent 注入
+│   ├── check_ios_file_sharing.py    # NS-06 iOS 文件共享
+│   ├── check_local_data_residue.py  # NS-17 本地数据残留
+│   ├── check_log_isolation.py       # NS-04 日志隔离（含分级规则）
+│   ├── check_mock_data_removal.py   # NS-07 Mock 数据
+│   ├── check_network_security.py    # NS-12 网络安全配置
+│   ├── check_permission_audit.py    # NS-13 权限审计
+│   ├── check_release_config.py      # SEC-012 构建配置
+│   ├── check_release_inventory.py   # NS-20 产物清单
+│   ├── check_artifact_consistency.py # NS-19 构建产物一致性
+│   ├── check_screen_privacy.py      # NS-18 屏幕隐私
+│   ├── check_secret_context.py      # NS-11 Secret 上下文检测
+│   ├── check_webview_security.py    # NS-16 WebView 安全
+│   ├── check_dependency_audit.py    # NS-10 第三方依赖审计
+│   └── check_forbidden_capability.py # NS-21 禁止能力动态测试
+├── tests/
+│   ├── conftest.py                 # pytest fixtures（构建产物、规则、断言工具）
+│   ├── test_negative_security.py   # 主测试用例（静态 + 动态映射）
+│   ├── test_dynamic_debug_trigger.py # NS-01 动态触发 + NS-21 禁止能力清单
+│   └── test_self_gate_negative.py # 门禁自检
+└── ci-templates/
+    └── gitlab-ci-negative-security.yml # GitLab CI 反向安全测试流水线模板
+```
 
 ---
 
@@ -275,25 +183,27 @@ OPA 策略评估（negative.rego）
 
 ### 必需工具（本环境已确认可用或可安装）
 
-| 工具 | 版本要求 | 安装方式 | 当前状态 | 完整验证所需 |
-|---|---|---|---|---|
-| Python | >=3.10 | `python3` / `python` | ✅ 可用（`python3` 可执行） | ✅ |
-| pytest | >=7.0 | `pip install pytest` | ⚠️ 可安装 | ✅ |
-| bash / git | 任意 | 系统自带 | ✅ 完整可用 | ✅ |
+| 工具 | 版本要求 | 安装方式 | 当前状态 |
+|---|---|---|---|
+| Python | >=3.10 | `python3` / `python` | ✅ 可用 |
+| pytest | >=7.0 | `pip install pytest` | ⚠️ 可安装 |
+| bash / git | 任意 | 系统自带 | ✅ 完整可用 |
 
 ### 构建与测试环境依赖（完整验证必需）
 
-| 工具 | 版本要求 | 当前状态 | 影响规则 | 完整验证要求 |
-|---|---|---|---|---|
-| `flutter` / `dart` | stable / latest | ⚠️ 未在本环境验证 | 所有构建检查 | 构建真实 APK/IPA |
-| `apktool` | >=2.9 | ❌ 不可用（需安装） | NS-03、NS-14、NS-20 | 解析 `AndroidManifest.xml` |
-| `jadx` | >=1.4 | ❌ 不可用 | NS-08、NS-10 | 反编译抽样检查混淆 |
-| `aapt2` | Android SDK | ❌ 不可用 | NS-03、NS-13、NS-14、NS-20 | 解析压缩 manifest |
-| `adb` | Android SDK | ❌ 不可用 | NS-01（动态）、NS-04（动态）、NS-21（动态） | 连接模拟器/真机执行动态触发 |
-| `xcrun simctl` | macOS | ❌ 不可用（非 macOS） | NS-06（iOS 测试） | iOS 模拟器测试 |
-| 构建产物（`build/` 目录） | 真实构建输出 | ❌ 无（仅有桌面 APK 测试文件） | NS-07、NS-08、NS-09、NS-10、NS-19、NS-20、SEC-012 | 真实构建包验证 |
-| 构建日志（`build.log`） | 构建输出 | ❌ 无 | SEC-012 | 构建参数验证 |
-| `opa`（OPA CLI） | >=0.50 | ⚠️ 可安装 | 门禁决策（所有规则） | 执行 `gate_decision.py` |
+| 工具 | 版本要求 | 影响规则 | 完整验证要求 |
+|---|---|---|---|
+| `flutter` / `dart` | stable / latest | 所有构建检查 | 构建真实 APK/IPA |
+| `apktool` | >=2.9 | NS-03、NS-14、NS-20 | 解析 `AndroidManifest.xml` |
+| `jadx` | >=1.4 | NS-08、NS-10 | 反编译抽样检查混淆 |
+| `aapt2` | Android SDK | NS-03、NS-13、NS-14、NS-20 | 解析压缩 manifest |
+| `adb` | Android SDK | NS-01（动态）、NS-04（动态）、NS-21（动态） | 连接模拟器/真机执行动态触发 |
+| `xcrun simctl` | macOS | NS-06（iOS 测试） | iOS 模拟器测试 |
+| 构建产物（`build/` 目录） | 真实构建输出 | NS-07~NS-10、NS-19、NS-20、SEC-012 | 真实构建包验证 |
+| 构建日志（`build.log`） | 构建输出 | SEC-012 | 构建参数验证 |
+| `opa`（OPA CLI） | >=0.50 | 门禁决策（所有规则） | 执行 `gate_decision.py` |
+
+详见 `docs/environment_limitations.md`。
 
 ---
 
@@ -314,60 +224,39 @@ OPA 策略评估（negative.rego）
 
 ---
 
-## 完整执行状态与阶段说明
+## 完整验证与动态能力测试（需构建环境 + 模拟器/真机 + 完整构建日志）
 
-### 当前仓库交付状态（已完成）
-
-- ✅ **原始 9 条规则脚本**（`check_debug_isolation.py` ~ `check_binary_integrity.py`）
-- ✅ **补充脚本**（`check_release_config.py`、`check_secret_context.py`、`check_component_exposure.py`、`check_network_security.py`、`check_permission_audit.py`、`check_intent_injection.py`、`check_webview_security.py`、`check_local_data_residue.py`、`check_screen_privacy.py`、`check_release_inventory.py`）
-- ✅ **策略文件**（`negative.rego`、`allowlist.yaml`、`forbidden_domains.yaml` 含分类规则）
-- ✅ **测试框架**（`conftest.py`、`test_negative_security.py`、`test_dynamic_debug_trigger.py` 增强 `FORBIDDEN_CAPABILITIES` 清单）
-- ✅ **文档**（完整中文 `README.md`、`test_matrix.md`、`pipeline_diagram.md`、`NEGATIVE_TEST_GUIDE.md`）
-- ✅ **CI 模板**（`.github/workflows/release-gate.yml` 真实文件）
-- ✅ **APK 扫描报告示例**（`results/evidence/DESKTOP_APK_SCAN/APK_SCAN_REPORT.md`，含发现、结论、修复建议、规则映射）
-
-### Phase 1：本地框架执行（已就绪，无设备依赖）
-可在任何开发环境执行静态检查、框架运行、文档生成：
-
-```bash
-bash run_all_negative_tests.sh \
-  --apk build/app/outputs/flutter-apk/app-release.apk \
-  --output-dir results/
-python security/scripts/gate_decision.py --evidence-dir results/ --policy-dir security/policies/
-```
-
-### Phase 2：完整 CI 流水线执行（需要构建环境 + 构建产物）
-需要真实 `flutter build --release --obfuscate --split-debug-info=...` 产物，以及构建日志：
-
-```bash
-# 构建阶段
-flutter build apk --release --obfuscate --split-debug-info=build/symbols/android
-flutter build ios --release --obfuscate --split-debug-info=build/symbols/ios
-
-# 测试阶段（ubuntu-latest / macos-latest）
-python -m pytest security/tests/ --platform android,ios --artifact-dir artifacts/
-
-# 门禁阶段
-python security/scripts/gate_decision.py --evidence-dir results/
-```
-
-### Phase 3：完整验证与动态能力测试（需要构建环境 + 模拟器/真机 + 完整构建日志）
 只有在真实构建环境、真实设备连接、完整构建日志可用时，才能完成以下完整验证：
 
 - **NS-03**：`aapt2 dump xmltree` 完整解析 `AndroidManifest.xml`
-- **NS-04**：真实设备运行 `adb logcat` 抓取业务流程日志，执行分级扫描（Critical/High/Medium）
+- **NS-04**：真实设备运行 `adb logcat` 抓取业务流程日志，执行分级扫描
 - **NS-05 + NS-17**：执行真实登录流程，检查 `Hive` / `SharedPreferences` / `Keychain` 存储状态
 - **NS-08 + NS-19**：执行 `jadx` 反编译抽样，验证混淆映射文件可还原崩溃堆栈，执行 `SBOM` 对比
 - **NS-09**：执行 `apksigner verify --print-certs --verbose` 完整签名验证
 - **NS-10**：解析真实 `pubspec.yaml` / `build.gradle`，生成 `SBOM`，与构建产物逐项比对
-- **NS-11**：使用真实构建样本测试 `REAL_SECRET_CANDIDATE` / `THIRDPARTY_REF` / `CONTEXT_NEEDED` 分类规则，验证熵值/PEM/JWT 格式判断准确性
+- **NS-11**：使用真实构建样本测试 `REAL_SECRET_CANDIDATE` / `THIRDPARTY_REF` / `CONTEXT_NEEDED` 分类规则
 - **NS-12**：解析真实 `Info.plist` / `NetworkSecurityConfig`，验证 `cleartextTraffic`、`certificate_pinning_disabled` 配置状态
 - **NS-13**：解析完整 `manifest` 深度权限列表，与业务功能映射表对比
 - **NS-14**：解析完整 `manifest` 提取所有 `exported` 组件，检测 `DebugActivity` / `MockServer` / 测试组件
 - **NS-15**：执行真实深链触发（`adb shell am start -W -d ...`），验证 `open redirect` / `intent` 注入 / 参数绕过
 - **NS-16**：运行时验证 `WebView` 配置（`JavaScript` 接口、`file://` 访问、`debugging` 状态）
-- **NS-21**：完整执行 `FORBIDDEN_CAPABILITIES` 清单（`Oops_DevMenu_Trigger`、`DeepLink_DevHost_Open`、`Mock_Server_Connection`、`Certificate_Pinning_Bypass` 等），验证生产包不具备不应有能力
+- **NS-21**：完整执行 `FORBIDDEN_CAPABILITIES` 清单（`Oops_DevMenu_Trigger`、`DeepLink_DevHost_Open`、`Mock_Server_Connection`、`Certificate_Pinning_Bypass` 等）
 - **SEC-012**：使用真实 `build.log` 验证构建参数完整性
+
+人工/动态辅助验证标准化流程见 `docs/MANUAL_TEST_MATRIX.md`。
+
+---
+
+## 当前仓库交付状态
+
+- ✅ **原始 9 条规则脚本**（`check_debug_isolation.py` ~ `check_binary_integrity.py`）
+- ✅ **补充框架脚本**（`check_release_config.py`、`check_secret_context.py`、`check_component_exposure.py`、`check_network_security.py`、`check_permission_audit.py`、`check_intent_injection.py`、`check_webview_security.py`、`check_local_data_residue.py`、`check_screen_privacy.py`、`check_release_inventory.py`、`check_artifact_consistency.py`、`check_dependency_audit.py`、`check_forbidden_capability.py`）
+- ✅ **策略文件**（`negative.rego`、`allowlist.yaml`、`forbidden_domains.yaml` 含分类规则）
+- ✅ **测试框架**（`conftest.py`、`test_negative_security.py`、`test_dynamic_debug_trigger.py` 增强 `FORBIDDEN_CAPABILITIES` 清单、`test_self_gate_negative.py` 门禁自检）
+- ✅ **文档**（完整中文 `README.md`、`test_matrix.md`、`docs/pipeline_diagram.md`、`docs/NEGATIVE_TEST_GUIDE.md`、`docs/MANUAL_TEST_MATRIX.md`）
+- ✅ **CI 模板**（`ci-templates/gitlab-ci-negative-security.yml` 真实文件）
+- ✅ **证据校验**（`validate_evidence_bundle.py` 拒绝 FRAMEWORK_READY/SKIPPED/UNKNOWN/缺失）
+- ⚠️ **完整验证依赖外部环境**：构建产物（真实 APK/IPA）、构建日志（`build.log`）、`aapt2`、`jadx`、模拟器/真机、真实构建环境（用于完整 `SBOM`、熵值验证、动态能力测试）
 
 ---
 
@@ -386,25 +275,12 @@ python security/scripts/gate_decision.py --evidence-dir results/
 
 ---
 
-## 最终状态说明
-
-- ✅ **原始 9 条规则脚本**：全部交付、可运行、可独立执行
-- ✅ **补充框架脚本（NS-10~NS-21 + SEC-012 增强）**：全部交付（`check_network_security.py`、`check_secret_context.py`、`check_permission_audit.py`、`check_component_exposure.py`、`check_intent_injection.py`、`check_webview_security.py`、`check_local_data_residue.py`、`check_screen_privacy.py`、`check_release_inventory.py`、`test_dynamic_debug_trigger.py` 增强）
-- ✅ **策略与白名单**：`negative.rego`、`allowlist.yaml`、`forbidden_domains.yaml`（含分类规则）
-- ✅ **文档与矩阵**：`README.md`（完整集成说明）、`test_matrix.md`（21 项基线）、`pipeline_diagram.md`、`NEGATIVE_TEST_GUIDE.md`
-- ✅ **CI 流水线模板**：`.github/workflows/release-gate.yml`（真实文件）
-- ✅ **测试框架**：`tests/conftest.py`、`test_negative_security.py`、`run_all_negative_tests.sh`
-- ✅ **APK 扫描报告示例**：完整报告格式已交付（可作为标准模板复用）
-- ⚠️ **完整验证依赖外部环境**：构建产物（真实 APK/IPA）、构建日志（`build.log`）、`aapt2`、`jadx`、模拟器/真机、真实构建环境（用于完整 `SBOM`、熵值验证、动态能力测试）
-
----
-
 ## 使用说明
 
-1. **快速检查**：直接执行 `bash run_all_negative_tests.sh --apk ... --output-dir results/`
-2. **完整 CI 流水线**：参考 `.github/workflows/release-gate.yml`，在 `macos-latest` 构建 + `ubuntu-latest` 测试环境执行
-3. **门禁执行**：执行 `python security/scripts/gate_decision.py --evidence-dir results/ --policy-dir security/policies/`
-4. **证据审计**：每条规则生成 `results/evidence/NS-XX.json`，策略决策生成 `results/policy_decision.json`
+1. **快速检查**：`bash run_all_negative_tests.sh --apk ... --output-dir results/`
+2. **完整 CI 流水线**：参考 `ci-templates/gitlab-ci-negative-security.yml`，在 `macos-latest` 构建 + `ubuntu-latest` 测试环境执行
+3. **门禁执行**：`python scripts/gate_decision.py --evidence-dir results/ --policy-dir policies/`
+4. **证据审计**：每条规则生成 `results/evidence/NS-XX.json`，策略决策生成 `results/policy_decision.json`；证据完整性校验 `python scripts/validate_evidence_bundle.py --evidence-dir results/evidence`
 5. **缺口追踪**：查看 `test_matrix.md` 和 `docs/pipeline_diagram.md` 了解完整 21 项基线状态与流水线位置
 
 ---
@@ -413,7 +289,7 @@ python security/scripts/gate_decision.py --evidence-dir results/
 
 - **安全负责人**：审批白名单（`policies/allowlist.yaml`）、审查新规则、处理误报、确认 `REVIEW` 级别发现
 - **开发团队**：修复 `FAIL` 测试项（如 `NS-07 Mock 数据`）、更新构建配置、清理构建产物中的测试/调试资源
-- **CI 管理员**：维护流水线配置（`.github/workflows/release-gate.yml`）、监控门禁状态、确保构建产物与构建日志完整可追溯
+- **CI 管理员**：维护流水线配置（`ci-templates/gitlab-ci-negative-security.yml`）、监控门禁状态、确保构建产物与构建日志完整可追溯
 - **业务团队**：确认 `THIRDPARTY` 分类中的第三方 SDK 是否为业务必需、提供业务功能与权限映射关系（支持 `NS-13` 完整审计）
 
-如有疑问、需要新增规则、需要完整 `SBOM` 生成、需要动态能力完整验证环境支持，或需要针对特定业务（如 `ope.ai` 深链、`xxai_feature_square` 模块、`flutter_assets` 第三方依赖）的定制检测规则，请联系安全团队。参见完整测试与人工验证矩阵：security/docs/MANUAL_TEST_MATRIX.md
+如有疑问、需要新增规则、需要完整 `SBOM` 生成、需要动态能力完整验证环境支持，或需要针对特定业务（如 `ope.ai` 深链、`xxai_feature_square` 模块、`flutter_assets` 第三方依赖）的定制检测规则，请联系安全团队。参见完整测试与人工验证矩阵：`docs/MANUAL_TEST_MATRIX.md`

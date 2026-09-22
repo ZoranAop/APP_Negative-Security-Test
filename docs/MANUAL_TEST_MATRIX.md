@@ -90,8 +90,8 @@ UNKNOWN     → 阻断（无法确定结果）
 
 ## 使用说明
 
-- 自动化脚本：运行 `bash security/run_all_negative_tests.sh --apk ...`
+- 自动化脚本：运行 `bash run_all_negative_tests.sh --apk ...`
 - 人工测试：参照本矩阵执行对应步骤，生成 `results/evidence/NS-XX-manual.json`
-- Evidence 校验：`python security/scripts/validate_evidence_bundle.py --evidence-dir results/evidence`
-- Gate 决策：`python security/scripts/gate_decision.py --evidence-dir results/`
-- OPA 评估：`opa eval -d security/policies/negative.rego ...`
+- Evidence 校验：`python scripts/validate_evidence_bundle.py --evidence-dir results/evidence`
+- Gate 决策：`python scripts/gate_decision.py --evidence-dir results/ --policy-dir policies/`
+- OPA 评估：`opa eval -d policies/negative.rego ...`

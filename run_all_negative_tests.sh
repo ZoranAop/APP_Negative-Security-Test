@@ -31,7 +31,7 @@ log_error() {
 
 # 默认值
 OUTPUT_DIR="results"
-ARTIFACTS_DIR="security/artifacts"
+ARTIFACTS_DIR="artifacts"
 PLATFORM="android,ios"
 
 # 检查外部工具可用性
@@ -95,7 +95,7 @@ while [[ $# -gt 0 ]]; do
             echo "  --manifest FILE      AndroidManifest.xml 路径"
             echo "  --info-plist FILE    Info.plist 路径"
             echo "  --output-dir DIR     输出目录 (默认: results)"
-            echo "  --artifacts-dir DIR  构建产物目录 (默认: security/artifacts)"
+            echo "  --artifacts-dir DIR  构建产物目录 (默认: artifacts)"
             echo "  --platform LIST      测试平台，逗号分隔 (默认: android,ios)"
             echo "  --help               显示帮助"
             exit 0
@@ -160,7 +160,7 @@ for TEST_SPEC in "${TEST_SCRIPTS[@]}"; do
     
     # 添加平台特定参数
     if [[ "$TEST_ID" == "NS-01" ]]; then
-        CMD_ARGS+=(--apk "$APK_FILE" --ipa "$IPA_FILE" --manifest "$MANIFEST_FILE" --info-plist "$INFO_PLIST_FILE")
+        CMD_ARGS+=(--apk "$APK_FILE" --ipa "$IPA_FILE" --manifest "$MANIFEST_FILE")
     elif [[ "$TEST_ID" == "NS-02" ]]; then
         CMD_ARGS+=(--manifest "$MANIFEST_FILE" --info-plist "$INFO_PLIST_FILE" --artifacts-dir "$ARTIFACTS_DIR")
     elif [[ "$TEST_ID" == "NS-03" ]]; then

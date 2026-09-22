@@ -23,8 +23,8 @@ def project_root():
 
 @pytest.fixture(scope="session")
 def security_root(project_root):
-    """security 目录"""
-    return project_root / "security"
+    """仓库根目录（兼容旧 fixture 名称；实际文件在根目录而非 security/ 子目录）"""
+    return project_root
 
 
 @pytest.fixture(scope="session")
@@ -42,11 +42,24 @@ def build_artifacts(project_root, security_root):
         apk_candidates = list(artifact_dir.glob("**/*.apk"))
     ipa_candidates = list(artifact_dir.glob("**/*.ipa"))
     mapping_candidates = list(artifact_dir.glob("**/mapping.txt"))
+    info_plist_candidates = list(artifact_dir.glob("**/Info.plist"))
+    manifest_candidates = list(artifact_dir.glob("**/AndroidManifest.xml"))
+    build_log_candidates = list(artifact_dir.glob("**/build.log"))
+    pubspec_candidates = list(artifact_dir.glob("**/pubspec.yaml"))
+    dart_lib_candidates = [p for p in artifact_dir.glob("**/lib") if p.is_dir()]
+    assets_dir_candidates = [p for p in artifact_dir.glob("**/assets") if p.is_dir()]
 
     return {
         "apk": apk_candidates[0] if apk_candidates else None,
         "ipa": ipa_candidates[0] if ipa_candidates else None,
         "mapping": mapping_candidates[0] if mapping_candidates else None,
+        "info_plist": info_plist_candidates[0] if info_plist_candidates else None,
+        "manifest": manifest_candidates[0] if manifest_candidates else None,
+        "build_log": build_log_candidates[0] if build_log_candidates else None,
+        "pubspec": pubspec_candidates[0] if pubspec_candidates else None,
+        "dart_lib": dart_lib_candidates[0] if dart_lib_candidates else None,
+        "assets_dir": assets_dir_candidates[0] if assets_dir_candidates else None,
+        "expected_cert_fingerprint": os.environ.get("EXPECTED_CERT_FINGERPRINT"),
         "dir": artifact_dir,
     }
 
@@ -117,7 +130,7 @@ def build_env():
         "version": os.environ.get("BUILD_VERSION", "unknown"),
         "version_code": os.environ.get("BUILD_VERSION_CODE", "unknown"),
         "platform": os.environ.get("TARGET_PLATFORM", "android,ios"),
-        "artifact_dir": os.environ.get("NEGATIVE_TEST_ARTIFACTS_DIR", "security/artifacts"),
+        "artifact_dir": os.environ.get("NEGATIVE_TEST_ARTIFACTS_DIR", "artifacts"),
     }
 
 
@@ -208,7 +221,7 @@ def collect_finding_count():
 def security_test_config():
     return {
         "output_dir": os.environ.get("NEGATIVE_TEST_OUTPUT_DIR", "results"),
-        "artifacts_dir": os.environ.get("NEGATIVE_TEST_ARTIFACTS_DIR", "security/artifacts"),
+        "artifacts_dir": os.environ.get("NEGATIVE_TEST_ARTIFACTS_DIR", "artifacts"),
         "platform": os.environ.get("TARGET_PLATFORM", "android,ios"),
         "build_type": os.environ.get("BUILD_TYPE", "release"),
     }
@@ -228,7 +241,7 @@ def policy_input_builder():
                     "id": r.get("test_case", f"NS-{i:02d}"),
                     "name": r.get("test_name", "unknown"),
                     "status": r.get("status", "PASS"),
-                    "evidence_file": r.get("evidence_file", "security"),
+                        "evidence_file": r.get("evidence_file", "results/evidence"),
                     "details": r.get("details", {}),
                 }
                 for i, r in enumerate(test_results, 1)
@@ -275,7 +288,7 @@ def sarif_builder():
                         "message": {"text": f"{r.get('test_name', r.get('id','unknown'))} 未通过"},
                         "locations": [{
                             "physicalLocation": {
-                                "artifactLocation": {"uri": r.get("evidence_file", "security")}
+                                "artifactLocation": {"uri": r.get("evidence_file", "results/evidence")}
                             }
                         }],
                     }
