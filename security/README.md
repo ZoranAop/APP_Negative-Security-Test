@@ -1,4 +1,4 @@
-# APP_Negative-Security-Test
+# xxai_app_negative-security-test
 
 App 生产构建 **反向安全测试（Negative Security Test）+ CI 发布门禁（Release Gate）** 完整机制。
 
@@ -39,6 +39,36 @@ App 生产构建 **反向安全测试（Negative Security Test）+ CI 发布门�
 | **SEC-012** | Release 构建配置检查 | 构建参数 `--release`、`--obfuscate`、`--split-debug-info`、`minifyEnabled`、`proguardFiles` 验证 | ✅ 真实执行（`check_release_config.py` 构建参数验证，完整验证需构建日志） |
 
 > 已移除的占位规则（`NS-12` 网络安全配置、`NS-13` 权限审计、`NS-15` Intent 注入、`NS-16` WebView、`NS-17` 本地数据残留、`NS-18` 屏幕隐私）原为 FRAMEWORK_READY 占位脚本，无实际检测逻辑，已从矩阵中清除。
+
+---
+
+## 二进制 AXML 解析（无 aapt2 依赖，确定性强）
+
+`check_domain_isolation.py`（NS-02）、`check_deep_link_isolation.py`（NS-03）、`check_component_exposure.py`（NS-14）三条规则现优先调用 `shared/axml_parser.py` 解析 **binary AndroidManifest.xml**（aapt2 编译产物），无需 `aapt2` / `apktool` / `androguard`。
+
+- 旧版用正则读 binary manifest 报 `not well-formed` / `manifest_parse_error`，**漏掉全部真域名**，并对 `assets/*.plist` 误报 `www.apple.com` / `llvm.googlesource.com` 等系统域。
+- 新版从 AXML 字符串池提取 UTF-16LE / ASCII 字符串，重建域名、深链 host/scheme、组件，并对 `dev.fluttercommunity` / `com.google` / `androidx` 等第三方前缀做白名单过滤。
+- 验证（`com.xxai.app.mobile` 1.3.2 Build 2680 实包）：NS-02 / NS-03 / NS-14 三条规则对同一 APK 由 FAIL（误报 4 条）→ **PASS（0 条）**，与报告 `APP_Negative_Security_Test_Report_1.3.2.md` 结论一致。
+
+---
+
+## NS-06 误报修正
+
+`check_ios_file_sharing.py` 旧版对 `artifacts/*.plist` 全量遍历（含 `Frameworks/`、`PlugIns/`、`*.bundle/`、`Resources/`），缺 `codesign` 时 122 个系统 plist 解析失败，每条报 `invalid_plist_in_artifacts`，放大 `NSBackupUseEncryption=NO` 一条真实 MEDIUM。
+
+新版仅对主 App `Info.plist`（如 `Payload/Runner.app/Info.plist`）做文件共享 / 备份加密判定，`Frameworks`/`PlugIns`/`*.bundle` 下的 plist 仅计数（`system_plist_count`）不报，122 条误报 → 1 条真实发现。
+
+---
+
+## NS-20 误报修正
+
+`check_release_inventory.py` 旧版在缺 `build/` 目录时直接判 `empty_build_directory` FAIL；新版对"仅校验 APK 清单"场景降级为 `REVIEW`（`sys.exit(0)`），仅 `forbidden_path_in_artifact` 命中才 `FAIL`，消除对生产包"无 build 目录"的误阻断。
+
+---
+
+## NS-12 / 16 / 17 参数补全
+
+`check_network_security.py` / `check_webview_security.py` / `check_local_data_residue.py` 三条规则旧版 argparse 仅支持 `--apk`，带 `--manifest` 调用直接 `unrecognized arguments` 退出 2 → NO_JSON。新版补 `--manifest` 参数（NS-16/17 兼容不消费，NS-12 用于配合 APK 解析网络配置），三条规则现可正常产出 JSON。
 
 ---
 
@@ -256,7 +286,7 @@ python -m pytest security/tests/ --platform android,ios --artifact-dir artifacts
 4. **证据审计**：每条规则生成 `results/evidence/NS-XX.json`，策略决策生成 `results/policy_decision.json`
 5. **缺口追踪**：查看 `test_matrix.md` 和 `docs/pipeline_diagram.md` 了解完整 21 项基线状态与流水线位置
 
-如有疑问、需要新增规则、需要完整 `SBOM` 生成、需要动态能力完整验证环境支持，或需要针对特定业务（如 、`feature_module` 模块、`flutter_assets` dependencies）的定制检测规则，请联系安全团队。参见完整测试与人工验证矩阵：security/docs/MANUAL_TEST_MATRIX.md
+如有疑问、需要新增规则、需要完整 `SBOM` 生成、需要动态能力完整验证环境支持，或需要针对特定业务（如 `ope.ai` 深链、`xxai_feature_square` 模块、`flutter_assets` 第三方依赖）的定制检测规则，请联系安全团队。参见完整测试与人工验证矩阵：security/docs/MANUAL_TEST_MATRIX.md
 
 ---
 

@@ -11,6 +11,14 @@ import re
 import sys
 from pathlib import Path
 
+# 复用 shared AXML 解析器（binary AndroidManifest.xml 确定性解析，无 Android SDK 依赖）
+sys.path.insert(0, str(Path(__file__).resolve().parent / "shared"))
+try:
+    from axml_parser import parse_axml_manifest as _axml_parse
+except Exception:
+    _axml_parse = None
+
+
 def parse_plist(plist_path):
     """解析 plist 文件"""
     try:
@@ -20,35 +28,45 @@ def parse_plist(plist_path):
         return {"error": str(e), "data": None}
 
 def parse_android_manifest(manifest_path):
-    """解析 AndroidManifest.xml"""
+    """解析 AndroidManifest.xml。
+    优先用 AXML 解析器处理 binary manifest（aapt2 编译产物）；
+    若解析失败且文件为普通文本 XML，回退到正则。"""
+    result = {"domains": [], "urls": [], "net_config": {}, "axml_parsed": False}
     try:
-        content = manifest_path.read_text(encoding='utf-8', errors='ignore')
-        result = {
-            "domains": [],
-            "urls": [],
-            "net_config": {}
-        }
-        
-        # 提取 android:value 中的 URL
+        p = Path(manifest_path)
+        if not p.exists():
+            return {"error": f"manifest 不存在: {p}", "data": None, "axml_parsed": False}
+
+        # 1) 优先：AXML 二进制解析（无 aapt2 也可确定性读 manifest 域名/深链/组件）
+        if _axml_parse:
+            ax = _axml_parse(str(p))
+            if ax.get("parsed"):
+                result["axml_parsed"] = True
+                # 合并生产/开发域名与深链 host（过滤字符串池噪声：长度前缀、组件全限定名）
+                prod = [d for d in ax["domains"].get("production", []) if re.fullmatch(r"[a-z0-9][a-z0-9.\-]*\.[a-z]{2,}", d)]
+                dl_hosts = ax["deep_link"].get("hosts", [])
+                result["domains"] = sorted(set(prod) | set(dl_hosts))
+                result["urls"] = ax["deep_link"].get("schemes", [])
+                result["dev_test_domains"] = ax["domains"].get("dev_test", [])
+                result["thirdparty_domains"] = ax["domains"].get("thirdparty", [])
+                return result
+
+        # 2) 回退：普通文本 XML 正则
+        content = p.read_text(encoding='utf-8', errors='ignore')
         url_pattern = r'android:value\s*=\s*["\']([^"\']+)["\']'
         for match in re.finditer(url_pattern, content):
             url = match.group(1)
             if any(scheme in url for scheme in ['http', 'https', 'flutter', 'ws']):
                 result["urls"].append(url)
-        
-        # 提取 <data android:host="..."> 中的域名
         host_pattern = r'<data[^>]*android:host=["\']([^"\']+)["\']'
         for match in re.finditer(host_pattern, content):
             result["domains"].append(match.group(1))
-        
-        # 提取 android:scheme
         scheme_pattern = r'<data[^>]*android:scheme=["\']([^"\']+)["\']'
         for match in re.finditer(scheme_pattern, content):
             result["domains"].append(match.group(1))
-        
         return result
     except Exception as e:
-        return {"error": str(e), "data": None}
+        return {"error": str(e), "data": None, "axml_parsed": False}
 
 def check_associated_domains(plist_path):
     """检查 Associated Domains 配置"""
@@ -156,10 +174,10 @@ def main():
     parser.add_argument("--artifacts-dir", default="results/artifacts", help="输出目录")
     parser.add_argument("--output-json", help="输出 JSON 结果文件")
     parser.add_argument("--production-domains", nargs="*", default=[
-        "api.target_app.com", "feed-api.target_app.com", "auth.target_app.com", "target_app.com"
+        "api.xxai.com", "feed-api.xxai.com", "auth.xxai.com", "xxai.com"
     ], help="生产域名白名单")
     parser.add_argument("--production-associated-domains", nargs="*", default=[
-        "applinks:target_app.com"
+        "applinks:xxai.com"
     ], help="生产 Associated Domains 白名单")
     
     args = parser.parse_args()
@@ -177,27 +195,39 @@ def main():
     production_associated_domains = set(args.production_associated_domains)
     
     # 1. 检查 Android Manifest
+    # 系统/框架允许的域名与 scheme（NS-02 白名单扩展，避免 AXML 解析产物误报）
+    SYSTEM_DOMAIN_WHITELIST = {
+        "schemas.android.com", "android", "schemas.android", "com.android", "com.google.android",
+        "xxai", "https", "http", "file", "content", "intent", "flutter",
+    }
+
     manifest_path = Path(args.manifest)
     manifest_data = {"domains": [], "urls": []}
     if manifest_path.exists():
         manifest_data = parse_android_manifest(manifest_path)
         results["details"]["android_manifest"] = manifest_data
-        
+
         # 检查发现的域名
         for domain in manifest_data.get("domains", []):
+            dnorm = domain.lower()
+            if dnorm in SYSTEM_DOMAIN_WHITELIST:
+                continue
             if domain not in production_domains and not domain.startswith(("com.example", "org.example")):
                 results["findings"].append({
                     "type": "android_domain_not_in_whitelist",
                     "value": domain
                 })
-        
+
         for url in manifest_data.get("urls", []):
-            parsed_url = url.split("://")[1].split("/")[0] if "://" in url else url
-            if parsed_url not in production_domains:
-                results["findings"].append({
-                    "type": "android_url_not_in_whitelist",
-                    "value": url
-                })
+            # AXML 分支的 urls 实为 schemes（xxai/https/intent 等），直接跳过；
+            # 文本 XML 分支的 urls 形如 https://xxai.com，按 host 校验
+            if "://" in url:
+                parsed_url = url.split("://")[1].split("/")[0]
+                if parsed_url not in production_domains:
+                    results["findings"].append({
+                        "type": "android_url_not_in_whitelist",
+                        "value": url
+                    })
     
     # 2. 检查 iOS Info.plist
     info_plist_path = Path(args.info_plist)
@@ -227,12 +257,24 @@ def main():
                 })
     
     # 3. 扫描构建产物中的所有文件（APK/IPA 解压后的文件）
+    # 排除框架/系统/开源 SDK 自带域名（Info.plist 等系统资源），避免误报
+    SYSTEM_DOMAIN_ALLOWLIST = {
+        "apple.com", "www.apple.com", "apple-dns-scripts.com", "apple.com.cn",
+        "llvm.googlesource.com", "googlesource.com", "google.com", "golang.org",
+        "flutter.dev", "flutter.dev.", "api.flutter.dev", "plugins.flutter.dev",
+        "fluttercommunity.dev", "dev.fluttercommunity", "firebase.google.com",
+    }
     artifacts_dir = Path(args.artifacts_dir)
     if artifacts_dir.exists():
         for file_type in ["*.xml", "*.plist", "*.json", "*.dart"]:
             for file_path in artifacts_dir.rglob(file_type):
                 scan_result = scan_for_domain_patterns(file_path)
                 for domain in scan_result.get("domains_found", []):
+                    dnorm = domain.lower()
+                    if dnorm in SYSTEM_DOMAIN_ALLOWLIST:
+                        continue
+                    if any(dnorm.endswith(s.lstrip(".").lower()) for s in SYSTEM_DOMAIN_ALLOWLIST if "." in s):
+                        continue
                     if domain not in production_domains:
                         results["findings"].append({
                             "type": "unexpected_domain_in_assets",

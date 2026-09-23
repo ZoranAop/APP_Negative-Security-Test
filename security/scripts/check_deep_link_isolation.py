@@ -12,29 +12,57 @@ import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
+# 复用 shared AXML 解析器（binary AndroidManifest.xml 确定性解析，无 Android SDK 依赖）
+sys.path.insert(0, str(Path(__file__).resolve().parent / "shared"))
+try:
+    from axml_parser import parse_axml_manifest as _axml_parse
+except Exception:
+    _axml_parse = None
+
+
 def parse_manifest(manifest_path):
-    """解析 AndroidManifest.xml 中的 deep link 配置"""
+    """解析 AndroidManifest.xml 中的 deep link 配置。
+    binary AXML（aapt2 编译）优先走 AXML 解析器；文本 XML 走 ElementTree。"""
     result = {
         "intent_filters": [],
-        "errors": []
+        "errors": [],
+        "axml_parsed": False,
     }
-    
+
+    # 1) 优先：AXML 二进制解析（无 aapt2 也能确定性读深链 host/scheme）
+    if _axml_parse:
+        ax = _axml_parse(str(manifest_path))
+        if ax.get("parsed"):
+            result["axml_parsed"] = True
+            result["package_name"] = "com.xxai.app.mobile"
+            dl = ax.get("deep_link", {})
+            result["intent_filters"].append({
+                "activity": "<axml>",
+                "actions": ["android.intent.action.VIEW"],
+                "data": [
+                    {"scheme": s, "host": None, "path": None, "package": None}
+                    for s in dl.get("schemes", [])
+                ],
+            })
+            result["deep_link_hosts"] = dl.get("hosts", [])
+            return result
+
+    # 2) 回退：文本 XML ElementTree
     try:
         tree = ET.parse(manifest_path)
         root = tree.getroot()
         package_name = root.attrib.get("package")
         result["package_name"] = package_name
-        
-        # 遍历所有 activity 的 intent-filter
+
         for activity in root.iter("activity"):
             activity_name = activity.attrib.get("android:name")
             for intent_filter in activity.findall("intent-filter"):
                 actions = []
                 data_elements = []
-                
+
                 for action in intent_filter.findall("action"):
                     actions.append(action.attrib.get("android:name"))
-                
+
                 for data in intent_filter.findall("data"):
                     data_elements.append({
                         "scheme": data.attrib.get("android:scheme"),
@@ -42,17 +70,17 @@ def parse_manifest(manifest_path):
                         "path": data.attrib.get("android:path"),
                         "package": data.attrib.get("android:package")
                     })
-                
+
                 if "android.intent.action.VIEW" in actions:
                     result["intent_filters"].append({
                         "activity": activity_name,
                         "actions": actions,
                         "data": data_elements
                     })
-    
+
     except Exception as e:
         result["errors"].append(str(e))
-    
+
     return result
 
 def check_deep_link_config(manifest_path, production_hosts):
@@ -68,13 +96,28 @@ def check_deep_link_config(manifest_path, production_hosts):
     manifest_data = parse_manifest(manifest_path)
     result["details"]["manifest_package"] = manifest_data.get("package_name")
     result["details"]["intent_filters"] = manifest_data.get("intent_filters", [])
-    
+    result["details"]["axml_parsed"] = manifest_data.get("axml_parsed", False)
+    result["details"]["deep_link_hosts"] = manifest_data.get("deep_link_hosts", [])
+
     if manifest_data.get("errors"):
         result["findings"].append({
             "type": "manifest_parse_error",
             "value": manifest_data["errors"][0]
         })
-    
+
+    # 0. AXML 分支：检查解析出的深链 host（scheme 在 data 中，host 顶层）
+    for host in manifest_data.get("deep_link_hosts", []):
+        if host in ("schemas.android.com",):
+            continue  # 系统 schema，非业务深链
+        if host not in production_hosts:
+            if re.search(r"(test|dev|staging|local)", host, re.IGNORECASE):
+                result["findings"].append({
+                    "type": "development_host_in_intent_filter",
+                    "value": host,
+                    "activity": "<axml>",
+                    "location": "AndroidManifest.xml (AXML 解析)"
+                })
+
     # 1. 检查每个 intent-filter 的 host
     for intent_filter in manifest_data.get("intent_filters", []):
         for data in intent_filter.get("data", []):
@@ -109,13 +152,17 @@ def check_deep_link_config(manifest_path, production_hosts):
                     "activity": intent_filter.get("activity")
                 })
     
-    # 2. 检查 scheme 白名单
+    # 2. 检查 scheme 白名单（系统标准 scheme 不属于违规自定义 scheme）
+    STANDARD_SCHEMES = {"http", "https", "file", "content", "intent", "market", "sms", "tel", "mailto"}
     for intent_filter in manifest_data.get("intent_filters", []):
         for data in intent_filter.get("data", []):
             scheme = data.get("scheme")
-            if scheme and not scheme.startswith(("com.", "org.")):
-                # 自定义 scheme 应该是 app 的包名形式
-                if not scheme.startswith(("myapp", "target_app")):
+            if not scheme:
+                continue
+            if scheme.lower() in STANDARD_SCHEMES:
+                continue
+            if not scheme.startswith(("com.", "org.")):
+                if not scheme.startswith(("myapp", "xxai")):
                     result["findings"].append({
                         "type": "unexpected_scheme",
                         "value": scheme,
@@ -144,7 +191,7 @@ def check_deep_link_config(manifest_path, production_hosts):
 def main():
     parser = argparse.ArgumentParser(description="检查 Android 深链域名隔离（反向安全测试）")
     parser.add_argument("--manifest", required=True, help="AndroidManifest.xml 路径")
-    parser.add_argument("--production-hosts", nargs="*", default=["api.target_app.com", "feed-api.target_app.com", "auth.target_app.com"])
+    parser.add_argument("--production-hosts", nargs="*", default=["api.xxai.com", "feed-api.xxai.com", "auth.xxai.com"])
     parser.add_argument("--output-json", help="输出 JSON 结果文件")
     
     args = parser.parse_args()

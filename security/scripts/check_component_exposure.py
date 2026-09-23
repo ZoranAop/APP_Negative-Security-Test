@@ -12,6 +12,13 @@ SEC-014 / NS-14: Android Component Exposure 检查
 import argparse, json, sys, re, subprocess, zipfile
 from pathlib import Path
 
+# 复用 shared AXML 解析器（binary AndroidManifest.xml 确定性解析，无 Android SDK 依赖）
+sys.path.insert(0, str(Path(__file__).resolve().parent / "shared"))
+try:
+    from axml_parser import parse_axml_manifest as _axml_parse
+except Exception:
+    _axml_parse = None
+
 DEBUG_COMPONENT_PATTERNS = [
     r"DebugActivity", r"TestActivity", r"InspectorActivity",
     r"DevActivity", r"MockServer", r"DebugPanel", r"OopsActivity",
@@ -19,6 +26,11 @@ DEBUG_COMPONENT_PATTERNS = [
 
 def extract_manifest_from_apk(apk_path):
     """从 APK 提取 binary AndroidManifest.xml（使用 aapt2 或 python 备选）"""
+    if _axml_parse:
+        ax = _axml_parse(apk_path)
+        if ax.get("parsed"):
+            # AXML 解析成功：返回结构化结果（非文本），由 parse_manifest_axml 消费
+            return {"_axml": ax}
     try:
         out = subprocess.run(
             ["aapt2", "dump", "xmltree", str(apk_path)],
@@ -39,6 +51,19 @@ def extract_manifest_from_apk(apk_path):
     except Exception:
         pass
     return ""
+
+def parse_manifest_axml(ax):
+    """将 AXML 解析结果映射为 parse_manifest 的输出结构。"""
+    result = {
+        "exported_activities": [], "exported_services": [],
+        "exported_receivers": [], "exported_providers": [],
+        "provider_without_permission": [], "debug_components": [],
+        "intent_schemes": ax.get("deep_link", {}).get("schemes", []),
+        "axml_source": True,
+    }
+    result["debug_components"] = ax.get("debug_components", [])
+    result["exported_debug_components"] = ax.get("components", {}).get("exported_debug", [])
+    return result
 
 def parse_manifest(manifest_xml_text):
     """解析 manifest XML 文本，提取组件属性"""
@@ -104,11 +129,22 @@ def main():
     args = parser.parse_args()
 
     manifest_text = ""
+    axml_result = None
     if args.manifest and Path(args.manifest).exists():
-        manifest_text = Path(args.manifest).read_text(errors="ignore")
+        if _axml_parse:
+            ax = _axml_parse(args.manifest)
+            if ax.get("parsed"):
+                axml_result = parse_manifest_axml(ax)
+        if not axml_result:
+            manifest_text = Path(args.manifest).read_text(errors="ignore")
     elif args.apk and Path(args.apk).exists():
-        manifest_text = extract_manifest_from_apk(args.apk)
-    else:
+        extracted = extract_manifest_from_apk(args.apk)
+        if isinstance(extracted, dict) and "_axml" in extracted:
+            axml_result = parse_manifest_axml(extracted["_axml"])
+        else:
+            manifest_text = extracted
+
+    if axml_result is None and manifest_text == "":
         result = {
             "test_case": "NS-14",
             "test_name": "Android Component Exposure",
@@ -123,14 +159,17 @@ def main():
         print(f"NS-14 结果: FAIL — 无输入文件")
         sys.exit(1)
 
-    parsed = parse_manifest(manifest_text)
+    if axml_result is not None:
+        parsed = axml_result
+    else:
+        parsed = parse_manifest(manifest_text)
 
     findings = []
-    # 检测 Debug 组件
-    if parsed["debug_components"]:
+    # 检测 Debug 组件（AXML 与文本解析均覆盖）
+    if parsed.get("debug_components") or parsed.get("exported_debug_components"):
         findings.append({
             "type": "debug_component_in_manifest",
-            "value": parsed["debug_components"],
+            "value": parsed.get("debug_components") or parsed.get("exported_debug_components"),
             "severity": "CRITICAL",
             "description": "生产包中发现调试组件，必须移除",
         })

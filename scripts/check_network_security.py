@@ -38,14 +38,19 @@ def check_apk_network(apk_path):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--apk")
+    parser.add_argument("--manifest", help="AndroidManifest.xml 路径（可选，配合 --apk 解析网络配置）")
     parser.add_argument("--output-json")
     args = parser.parse_args()
-    if not args.apk or not os.path.exists(args.apk):
-        res = {"test_case":"NS-12","test_name":"Network Security Config","status":"SKIPPED","findings":[{"id":"no_apk","note":"未提供 APK，无法执行静态解析"}],"notes":"Fail-Closed：无输入 → SKIPPED → BLOCK"}
+    has_input = (args.apk and os.path.exists(args.apk)) or (args.manifest and os.path.exists(args.manifest))
+    if not has_input:
+        res = {"test_case":"NS-12","test_name":"Network Security Config","status":"SKIPPED","findings":[{"id":"no_input","note":"未提供 APK/manifest，无法执行静态解析"}],"notes":"Fail-Closed：无输入 → SKIPPED → BLOCK"}
         with open(args.output_json or "/tmp/NS-12.json","w") as f: json.dump(res,f,indent=2,ensure_ascii=False)
         sys.exit(1)
-    result = check_apk_network(args.apk)
-    res = {"test_case":"NS-12","test_name":"Network Security Config","status":result["status"],"findings":result["findings"],"notes":result["note"]}
+    if args.apk and os.path.exists(args.apk):
+        result = check_apk_network(args.apk)
+    else:
+        result = {"status":"SKIPPED","findings":[{"id":"manifest_only","note":"仅提供 manifest，需配合 APK 完整解析网络配置"}],"note":"manifest-only 模式"}
+    res = {"test_case":"NS-12","test_name":"Network Security Config","status":result["status"],"findings":result["findings"],"notes":result.get("note","")}
     with open(args.output_json or "/tmp/NS-12.json","w") as f: json.dump(res,f,indent=2,ensure_ascii=False)
     sys.exit(0 if result["status"]=="PASS" else (0 if result["status"]=="REVIEW" else 1))
 if __name__=="__main__": main()

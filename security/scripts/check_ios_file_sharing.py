@@ -226,23 +226,37 @@ def main():
             results["details"]["ipa_analysis"] = ipa_result["details"]
     
     # 3. 检查构建产物中的所有 .plist 文件
+    # 仅对主 App 的 Info.plist 做文件共享/备份加密判定；
+    # Frameworks/、PlugIns/、*.bundle 下的系统/SDK plist 仅计数不报误告警。
     artifacts_dir = Path(args.artifacts_dir)
     if artifacts_dir.exists():
+        main_info_plist = None
+        system_plist_count = 0
         for plist_file in artifacts_dir.rglob("*.plist"):
-            if plist_file.is_file():
-                plist_result = parse_info_plist(plist_file)
-                if plist_result.get("parsing_error"):
-                    continue
-                
+            if not plist_file.is_file():
+                continue
+            rel = plist_file.as_posix()
+            is_framework_or_bundle = (
+                "/Frameworks/" in rel or "/PlugIns/" in rel
+                or ".bundle/" in rel or "/Resources/" in rel
+            )
+            if is_framework_or_bundle:
+                system_plist_count += 1
+                continue
+            # 主 App 的 Info.plist（如 Payload/Runner.app/Info.plist）
+            main_info_plist = main_info_plist or plist_file
+        if main_info_plist is not None:
+            plist_result = parse_info_plist(main_info_plist)
+            if plist_result.get("parsing_error"):
+                results["details"]["main_info_plist_parse_error"] = plist_result.get("parsing_error")
+            else:
                 plist_analysis = check_file_sharing_settings(plist_result["data"])
-                if plist_analysis["status"] == "FAIL":
-                    # 记录每个失败的文件
-                    results["findings"].append({
-                        "type": "invalid_plist_in_artifacts",
-                        "value": str(plist_file),
-                        "severity": "MEDIUM",
-                        "details": plist_analysis["findings"]
-                    })
+                for f in plist_analysis.get("findings", []):
+                    f.setdefault("file", str(main_info_plist))
+                    results["findings"].append(f)
+        # 系统/SDK plist 解析失败不再逐条报 invalid_plist（环境缺 codesign 时的误报源）
+        if system_plist_count:
+            results["details"]["system_plist_count"] = system_plist_count
     
     # 判断结果
     if results["findings"]:

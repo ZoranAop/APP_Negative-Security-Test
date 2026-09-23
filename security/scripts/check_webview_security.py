@@ -5,7 +5,7 @@
 import argparse, json, sys, os, zipfile, re
 
 def main():
-    parser = argparse.ArgumentParser(); parser.add_argument("--apk"); parser.add_argument("--output-json")
+    parser = argparse.ArgumentParser(); parser.add_argument("--apk"); parser.add_argument("--manifest"); parser.add_argument("--output-json")
     args = parser.parse_args()
     findings = []
     if not args.apk or not os.path.exists(args.apk):
